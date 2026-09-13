@@ -32,7 +32,9 @@
                     <a href="javascript:void(0)">Authors</a>
                     <ul>
                         <li><a href="{{ route('author-guidelines') }}">Paper Submission & Guidelines</a></li>
-                        <li><a href="{{ route('callForPepper') }}">Conference Flyer / Call for Papers (CFP)</a></li>
+                        <li><a href="#">Conference Flyer / Call for Papers (CFP)</a></li>
+                        <!-- <li><a href="{{ route('callForPepper') }}">Conference Flyer / Call for Papers (CFP)</a></li> -->
+                       
                         <li><a href="{{ route('tracks') }}">Tracks</a></li>
                         <li><a href="{{ route('tracks') }}#sub-tracks">Sub-Tracks</a></li>
                         <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#important-dates">Important Dates</a></li>
