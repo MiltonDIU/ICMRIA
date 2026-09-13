@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'site_title' => 'Conference | Daffodil International University',
+    'site_title' => 'ICMRIA 2027 | Daffodil International University',
 ];

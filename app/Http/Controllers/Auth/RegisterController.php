@@ -297,7 +297,7 @@ class RegisterController extends Controller
 
         if ($request->action == 'save-pay' && $isPaymentEnabled) {
             $payment = new PaymentController();
-            $transaction_id = rand(100, 999) . '-' . "BNC2026-" . strtotime(now());
+            $transaction_id = rand(100, 999) . '-' . "ICMRIA2027-" . strtotime(now());
             $payment->paymentStore($user, $transaction_id, 'onecard');
 
             // $sslPayment = new SslCommerzPaymentController();

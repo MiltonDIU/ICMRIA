@@ -14,7 +14,7 @@ class PaymentController extends Controller
 {
     public function setPayment($user)
     {
-        $randomNum= rand(100,999).'-'."BNC2026-".strtotime(now());  //substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTVWXYZ"), 0, 8);
+        $randomNum= rand(100,999).'-'."ICMRIA2027-".strtotime(now());  //substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTVWXYZ"), 0, 8);
 
         $payment = $this->paymentStore($user,$randomNum);
         $curl = curl_init();
@@ -127,7 +127,7 @@ class PaymentController extends Controller
             return redirect()->back()->with('error', 'Please confirm your author list and student status first.');
         }
         //$this->setPayment($user);
-        $randomNum= rand(100,999).'-'."BNC2026-".strtotime(now());  //substr(str_shuffle
+        $randomNum= rand(100,999).'-'."ICMRIA2027-".strtotime(now());  //substr(str_shuffle
         $this->paymentStore($user,$randomNum,'onecard');
 
         // $sslPayment = new SslCommerzPaymentController();
@@ -165,7 +165,7 @@ class PaymentController extends Controller
             $currencyCode = $pricing['currency'];
         }
 
-        $randomNum = rand(100,999).'-'."BNC2026-".strtotime(now());
+        $randomNum = rand(100,999).'-'."ICMRIA2027-".strtotime(now());
 
         $paymentData = array(
             'user_id' => $user->id,

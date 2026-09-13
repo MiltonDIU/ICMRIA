@@ -31,7 +31,7 @@ class AbstractRejected extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        return $this->subject('Abstract Review Decision – BNC2026')
+        return $this->subject('Abstract Review Decision – ICMRIA 2027')
                     ->view('mail.abstract_rejected');
     }
 }

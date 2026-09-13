@@ -35,7 +35,7 @@ class Venue extends Model implements HasMedia
         'description',
     ];
 
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')->width(50)->height(50);
     }

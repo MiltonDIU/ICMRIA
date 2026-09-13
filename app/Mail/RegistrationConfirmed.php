@@ -31,7 +31,7 @@ class RegistrationConfirmed extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        return $this->subject('Registration and Payment Confirmation – BNC2026')
+        return $this->subject('Registration and Payment Confirmation – ICMRIA 2027')
                     ->view('mail.registration_confirmed');
     }
 }

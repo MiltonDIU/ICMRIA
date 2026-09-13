@@ -72,8 +72,8 @@
 {{--                                    <h4><strong> {!! $settings['title'] ?? 'Conference Title' !!}</strong></h4>--}}
 {{--                                    <span class="main-title">International Conference on</span>--}}
 {{--                                    <img src="{{ asset('/') }}img/eng-con_logo.png">--}}
-                                    <span class="second-title">International Conference on Beyond Nature and Culture </span>
-                                    <span class="sub-title">Planetary  Precarity in Literary-Cultural-Linguistic Representations</span>
+                                    <span class="second-title">ICMRIA 2027</span>
+                                    <span class="sub-title">Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future</span>
 
 
                                     <div><img width="20px;" src="{{ asset('/') }}img/calendar.png"> {!! $settings['about_when'] ?? '' !!} </div>

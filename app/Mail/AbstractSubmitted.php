@@ -32,7 +32,7 @@ class AbstractSubmitted extends Mailable implements ShouldQueue
     public function build()
     {
         return $this->to($this->paper->user->email)
-                    ->subject('Abstract Submission Received – BNC2026')
+                    ->subject('Abstract Submission Received – ICMRIA 2027')
                     ->view('mail.abstract_submitted');
     }
 }

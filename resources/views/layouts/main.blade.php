@@ -3,21 +3,21 @@
 
 <head>
   <meta charset="utf-8">
-  <title>{{ env('APP_NAME', 'Conference | Daffodil International University') }}</title>
+  <title>{{ env('APP_NAME', 'ICMRIA 2027 | Daffodil International University') }}</title>
 
-  <meta property="og:url"               content="https://engconference.diu.edu.bd/" />
+  <meta property="og:url"               content="{{ config('app.url') }}" />
   <meta property="og:type"              content="website" />
-  <meta property="og:title"             content="Conference, Daffodil International University" />
-  <!--<meta property="og:description"       content="Conference, Daffodil International University" />-->
-  <!--<meta property="og:image"             content="https://aiconnect.dipti.com.bd/img/aiconnect-banner1.jpg" />-->
-  <!--<meta property="og:image:secure_url"  content="https://aiconnect.dipti.com.bd/img/aiconnect-banner1.jpg" />-->
+  <meta property="og:title"             content="{{ env('APP_NAME', 'ICMRIA 2027') }}" />
+  <meta property="og:description"       content="International Conference on Multidisciplinary Research, Innovation and Applications 2027, Daffodil International University" />
+  <meta property="og:image"             content="{{ asset('img/icmria27-logo.png') }}" />
 
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
-  <!--<link rel="icon" type="image/png" href="{{ asset('/') }}img/AIConnectFavicon.png"/>-->
-  <link rel="icon" type="image/png" href="https://daffodilvarsity.edu.bd/favicon.ico"/>
-  
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/icmria27-favicon-32.png') }}"/>
+  <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('img/icmria27-favicon.png') }}"/>
+  <link rel="apple-touch-icon" href="{{ asset('img/icmria27-apple-touch-icon.png') }}"/>
+
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i|Raleway:300,400,500,700,800" rel="stylesheet">

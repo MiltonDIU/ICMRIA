@@ -30,6 +30,10 @@ class Speaker extends Model implements HasMedia
         'show_home',
         'serial',
         'speaker_type_id',
+        'track_id',
+        'focus_area',
+        'affiliation',
+        'country',
         'twitter',
         'facebook',
         'linkedin',
@@ -40,7 +44,7 @@ class Speaker extends Model implements HasMedia
         'full_description',
     ];
 
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')->width(50)->height(50);
     }
@@ -66,6 +70,9 @@ class Speaker extends Model implements HasMedia
     }
     public function speakerType(){
         return $this->belongsTo(SpeakerType::class,'speaker_type_id','id');
+    }
+    public function track(){
+        return $this->belongsTo(Track::class, 'track_id', 'id');
     }
     public function guestCategories()
     {

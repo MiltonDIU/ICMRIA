@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email Address – BNC2026</title>
+    <title>Verify Your Email Address – ICMRIA 2027</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
@@ -41,7 +41,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #00396B 0%, #0055A0 100%);
             padding: 30px;
             text-align: center;
             color: #ffffff;
@@ -118,7 +118,7 @@
 
         .btn-verify {
             display: inline-block;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #00396B 0%, #0055A0 100%);
             color: #ffffff !important;
             text-decoration: none;
             font-size: 16px;
@@ -140,7 +140,7 @@
         }
 
         .url-fallback a {
-            color: #3b82f6;
+            color: #0055A0;
             text-decoration: none;
         }
 
@@ -179,7 +179,7 @@
         }
 
         .contact-info {
-            color: #3b82f6;
+            color: #0055A0;
             text-decoration: none;
             font-weight: 600;
         }
@@ -199,9 +199,9 @@
     <div class="wrapper">
         <div class="main-content">
             <div class="header">
-                <p class="header-conference">International Conference on Beyond Nature and Culture</p>
-                <h1 class="header-title">BNC2026</h1>
-                <p class="header-subtitle">Planetary Precarity in Literary-Cultural-Linguistic Representations</p>
+                <p class="header-conference">International Conference on Multidisciplinary Research, Innovation and Applications</p>
+                <h1 class="header-title">ICMRIA 2027</h1>
+                <p class="header-subtitle">Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future</p>
             </div>
 
             <div class="content">
@@ -212,7 +212,7 @@
                 <span class="badge">✉ Email Verification Required</span>
 
                 <p class="message-intro">
-                    Thank you for registering with <strong>BNC2026</strong>. To complete your registration and gain full access to your account, please verify your email address by clicking the button below.
+                    Thank you for registering with <strong>ICMRIA 2027</strong>. To complete your registration and gain full access to your account, please verify your email address by clicking the button below.
                 </p>
 
                 <div class="verify-box">
@@ -230,7 +230,7 @@
                 </div>
 
                 <p class="disclaimer">
-                    If you did not create an account at BNC2026, please ignore this email. No action is required on your part.
+                    If you did not create an account at ICMRIA 2027, please ignore this email. No action is required on your part.
                 </p>
 
                 <p class="message-intro" style="margin-top: 24px;">
@@ -242,8 +242,8 @@
             <div class="footer">
                 <p class="footer-text">Warm regards,</p>
                 <p class="footer-text"><strong>Conference Secretariat</strong></p>
-                <p class="footer-text">BNC2026</p>
-                <p class="footer-text">Department of English</p>
+                <p class="footer-text">ICMRIA 2027</p>
+                <p class="footer-text">Division of Research</p>
                 <p class="footer-text">Daffodil International University</p>
             </div>
         </div>

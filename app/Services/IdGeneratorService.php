@@ -37,15 +37,13 @@ class IdGeneratorService
 
     /**
      * Generate a unique Submission ID for a paper.
-     * Format: ABS-YYYYMMDD-XXX
-     * 
+     * Format: ICMRIA2027-XXX
+     *
      * @return string
      */
     public static function generateSubmissionId()
     {
-        $now = Carbon::now();
-        $date = $now->format('y') . $now->month . $now->day;
-        $prefix = 'ABS-' . $date . '-';
+        $prefix = 'ICMRIA2027-';
 
         // Find the absolute last submission to get the highest sequence number regardless of date
         $lastPaper = Paper::orderBy('id', 'desc')

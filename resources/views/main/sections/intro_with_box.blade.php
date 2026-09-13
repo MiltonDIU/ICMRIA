@@ -4,9 +4,9 @@
 {{--        <div class="main-title pb-0">{!! $settings['title'] ?? '' !!}</div>--}}
 
         <span class="main-title">International Conference on</span>
-        <img src="{{ asset('/') }}img/eng-con_logo.png" class="intro-img">
-        <span class="second-title"> Beyond Nature and Culture </span>
-        <span class="sub-title">Planetarity Precarity in Literary-Cultural-Linguistic Representations</span>
+        <img src="{{ asset('img/icmria27-logo-white.png') }}" alt="ICMRIA 2027" class="intro-img" style="max-width: 520px;">
+        <span class="second-title">Multidisciplinary Research, Innovation and Applications 2027</span>
+        <span class="sub-title">Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future</span>
 
 
 {{--        <p style="margin:10px" class="mb-4 pb-0">{!! $settings['subtitle'] ?? '' !!}</p>--}}
@@ -42,23 +42,9 @@
         {{--                        </ul>--}}
         {{--                    </div>--}}
         {{--                </div>--}}
-        <p class="organize" style="margin-top: 20px"> Organized by</p>
-        <img src="{{ asset('/') }}img/eng-dept_logo.png" class="intro-img">
-        <br>
-        <p>Department of English | Daffodil International University</p>
-        <div class="organize">
-            {{--            <img src="{{ asset('/') }}img/AWS-DIU-DIPTI.png">
-                        <!--<img src="{{ asset('/') }}img/banner-logo.png">-->
-                        <p>Department of English, Daffodil International University</p>
-
-            {{--            @foreach($strategics as $strategic)--}}
-            {{--                <img src="{{ $strategic->logo!=null?$strategic->logo->getUrl():'' }}" alt="{{ $strategic->name }}">--}}
-            {{--            @endforeach--}}
-
-        </div>
-
-
-        <img src="{{ asset('/') }}img/hero-partner_engcon2.png" class="intro-img">
+        <p class="organize" style="margin-top: 20px">Organized by</p>
+        <p style="margin-top:10px; font-size:22px; font-weight:700; color:#fff;">Daffodil International University (DIU)</p>
+        <p style="color:#fff;">Daffodil Smart City, Birulia, Savar, Dhaka, Bangladesh</p>
 
 
 

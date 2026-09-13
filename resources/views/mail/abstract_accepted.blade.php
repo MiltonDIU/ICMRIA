@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abstract Accepted – BNC2026</title>
+    <title>Abstract Accepted – ICMRIA 2027</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
@@ -229,9 +229,9 @@
     <div class="wrapper">
         <div class="main-content">
             <div class="header">
-                <p class="header-conference">International Conference on Beyond Nature and Culture</p>
-                <h1 class="header-title">BNC2026</h1>
-                <p class="header-subtitle">Planetary Precarity in Literary-Cultural-Linguistic Representations</p>
+                <p class="header-conference">International Conference on Multidisciplinary Research, Innovation and Applications</p>
+                <h1 class="header-title">ICMRIA 2027</h1>
+                <p class="header-subtitle">Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future</p>
             </div>
 
             <div class="content">
@@ -241,7 +241,7 @@
 
                 <p class="message-intro">
                     We are delighted to inform you that your abstract has been <strong>accepted for presentation</strong> at the international conference
-                    <strong>Beyond Nature and Culture: Planetary Precarity in Literary-Cultural-Linguistic Representations (BNC2026)</strong>.
+                    <strong>International Conference on Multidisciplinary Research, Innovation and Applications 2027 (ICMRIA 2027)</strong>.
                 </p>
 
                 <div class="submission-card">
@@ -300,7 +300,7 @@
                 </div>
 
                 <p class="message-intro">
-                    We congratulate you on the acceptance of your abstract and look forward to welcoming you to BNC2026.
+                    We congratulate you on the acceptance of your abstract and look forward to welcoming you to ICMRIA 2027.
                 </p>
 
                 <p class="message-intro">
@@ -311,8 +311,8 @@
             <div class="footer">
                 <p class="footer-text">Warm regards,</p>
                 <p class="footer-text"><strong>Conference Secretariat</strong></p>
-                <p class="footer-text">BNC2026</p>
-                <p class="footer-text">Department of English</p>
+                <p class="footer-text">ICMRIA 2027</p>
+                <p class="footer-text">Division of Research</p>
                 <p class="footer-text">Daffodil International University</p>
             </div>
         </div>

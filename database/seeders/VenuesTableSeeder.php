@@ -12,12 +12,15 @@ class VenuesTableSeeder extends Seeder
      */
     public function run()
     {
+        // Venue / location — Daffodil International University permanent campus
+        // (same DIU campus used for ICMRIA 2027; coordinates verified from the
+        // live database).
         $venue = Venue::create([
-            'name'          => 'Daffodil Plaza',
-            'address'       => '4/2 Sobhanbag, Mirpur Road, Dhanmondi, Dhaka',
+            'name'          => 'Daffodil International University',
+            'address'       => 'Daffodil Smart City, Birulia, Savar, Dhaka-1216',
             'latitude'      => '23.75484855496525',
             'longitude'     => '90.37654019499453',
-            'description'   =>  'This full day event will feature hands-on workshops on building cloud native applications and machine learning, as well as insights on the recipe for creating the next generation of unicorn startups.'
+            'description'   => 'ICMRIA 2027 will be held on the permanent campus of Daffodil International University at Daffodil Smart City, Birulia, Savar, Dhaka-1216. The conference runs in blended mode (onsite + online) on 9–10 January 2027.',
         ]);
 
         foreach(range(1,8) as $id)

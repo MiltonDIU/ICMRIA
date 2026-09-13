@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>AI Connect Bangladesh Summit, 2023</title>
+    <title>ICMRIA 2027</title>
     <link rel="stylesheet" href="">
 </head>
 <body>

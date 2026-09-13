@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abstract Submission Received – BNC2026</title>
+    <title>Abstract Submission Received – ICMRIA 2027</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
@@ -41,7 +41,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #00396B 0%, #0055A0 100%);
             padding: 30px;
             text-align: center;
             color: #ffffff;
@@ -149,7 +149,7 @@
         }
 
         .contact-info {
-            color: #3b82f6;
+            color: #0055A0;
             text-decoration: none;
             font-weight: 600;
         }
@@ -168,9 +168,9 @@
     <div class="wrapper">
         <div class="main-content">
             <div class="header">
-                <p class="header-conference">International Conference on Beyond Nature and Culture</p>
-                <h1 class="header-title">BNC2026</h1>
-                <p class="header-subtitle">Planetary Precarity in Literary-Cultural-Linguistic Representations</p>
+                <p class="header-conference">International Conference on Multidisciplinary Research, Innovation and Applications</p>
+                <h1 class="header-title">ICMRIA 2027</h1>
+                <p class="header-subtitle">Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future</p>
             </div>
 
             <div class="content">
@@ -178,7 +178,7 @@
 
                 <p class="message-intro">
                     Thank you for submitting your abstract to the international conference
-                    <strong>Beyond Nature and Culture: Planetary Precarity in Literary-Cultural-Linguistic Representations (BNC2026)</strong>.
+                    <strong>International Conference on Multidisciplinary Research, Innovation and Applications 2027 (ICMRIA 2027)</strong>.
                 </p>
 
                 <p class="message-intro">
@@ -225,14 +225,14 @@
 
                 <p class="message-intro">If you have any questions, please contact the conference team at <a href="mailto:events.eng@diu.edu.bd" class="contact-info">events.eng@diu.edu.bd</a>.</p>
 
-                <p class="message-intro">Thank you for your interest in BNC2026.</p>
+                <p class="message-intro">Thank you for your interest in ICMRIA 2027.</p>
             </div>
 
             <div class="footer">
                 <p class="footer-text">Warm regards,</p>
                 <p class="footer-text"><strong>Conference Secretariat</strong></p>
-                <p class="footer-text">BNC2026</p>
-                <p class="footer-text">Department of English</p>
+                <p class="footer-text">ICMRIA 2027</p>
+                <p class="footer-text">Division of Research</p>
                 <p class="footer-text">Daffodil International University</p>
             </div>
         </div>

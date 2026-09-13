@@ -4,7 +4,7 @@
       <div class="row">
 
         <div class="col-lg-3 col-md-6 footer-info">
-          <img src="img/logo.png" alt="TheEvenet">
+          <img src="{{ asset('img/icmria27-logo-white.png') }}" alt="ICMRIA 2027" style="max-width: 220px; margin-bottom: 15px;">
           <p>{{ $settings['footer_description'] ?? '' }}</p>
         </div>
 
