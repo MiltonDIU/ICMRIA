@@ -43,7 +43,7 @@
         min-height: 100vh;
         height: auto !important;
         position: relative;
-        background: url("{{ asset('img/BackgroundImage.png') }}") center center / cover no-repeat;
+        background: url("{{ asset('img/BackgroundImage.png?v=icmria27') }}") center center / cover no-repeat;
         display: flex;
         align-items: center;
         justify-content: center;
