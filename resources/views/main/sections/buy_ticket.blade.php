@@ -127,6 +127,7 @@
     </div>
 
     <!-- ========================================================= -->
+{{-- [TEMPORARILY COMMENTED OUT - To be finalized with conference committee]
     <!-- 1. UNIVERSAL ALL-INCLUSIVE PRIVILEGES SHOWCASE            -->
     <!-- ========================================================= -->
     <div class="all-inclusive-showcase mb-5">
@@ -178,6 +179,7 @@
         </div>
       </div>
     </div>
+    --}}
 
     <!-- ========================================================= -->
     <!-- 2. INTERACTIVE PRICING VIEW SELECTOR                      -->
