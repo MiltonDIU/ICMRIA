@@ -55,7 +55,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group {{ $errors->has('subtitle') ? 'has-error' : '' }}">
                             <label for="subtitle">{{ trans('cruds.schedule.fields.subtitle') }}</label>
                             <input type="text" id="subtitle" name="subtitle" class="form-control" value="{{ old('subtitle', isset($schedule) ? $schedule->subtitle : '') }}">
@@ -69,7 +69,25 @@
                             </p>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <div class="form-group {{ $errors->has('schedule_category_id') ? 'has-error' : '' }}">
+                            <label for="schedule_category_id">Session Category</label>
+                            <select name="schedule_category_id" id="schedule_category_id" class="form-control select2">
+                                <option value="">-- Select Category --</option>
+                                @foreach($scheduleCategories as $id => $categoryName)
+                                    <option value="{{ $id }}" {{ old('schedule_category_id', isset($schedule) ? $schedule->schedule_category_id : '') == $id ? 'selected' : '' }}>
+                                        {{ $categoryName }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @if($errors->has('schedule_category_id'))
+                                <p class="help-block text-danger">
+                                    {{ $errors->first('schedule_category_id') }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-3">
                         <div class="form-group {{ $errors->has('speaker_id') ? 'has-error' : '' }}">
                             <label for="speaker">{{ trans('cruds.schedule.fields.speaker') }}</label>
 
@@ -85,7 +103,7 @@
                             @endif
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group {{ $errors->has('title') ? 'has-error' : '' }}">
                             <label for="title">{{ trans('cruds.schedule.fields.total_seat') }}*</label>
                             <input type="text" id="total_seat" name="total_seat" class="form-control" value="{{ old('total_seat', isset($schedule) ? $schedule->total_seat : '') }}" required>
@@ -102,7 +120,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label>{{ trans('cruds.schedule.fields.is_workshop') }}</label>
                             <select class="form-control {{ $errors->has('is_workshop') ? 'is-invalid' : '' }}" name="is_workshop" id="workshop" onchange="toggleExtraFields()">
@@ -117,7 +135,7 @@
                             <span class="help-block">{{ trans('cruds.schedule.fields.is_workshop_helper') }}</span>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label>{{ trans('cruds.schedule.fields.event_session') }}</label>
                             <select class="form-control {{ $errors->has('event_session') ? 'is-invalid' : '' }}" name="event_session" id="event_session" onchange="toggleExtraFields()">
@@ -130,6 +148,19 @@
                                 <span class="text-danger">{{ $errors->first('event_session') }}</span>
                             @endif
                             <span class="help-block">{{ trans('cruds.schedule.fields.event_session_helper') }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Is Active</label>
+                            <select class="form-control {{ $errors->has('is_active') ? 'is-invalid' : '' }}" name="is_active" id="is_active">
+                                @foreach(App\Models\Schedule::IS_Active as $key => $label)
+                                    <option value="{{ $key }}" {{ old('is_active', '1') === (string) $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @if($errors->has('is_active'))
+                                <span class="text-danger">{{ $errors->first('is_active') }}</span>
+                            @endif
                         </div>
                     </div>
                 </div>

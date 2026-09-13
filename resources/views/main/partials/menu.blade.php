@@ -347,12 +347,24 @@
                 @endcan
                 @can('schedule_access')
                     <li class="nav-item">
-                        <a href="{{ route("admin.schedules.index") }}" class="nav-link {{ request()->is('admin/schedules') || request()->is('admin/schedules/*') ? 'active' : '' }}">
+                        <a href="{{ route("admin.schedules.index") }}" class="nav-link {{ request()->is('admin/schedules') && !request()->is('admin/schedule-categories*') ? 'active' : '' }}">
                             <i class="fa-fw far fa-clock">
 
                             </i>
                             <p>
                                 <span>{{ trans('cruds.schedule.title') }}</span>
+                            </p>
+                        </a>
+                    </li>
+                @endcan
+                @can('schedule_category_access')
+                    <li class="nav-item">
+                        <a href="{{ route("admin.schedule-categories.index") }}" class="nav-link {{ request()->is('admin/schedule-categories*') ? 'active' : '' }}">
+                            <i class="fa-fw fas fa-tags">
+
+                            </i>
+                            <p>
+                                <span>Session Categories</span>
                             </p>
                         </a>
                     </li>
@@ -486,6 +498,36 @@
                                     <a href="{{ route('admin.conference-members.index') }}" class="nav-link {{ request()->is('admin/conference-members') || request()->is('admin/conference-members/*') ? 'active' : '' }}">
                                         <i class="fa-fw nav-icon fas fa-user-tie"></i>
                                         <p>Committee  Members </p>
+                                    </a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </li>
+                @endif
+
+                @if(Gate::check('conference_message_access') || Gate::check('conference_message_category_access'))
+                    <li class="nav-item has-treeview {{ request()->is('admin/conference-message*') ? 'menu-open' : '' }}">
+                        <a class="nav-link nav-dropdown-toggle {{ request()->is('admin/conference-message*') ? 'active' : '' }}" href="#">
+                            <i class="fa-fw nav-icon fas fa-comment-dots"></i>
+                            <p>
+                                <span>Messages</span>
+                                <i class="right fa fa-fw fa-angle-left nav-icon"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @can('conference_message_category_access')
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.conference-message-categories.index') }}" class="nav-link {{ request()->is('admin/conference-message-categories*') ? 'active' : '' }}">
+                                        <i class="fa-fw nav-icon fas fa-tags"></i>
+                                        <p>Message Categories</p>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('conference_message_access')
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.conference-messages.index') }}" class="nav-link {{ request()->is('admin/conference-messages') || request()->is('admin/conference-messages/create') || request()->is('admin/conference-messages/*/edit') ? 'active' : '' }}">
+                                        <i class="fa-fw nav-icon fas fa-envelope-open-text"></i>
+                                        <p>All Messages</p>
                                     </a>
                                 </li>
                             @endcan

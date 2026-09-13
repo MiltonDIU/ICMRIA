@@ -4,9 +4,7 @@
         <div id="logo" class="pull-left">
             <h1>
                 <a href="{{ route('home') }}#intro">
-                    <img width="200px" src="{{ asset('/') }}img/logo.svg">
-                    {{-- <span><i class="fa fa-map-marker" aria-hidden="true"></i></span>--}}
-                    {{-- {{ env('APP_NAME', 'The Event') }}--}}
+                    <img width="230" src="{{ asset('img/icmria27-logo-white.png') }}" alt="ICMRIA 2027">
                 </a>
             </h1>
         </div>
@@ -16,32 +14,19 @@
                 <li class="menu-active"><a
                         href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#intro">Home</a></li>
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#about">About</a></li>
-                {{-- <li><a
-                        href="{{ Route::current()->getName() != 'call-for-papers' ? route('callForPepper') : '' }}">Call
-                        for Papers</a></li>--}}
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#CallforPapers">Call for
                         Papers</a></li>
-                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#schedule">Schedule</a>
+                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#committee">Committee</a>
+                </li>
+                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#messages">Messages</a>
                 </li>
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#speakers">Speakers</a>
                 </li>
-                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#advisors">Advisors</a>
+                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#schedule">Schedule</a>
                 </li>
-                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#organizers">Organizing
-                        Committees</a></li>
-                {{-- <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#venue">Venue</a></li>
-                --}}
-                {{-- <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#hotels">Hotels</a>
-                </li>--}}
-                {{-- <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#gallery">Gallery</a>
-                </li>--}}
-                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#supporters">Partners</a>
+                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#buy-tickets">Registration</a>
                 </li>
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#contact">Contact</a></li>
-                {{-- <li><a href="{{  route('blogs') }}">Blogs</a></li>--}}
-                {{-- <li class="buy-tickets"><a
-                        href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#registration">Registration</a>
-                </li>--}}
                 @if(!Auth::check())
                     <li class="buy-tickets"><a href="{{ route('book-ticket') }}">Abstract Submission</a></li>
                     <li class="buy-tickets"><a href="{{ route("login") }}">Sign In</a></li>
@@ -70,7 +55,7 @@
         }
 
         #header {
-            background: rgba(6, 12, 34, 0.98);
+            background: var(--brand-navy);
             height: 70px;
             padding: 15px 0;
             transition: all 0.5s;

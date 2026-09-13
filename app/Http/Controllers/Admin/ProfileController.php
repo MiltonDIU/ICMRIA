@@ -174,6 +174,7 @@ class ProfileController extends Controller
             });
         }])
             ->where('is_workshop', '1')
+            ->where('is_active', '1')
             ->orderBy('start_time', 'asc')
             ->get()
             ->filter(function ($schedule) {

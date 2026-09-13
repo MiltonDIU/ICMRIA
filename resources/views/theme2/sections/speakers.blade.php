@@ -7,7 +7,7 @@
 
     <div class="row">
       @foreach($speakers as $speaker)
-        <div class="col-lg-4 col-md-6">
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
           <div class="speaker">
             <img src="{{ $speaker->photo->getUrl() }}" alt="{{ $speaker->name }}" class="img-fluid">
             <div class="details">

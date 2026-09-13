@@ -36,6 +36,7 @@ class Schedule extends Model
         'day_number',
         'start_time',
         'speaker_id',
+        'schedule_category_id',
         'total_seat',
         'is_workshop',
         'event_session',
@@ -52,6 +53,11 @@ class Schedule extends Model
       public function feedback()
     {
         return $this->hasMany(Schedule::class);
+    }
+
+        public function scheduleCategory()
+    {
+        return $this->belongsTo(ScheduleCategory::class, 'schedule_category_id');
     }
 
     public function speaker()
@@ -75,4 +81,9 @@ class Schedule extends Model
         return $this->belongsToMany(Speaker::class);
     }
 
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', '1');
+    }
 }

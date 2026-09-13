@@ -20,6 +20,8 @@ class Price extends Model
     protected $fillable = [
         'name',
         'price',
+        'registration_type',
+        'currency',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -29,8 +31,15 @@ class Price extends Model
     {
         return $this->belongsToMany(Amenity::class);
     }
+
     public function events()
     {
         return $this->belongsToMany(Event::class);
+    }
+
+    public function getFormattedPriceAttribute(): string
+    {
+        $symbol = strtoupper((string)$this->currency) === 'USD' ? 'US$ ' : 'BDT ';
+        return $symbol . number_format($this->price);
     }
 }

@@ -10,7 +10,7 @@
     </div>
 @endcan
 <div class="card">
-    <div class="card-header">
+    <div class="card-header font-weight-bold">
         {{ trans('cruds.speaker.title_singular') }} {{ trans('global.list') }}
     </div>
 
@@ -23,25 +23,25 @@
 
                         </th>
                         <th>
-                            {{ trans('cruds.speaker.fields.id') }}
+                            Photo
                         </th>
                         <th>
                             {{ trans('cruds.speaker.fields.name') }}
                         </th>
                         <th>
-                            {{ trans('cruds.speaker.fields.slug') }}
-                        </th>
-                        <th>
                             {{ trans('cruds.speaker.fields.speaker_type_id') }}
                         </th>
                         <th>
-                            {{ trans('cruds.speaker.fields.show_home') }}
+                            Track / Focus Area
+                        </th>
+                        <th>
+                            Affiliation & Country
                         </th>
                         <th>
                             {{ trans('cruds.speaker.fields.serial') }}
                         </th>
                         <th>
-                            {{ trans('cruds.speaker.fields.guest_category_id') }}
+                            {{ trans('cruds.speaker.fields.show_home') }}
                         </th>
                         <th>
                             &nbsp;
@@ -54,32 +54,50 @@
                             <td>
 
                             </td>
-                            <td>
-                                {{ $speaker->id ?? '' }}
+                            <td class="text-center">
+                                <img src="{{ $speaker->photo ? $speaker->photo->getUrl() : asset('img/default-speaker.jpg') }}" 
+                                     alt="{{ $speaker->name }}" 
+                                     width="42" height="42" 
+                                     style="object-fit: cover; border-radius: 50%; border: 1px solid #dee2e6;">
                             </td>
                             <td>
-                                {{ $speaker->name ?? '' }}
+                                <strong>{{ $speaker->name ?? '' }}</strong>
+                                @if($speaker->slug)
+                                    <br><small class="text-muted">{{ $speaker->slug }}</small>
+                                @endif
                             </td>
                             <td>
-                                {{ $speaker->slug ?? '' }}
+                                @if($speaker->speakerType)
+                                    <span class="badge badge-primary">{{ $speaker->speakerType->title }}</span>
+                                @else
+                                    <span class="badge badge-secondary">Not Assigned</span>
+                                @endif
                             </td>
                             <td>
-                                {{ $speaker->speakerType->title ?? '' }}
+                                @if($speaker->track)
+                                    <span class="badge badge-info">{{ $speaker->track->name }}</span>
+                                @endif
+                                @if($speaker->focus_area)
+                                    <br><small class="text-muted">{{ $speaker->focus_area }}</small>
+                                @endif
                             </td>
                             <td>
-                                {{ $speaker->show_home== 1?'Yes':'No' }}
+                                {{ $speaker->affiliation ?? '' }}
+                                @if($speaker->country)
+                                    <br><span class="badge badge-light border">{{ $speaker->country }}</span>
+                                @endif
                             </td>
-                            <td>
+                            <td class="text-center">
                                 {{ $speaker->serial ?? '' }}
                             </td>
-                            <td>
-                                <ol>
-                                @foreach($speaker->guestCategories as $category)
-                                    <li>{{ $category->title }}</li>
-                                @endforeach
-                                </ol>
+                            <td class="text-center">
+                                @if($speaker->show_home == 1)
+                                    <span class="badge badge-success">Yes</span>
+                                @else
+                                    <span class="badge badge-secondary">No</span>
+                                @endif
                             </td>
-                            <td>
+                            <td class="text-center text-nowrap">
                                 @can('speaker_show')
                                     <a class="btn btn-xs btn-primary" href="{{ route('admin.speakers.show', $speaker->id) }}">
                                         {{ trans('global.view') }}
@@ -99,9 +117,7 @@
                                         <input type="submit" class="btn btn-xs btn-danger" value="{{ trans('global.delete') }}">
                                     </form>
                                 @endcan
-
                             </td>
-
                         </tr>
                     @endforeach
                 </tbody>
@@ -110,6 +126,7 @@
     </div>
 </div>
 @endsection
+
 @section('scripts')
 @parent
 <script>
@@ -146,8 +163,8 @@
 @endcan
 
   $.extend(true, $.fn.dataTable.defaults, {
-    order: [[ 1, 'desc' ]],
-    pageLength: 100,
+    order: [[ 6, 'asc' ]],
+    pageLength: 25,
   });
   $('.datatable-Speaker:not(.ajaxTable)').DataTable({ buttons: dtButtons })
     $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){

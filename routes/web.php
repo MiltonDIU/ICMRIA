@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SpeakersController;
 use App\Http\Controllers\Admin\ScheduleController;
+use App\Http\Controllers\Admin\ScheduleCategoryController;
 use App\Http\Controllers\Admin\VenuesController;
 use App\Http\Controllers\Admin\HotelsController;
 use App\Http\Controllers\Admin\GalleriesController;
@@ -43,6 +44,8 @@ use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\Admin\CommitteeTypeController;
 use App\Http\Controllers\Admin\CommitteeController;
 use App\Http\Controllers\Admin\ConferenceMemberController;
+use App\Http\Controllers\Admin\ConferenceMessageController;
+use App\Http\Controllers\Admin\ConferenceMessageCategoryController;
 use App\Http\Controllers\Admin\PaperController;
 /*
 |--------------------------------------------------------------------------
@@ -179,6 +182,10 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::delete('schedules/destroy', [ScheduleController::class,'massDestroy'])->name('schedules.massDestroy');
     Route::resource('schedules', ScheduleController::class);
 
+    // Schedule Categories
+    Route::delete('schedule-categories/destroy', [ScheduleCategoryController::class, 'massDestroy'])->name('schedule-categories.massDestroy');
+    Route::resource('schedule-categories', ScheduleCategoryController::class);
+
     // Venues
     Route::delete('venues/destroy', [VenuesController::class,'massDestroy'])->name('venues.massDestroy');
     Route::post('venues/media', [VenuesController::class,'storeMedia'])->name('venues.storeMedia');
@@ -303,6 +310,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     // Committee  Members
     Route::delete('conference-members/destroy', [ConferenceMemberController::class, 'massDestroy'])->name('conference-members.massDestroy');
     Route::resource('conference-members', ConferenceMemberController::class);
+
+    // Conference Message Categories
+    Route::delete('conference-message-categories/destroy', [ConferenceMessageCategoryController::class, 'massDestroy'])->name('conference-message-categories.massDestroy');
+    Route::resource('conference-message-categories', ConferenceMessageCategoryController::class);
+
+    // Conference Messages
+    Route::delete('conference-messages/destroy', [ConferenceMessageController::class, 'massDestroy'])->name('conference-messages.massDestroy');
+    Route::post('conference-messages/media', [ConferenceMessageController::class, 'storeMedia'])->name('conference-messages.storeMedia');
+    Route::resource('conference-messages', ConferenceMessageController::class)->except('show');
 
     // Papers Admin Actions
     Route::post('papers/{paper}/review', [PaperController::class, 'review'])->name('papers.review');

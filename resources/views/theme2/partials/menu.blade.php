@@ -134,12 +134,24 @@
                 @endif
                 @can('schedule_access')
                     <li class="nav-item">
-                        <a href="{{ route("admin.schedules.index") }}" class="nav-link {{ request()->is('admin/schedules') || request()->is('admin/schedules/*') ? 'active' : '' }}">
+                        <a href="{{ route("admin.schedules.index") }}" class="nav-link {{ request()->is('admin/schedules') && !request()->is('admin/schedule-categories*') ? 'active' : '' }}">
                             <i class="fa-fw far fa-clock">
 
                             </i>
                             <p>
                                 <span>{{ trans('cruds.schedule.title') }}</span>
+                            </p>
+                        </a>
+                    </li>
+                @endcan
+                @can('schedule_category_access')
+                    <li class="nav-item">
+                        <a href="{{ route("admin.schedule-categories.index") }}" class="nav-link {{ request()->is('admin/schedule-categories*') ? 'active' : '' }}">
+                            <i class="fa-fw fas fa-tags">
+
+                            </i>
+                            <p>
+                                <span>Session Categories</span>
                             </p>
                         </a>
                     </li>

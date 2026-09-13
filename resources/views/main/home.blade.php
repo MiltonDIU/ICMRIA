@@ -9,12 +9,12 @@
         @include('main.sections.about')
 
         @include('main.sections.CallforPapers')
-        @include('main.sections.schedule')
+
+        @include('main.sections.committee')
+        @include('main.sections.messages')
 
         @include('main.sections.speakers')
-        @include('main.sections.advisors')
-
-        @include('main.sections.organizing_committee')
+        @include('main.sections.schedule')
 
 
 
@@ -32,7 +32,7 @@
 
 {{--    @include('main.sections.subscribe')--}}
 
- <!--@include('main.sections.buy_ticket')-->
+    @include('main.sections.buy_ticket')
         <!--@include('main.sections.register')-->
         @include('main.sections.contact')
                 <!--@include('main.popup')-->

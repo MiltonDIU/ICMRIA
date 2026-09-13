@@ -29,6 +29,7 @@ use App\Http\Middleware\CheckUniquePostView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use App\Models\CommitteeType;
+use App\Models\ConferenceMessage;
 class HomeController extends Controller
 {
 protected $noReferral = array(
@@ -67,8 +68,17 @@ protected $noReferral = array(
     {
         $user = Auth::user();
         $settings = Setting::pluck('value', 'key');
-        $speakers = Speaker::where('show_home',1)->orderBy('serial','asc')->get();
-        $schedules = Schedule::with('speaker')
+        $speakers = Speaker::where('show_home', 1)->with(['speakerType', 'track', 'media'])->orderBy('serial', 'asc')->get();
+
+        // Keynote and Invited speakers for the public Speakers section
+        $typeName = fn($s) => strtolower($s->speakerType->title ?? '');
+        $keynoteSpeakers = $speakers
+            ->filter(fn($s) => str_contains($typeName($s), 'keynote'))
+            ->values();
+        $invitedSpeakers = $speakers
+            ->filter(fn($s) => str_contains($typeName($s), 'invited') || str_contains($typeName($s), 'plenary'))
+            ->values();
+        $schedules = Schedule::with(['speaker.media', 'speakers.media', 'scheduleCategory'])
             ->orderBy('day_number', 'asc')
             ->orderBy('start_time', 'asc')
              ->where('is_active','1')
@@ -83,25 +93,38 @@ protected $noReferral = array(
         $prices = Price::with('amenities')->get();
         $amenities = Amenity::with('prices')->get();
 
-        // Fetch Advisory Boards
-        $advisoryBoardType = CommitteeType::where('name', 'Academic Advisory Boards')->first();
-        $advisoryBoards = $advisoryBoardType
-            ? $advisoryBoardType->committees()->orderBy('sort_order', 'asc')->with(['members' => function($q) {
-                $q->orderBy('committee_conference_member.sort_order', 'asc');
-            }])->get()
+        // Fetch the unified "Committee" list (document section 1 "Committee" menu)
+        $committeeType = CommitteeType::where('name', 'Conference Committee')->first();
+        $committees = $committeeType
+            ? $committeeType->committees()
+                ->where('parent_id', 0)
+                ->orderBy('sort_order', 'asc')
+                ->with([
+                    'members' => function ($q) {
+                        $q->orderBy('committee_conference_member.sort_order', 'asc');
+                    },
+                    'subCommittees' => function ($q) {
+                        $q->orderBy('sort_order', 'asc')->with(['members' => function ($mq) {
+                            $mq->orderBy('committee_conference_member.sort_order', 'asc');
+                        }]);
+                    },
+                ])->get()
             : collect();
 
-        // Fetch Conference Committees (Organizers)
-        $conferenceCommitteeType = CommitteeType::where('name', 'Conference Committee Structure')->first();
-        $conferenceCommittees = $conferenceCommitteeType
-            ? $conferenceCommitteeType->committees()->where('parent_id', 0)->orderBy('sort_order', 'asc')->with(['subCommittees' => function($q) {
-                $q->orderBy('sort_order', 'asc')->with(['members' => function($mq) {
-                    $mq->orderBy('committee_conference_member.sort_order', 'asc');
-                }]);
-            }])->get()
-            : collect();
+        // Conference messages (ordered by category sort_order, then message sort_order)
+        $conferenceMessages = ConferenceMessage::with('category')
+            ->where('is_published', 1)
+            ->leftJoin('conference_message_categories', 'conference_messages.conference_message_category_id', '=', 'conference_message_categories.id')
+            ->select('conference_messages.*')
+            ->orderByRaw('COALESCE(conference_message_categories.sort_order, 999) ASC')
+            ->orderBy('conference_messages.sort_order', 'asc')
+            ->orderBy('conference_messages.id', 'asc')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->category ? $item->category->name : 'General';
+            });
 
-        $viewData = compact('settings', 'speakers', 'schedules', 'venues', 'hotels', 'galleries', 'sponsors', 'strategics', 'faqs', 'prices', 'amenities', 'advisoryBoards', 'conferenceCommittees');
+        $viewData = compact('settings', 'speakers', 'keynoteSpeakers', 'invitedSpeakers', 'schedules', 'venues', 'hotels', 'galleries', 'sponsors', 'strategics', 'faqs', 'prices', 'amenities', 'committees', 'conferenceMessages');
 
         if (Auth::user()) {
             $viewData['profile'] = Profile::where('user_id', $user->id)->first();
@@ -116,7 +139,9 @@ protected $noReferral = array(
         $event = Event::find($id);
 //        $speakers = Speaker::all();
         $speakers = $event->speakers;
-        $schedules = Schedule::with('speaker')
+        $schedules = Schedule::with(['speaker.media', 'speakers.media', 'scheduleCategory'])
+            ->where('is_active', '1')
+            ->orderBy('day_number', 'asc')
             ->orderBy('start_time', 'asc')
             ->get()
             ->groupBy('day_number');
@@ -140,8 +165,19 @@ protected $noReferral = array(
     public function view($slug)
     {
         $settings = Setting::pluck('value', 'key');
-        $speaker = Speaker::where('slug',$slug)->first();
-        return view('main.speaker', compact('settings', 'speaker'));
+        $speaker = Speaker::with(['speakerType', 'track', 'media'])->where('slug', $slug)->firstOrFail();
+        $schedules = Schedule::with(['scheduleCategory'])
+            ->where(function ($q) use ($speaker) {
+                $q->where('speaker_id', $speaker->id)
+                  ->orWhereHas('speakers', function ($sq) use ($speaker) {
+                      $sq->where('speakers.id', $speaker->id);
+                  });
+            })
+            ->where('is_active', '1')
+            ->orderBy('day_number', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->get();
+        return view('main.speaker', compact('settings', 'speaker', 'schedules'));
     }
 
     public function privacyPolicy()
@@ -160,9 +196,11 @@ protected $noReferral = array(
                         $subQuery->where('payment_status', '1');
                     });
                 }])
-                ->where('is_workshop', '1')
-                  ->where('is_active', '1')
-                    ->orWhere('event_session', '1')
+                ->where(function ($q) {
+                    $q->where('is_workshop', '1')
+                      ->orWhere('event_session', '1');
+                })
+                ->where('is_active', '1')
                 ->orderBy('day_number', 'asc')->orderBy('start_time', 'asc')
                 ->get()
                 ->filter(function ($schedule) {
@@ -340,9 +378,12 @@ public function blogsCategory($id,$slug){
         $newId = $formattedDate . $sequenceNumber;
         return $newId;
     }
-public function scheduleDetails($id,$title){
-
-  $schedule = Schedule::where('id',$id)->first();
+public function scheduleDetails($id, $title)
+{
+    $schedule = Schedule::with(['scheduleCategory', 'speaker.media', 'speakers.media'])
+        ->where('id', $id)
+        ->where('is_active', '1')
+        ->firstOrFail();
     $settings = Setting::pluck('value', 'key');
     $populers = Post::where('is_active', '1')
         ->orderBy('views', 'desc')

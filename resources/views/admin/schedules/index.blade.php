@@ -6,6 +6,11 @@
                 <a class="btn btn-success" href="{{ route("admin.schedules.create") }}">
                     {{ trans('global.add') }} {{ trans('cruds.schedule.title_singular') }}
                 </a>
+                @can('schedule_category_access')
+                    <a class="btn btn-outline-primary ml-2" href="{{ route('admin.schedule-categories.index') }}">
+                        <i class="fas fa-tags mr-1"></i> Session Categories
+                    </a>
+                @endcan
             </div>
         </div>
     @endcan
@@ -33,6 +38,9 @@
                         </th>
                         <th>
                             {{ trans('cruds.schedule.fields.title') }}
+                        </th>
+                        <th>
+                            Category
                         </th>
                         <th>
                             {{ trans('cruds.schedule.fields.is_workshop') }}
@@ -76,6 +84,15 @@
                             </td>
                             <td>
                                 {{ $schedule->title ?? '' }}
+                            </td>
+                            <td>
+                                @if($schedule->scheduleCategory)
+                                    <span class="badge text-white px-2 py-1" style="background-color: {{ $schedule->scheduleCategory->color ?? '#00396B' }};">
+                                        {{ $schedule->scheduleCategory->name }}
+                                    </span>
+                                @else
+                                    <span class="badge badge-secondary">General</span>
+                                @endif
                             </td>
                             <td>
                                 {{ $schedule->is_workshop=='1' ? 'Yes':'No' }}

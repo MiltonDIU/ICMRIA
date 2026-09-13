@@ -69,3 +69,4 @@ Homestead.yaml
 # Temporary
 *.tmp
 *.temp
+/storage/media-library/*

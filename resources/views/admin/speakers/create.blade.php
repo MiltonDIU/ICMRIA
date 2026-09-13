@@ -74,6 +74,8 @@
                     {{ trans('cruds.speaker.fields.speaker_type_id_helper') }}
                 </p>
             </div>
+            @include('admin.speakers._track_fields')
+            @if(isset($guestCategories) && $guestCategories->count() > 0)
             <div class="form-group {{ $errors->has('guest_category_id') ? 'has-error' : '' }}">
                 <label for="guest_category_id">{{ trans('cruds.speaker.fields.guest_category_id') }}</label>
                 <select name="guest_category_id[]" class="form-control js-example-basic-multiple" multiple="multiple">
@@ -91,6 +93,7 @@
                     {{ trans('cruds.speaker.fields.guest_category_id_helper') }}
                 </p>
             </div>
+            @endif
             <div class="form-group {{ $errors->has('photo') ? 'has-error' : '' }}">
                 <label for="photo">{{ trans('cruds.speaker.fields.photo') }}</label>
                 <div class="needsclick dropzone" id="photo-dropzone">

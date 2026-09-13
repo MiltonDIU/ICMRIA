@@ -8,7 +8,7 @@
     <ul class="nav nav-tabs" role="tablist">
       @foreach($schedules as $key => $day)
         <li class="nav-item">
-          <a class="nav-link{{ $key === 1 ? ' active' : '' }}" href="#day-{{ $key }}" role="tab" data-toggle="tab">Day {{ $key }}</a>
+          <a class="nav-link{{ $loop->first ? ' active' : '' }}" href="#day-{{ $key }}" role="tab" data-toggle="tab">Day {{ $key }}</a>
         </li>
       @endforeach
     </ul>
@@ -18,8 +18,9 @@
 
     <div class="tab-content row justify-content-center">
       @foreach($schedules as $key => $day)
-        <div role="tabpanel" class="col-lg-9 tab-pane fade{{ $key === 1 ? ' show active' : '' }}" id="day-{{ $key }}">
+        <div role="tabpanel" class="col-lg-9 tab-pane fade{{ $loop->first ? ' show active' : '' }}" id="day-{{ $key }}">
           @foreach($day as $schedule)
+            @if($schedule->is_active == '1')
             <div class="row schedule-item">
               <div class="col-md-2"><time>{{ \Carbon\Carbon::parse($schedule->start_time)->format("h:i A") }}</time></div>
               <div class="col-md-10">
@@ -28,10 +29,15 @@
                     <img src="{{ $schedule->speaker->photo->getUrl() }}" alt="{{ $schedule->speaker->name }}">
                   </div>
                 @endif
-                <h4>{{ $schedule->title }} @if($schedule->speaker)<span>{{ $schedule->speaker->name }}</span>@endif</h4>
+                <h4>{{ $schedule->title }}
+                @if($schedule->scheduleCategory && $schedule->scheduleCategory->is_active)
+                  <span class="badge text-white ml-1 px-2 py-1" style="font-size: 11px; background-color: {{ $schedule->scheduleCategory->color ?? '#00396B' }};">{{ $schedule->scheduleCategory->name }}</span>
+                @endif
+                @if($schedule->speaker)<span>{{ $schedule->speaker->name }}</span>@endif</h4>
                 <p>{{ $schedule->subtitle }}</p>
               </div>
             </div>
+            @endif
           @endforeach
         </div>
       @endforeach

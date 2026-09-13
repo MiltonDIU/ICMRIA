@@ -20,7 +20,6 @@ class RolesTableSeeder extends Seeder
                 'created_at' => '2019-09-24 19:16:02',
                 'updated_at' => '2019-09-24 19:16:02',
             ],
-
             [
                 'id'         => 3,
                 'title'      => 'User',
@@ -40,7 +39,7 @@ class RolesTableSeeder extends Seeder
                 'updated_at' => '2019-09-24 19:16:02',
             ],
             [
-                'id'         =>6,
+                'id'         => 6,
                 'title'      => 'Registration Only',
                 'created_at' => '2019-09-24 19:16:02',
                 'updated_at' => '2019-09-24 19:16:02',
@@ -50,7 +49,8 @@ class RolesTableSeeder extends Seeder
                 'title'      => 'Dashboard and Profile',
                 'created_at' => '2019-09-24 19:16:02',
                 'updated_at' => '2019-09-24 19:16:02',
-            ],  [
+            ],
+            [
                 'id'         => 8,
                 'title'      => 'profile edit',
                 'created_at' => '2019-09-24 19:16:02',
@@ -58,6 +58,8 @@ class RolesTableSeeder extends Seeder
             ],
         ];
 
-        Role::insert($roles);
+        foreach ($roles as $role) {
+            Role::updateOrCreate(['id' => $role['id']], $role);
+        }
     }
 }

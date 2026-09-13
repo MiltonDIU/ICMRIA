@@ -44,6 +44,20 @@
                     </tr>
                     <tr>
                         <th>
+                            Session Category
+                        </th>
+                        <td>
+                            @if($schedule->scheduleCategory)
+                                <span class="badge text-white px-2 py-1" style="background-color: {{ $schedule->scheduleCategory->color ?? '#00396B' }};">
+                                    {{ $schedule->scheduleCategory->name }}
+                                </span>
+                            @else
+                                <span class="badge badge-secondary">General / Not Assigned</span>
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
                             {{ trans('cruds.schedule.fields.total_seat') }}
                         </th>
                         <td>
