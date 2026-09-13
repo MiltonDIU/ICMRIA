@@ -43,7 +43,7 @@
                         <li><a href="{{ route('accommodation-transportation') }}">Accommodation & Transportation Info</a></li>
                     </ul>
                 </li>
-                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#buy-tickets">Registration</a>
+                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#buy-tickets">Pricing</a>
                 </li>
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#contact">Contact</a></li>
                 @if(!Auth::check())
