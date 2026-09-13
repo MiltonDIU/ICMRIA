@@ -133,6 +133,9 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'inr_regular_price',      'value' => '175'],
             ['key' => 'inr_participant_price',  'value' => '75'],
 
+            ['key' => 'saarc_earlybird_price',  'value' => '75'],
+            ['key' => 'saarc_regular_price',    'value' => '175'],
+
             ['key' => 'bdt_earlybird_price',    'value' => '6000'], // Academic (default local)
             ['key' => 'bdt_regular_price',      'value' => '7000'],
             ['key' => 'bdt_participant_price',  'value' => '6000'],

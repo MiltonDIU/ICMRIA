@@ -23,7 +23,6 @@ class DatabaseSeeder extends Seeder
             SettingsTableSeeder::class,
             TrackSubTrackSeeder::class,
             SpeakerTypeSeeder::class,
-            KeynoteInvitedSpeakerSeeder::class,
             SpeakersTableSeeder::class,
             ScheduleCategorySeeder::class,
             SchedulesTableSeeder::class,

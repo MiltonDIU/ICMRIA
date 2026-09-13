@@ -1,7 +1,10 @@
 <?php
 namespace Database\Seeders;
+
 use App\Models\Venue;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class VenuesTableSeeder extends Seeder
 {
@@ -12,9 +15,10 @@ class VenuesTableSeeder extends Seeder
      */
     public function run()
     {
-        // Venue / location — Daffodil International University permanent campus
-        // (same DIU campus used for ICMRIA 2027; coordinates verified from the
-        // live database).
+        Schema::disableForeignKeyConstraints();
+        DB::table('venues')->truncate();
+        Schema::enableForeignKeyConstraints();
+
         $venue = Venue::create([
             'name'          => 'Daffodil International University',
             'address'       => 'Daffodil Smart City, Birulia, Savar, Dhaka-1216',

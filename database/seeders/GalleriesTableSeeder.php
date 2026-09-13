@@ -1,7 +1,10 @@
 <?php
 namespace Database\Seeders;
+
 use App\Models\Gallery;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class GalleriesTableSeeder extends Seeder
 {
@@ -12,6 +15,10 @@ class GalleriesTableSeeder extends Seeder
      */
     public function run()
     {
+        Schema::disableForeignKeyConstraints();
+        DB::table('galleries')->truncate();
+        Schema::enableForeignKeyConstraints();
+
         $gallery = Gallery::create([
             'name' => 'Event'
         ]);
