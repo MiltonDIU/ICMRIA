@@ -29,7 +29,7 @@ return new class extends Migration
             $table->dropColumn('author_list_confirmed');
         });
 
-        Schema::table('php ', function (Blueprint $table) {
+        Schema::table('paper_authors', function (Blueprint $table) {
             $table->dropColumn('is_student');
         });
     }
