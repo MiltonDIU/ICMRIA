@@ -56,7 +56,7 @@ class PricesTableSeeder extends Seeder
             ],
             [
                 'name'              => 'SAARC Presenter / Participant',
-                'price'             => 100,
+                'price'             => 75,
                 'currency'          => 'USD',
                 'registration_type' => 'early_bird',
             ],
@@ -90,7 +90,7 @@ class PricesTableSeeder extends Seeder
             ],
             [
                 'name'              => 'SAARC Presenter / Participant',
-                'price'             => 75,
+                'price'             => 175,
                 'currency'          => 'USD',
                 'registration_type' => 'regular',
             ],

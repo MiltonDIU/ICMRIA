@@ -1,4 +1,5 @@
 <section id="CallforPapers">
+    <span id="tracks"></span><span id="sub-tracks"></span><span id="camera-ready"></span><span id="conference-template"></span>
     <div class="container wow fadeInUp">
         <div class="section-header text-center mb-5">
             <h2>Call for Papers</h2>
@@ -45,7 +46,7 @@
                                 <div class="alert alert-info">
                                     <i class="fa fa-info-circle mr-2"></i> Your browser doesn't support inline PDF viewing.
                                 </div>
-                                <a href="{{ asset('documents/CFPApril23.pdf') }}" target="_blank" class="btn btn-lg btn-primary rounded-pill px-4">
+                                <a href="#" target="_blank" class="btn btn-lg btn-primary rounded-pill px-4">
                                    <i class="fa fa-file-pdf-o mr-2"></i> Open English PDF in New Tab
                                 </a>
                             </div>
@@ -73,7 +74,7 @@
                                 <div class="alert alert-info">
                                     <i class="fa fa-info-circle mr-2"></i> Your browser doesn't support inline PDF viewing.
                                 </div>
-                                <a href="{{ asset('documents/BanglaCFPApril 23-2.pdf') }}" target="_blank" class="btn btn-lg btn-primary rounded-pill px-4">
+                                <a href="#" target="_blank" class="btn btn-lg btn-primary rounded-pill px-4">
                                    <i class="fa fa-file-pdf-o mr-2"></i> Open Bangla PDF in New Tab
                                 </a>
                             </div>
@@ -83,10 +84,10 @@
 
                 <!-- Download Options -->
                 <div class="mt-4 d-flex flex-wrap justify-content-center gap-3">
-{{--                    <a href="{{ asset('documents/CFPApril23.pdf') }}" download class="btn btn-outline-primary m-2">--}}
+{{--                    <a href="#" download class="btn btn-outline-primary m-2">--}}
 {{--                        <i class="fa fa-download mr-1"></i> Download PDF--}}
 {{--                    </a>--}}
-                    <a href="{{ asset('documents/Call_for_Papers_with_References_long_form.pdf') }}" download class="btn btn-outline-secondary m-2">
+                    <a href="#" download class="btn btn-outline-secondary m-2">
                         <i class="fa fa-file-word-o mr-1"></i> Call for Papers with References (Long Form)
                     </a>
                 </div>

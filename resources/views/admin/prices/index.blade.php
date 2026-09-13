@@ -32,6 +32,12 @@
                             {{ trans('cruds.price.fields.price') }}
                         </th>
                         <th>
+                            Currency
+                        </th>
+                        <th>
+                            Registration Type
+                        </th>
+                        <th>
                             {{ trans('cruds.price.fields.amenities') }}
                         </th>
                         <th>
@@ -52,7 +58,13 @@
                                 {{ $price->name ?? '' }}
                             </td>
                             <td>
-                                {{ $price->price ?? '' }}
+                                <strong>{{ $price->currency === 'USD' ? 'US$' : '৳' }} {{ number_format($price->price, 2) }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge badge-primary">{{ strtoupper($price->currency ?? 'BDT') }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">{{ ucwords(str_replace('_', ' ', $price->registration_type ?? 'early_bird')) }}</span>
                             </td>
                             <td>
                                 @foreach($price->amenities as $key => $item)

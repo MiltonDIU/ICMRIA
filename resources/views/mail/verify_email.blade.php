@@ -235,7 +235,7 @@
 
                 <p class="message-intro" style="margin-top: 24px;">
                     If you have any questions, please contact us at
-                    <a href="mailto:events.eng@diu.edu.bd" class="contact-info">events.eng@diu.edu.bd</a>.
+                    <a href="mailto:fahadhossain.swe@diu.edu.bd" class="contact-info">fahadhossain.swe@diu.edu.bd</a>.
                 </p>
             </div>
 

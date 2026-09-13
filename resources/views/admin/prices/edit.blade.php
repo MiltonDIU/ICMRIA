@@ -22,17 +22,34 @@
                     {{ trans('cruds.price.fields.name_helper') }}
                 </p>
             </div>
-            <div class="form-group {{ $errors->has('price') ? 'has-error' : '' }}">
-                <label for="price">{{ trans('cruds.price.fields.price') }}*</label>
-                <input type="number" id="price" name="price" class="form-control" value="{{ old('price', isset($price) ? $price->price : '') }}" step="0.01" required>
-                @if($errors->has('price'))
-                    <p class="help-block">
-                        {{ $errors->first('price') }}
-                    </p>
-                @endif
-                <p class="helper-block">
-                    {{ trans('cruds.price.fields.price_helper') }}
-                </p>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group {{ $errors->has('price') ? 'has-error' : '' }}">
+                        <label for="price">{{ trans('cruds.price.fields.price') }}*</label>
+                        <input type="number" id="price" name="price" class="form-control" value="{{ old('price', isset($price) ? $price->price : '') }}" step="0.01" required>
+                        @if($errors->has('price'))
+                            <p class="help-block">{{ $errors->first('price') }}</p>
+                        @endif
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group {{ $errors->has('currency') ? 'has-error' : '' }}">
+                        <label for="currency">Currency*</label>
+                        <select id="currency" name="currency" class="form-control" required>
+                            <option value="BDT" {{ (old('currency', $price->currency ?? '') == 'BDT') ? 'selected' : '' }}>BDT (৳ - Bangladeshi Taka)</option>
+                            <option value="USD" {{ (old('currency', $price->currency ?? '') == 'USD') ? 'selected' : '' }}>USD ($ - US Dollar)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group {{ $errors->has('registration_type') ? 'has-error' : '' }}">
+                        <label for="registration_type">Registration Stage*</label>
+                        <select id="registration_type" name="registration_type" class="form-control" required>
+                            <option value="early_bird" {{ (old('registration_type', $price->registration_type ?? '') == 'early_bird') ? 'selected' : '' }}>Early Bird</option>
+                            <option value="regular" {{ (old('registration_type', $price->registration_type ?? '') == 'regular') ? 'selected' : '' }}>Regular / Standard</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="form-group {{ $errors->has('amenities') ? 'has-error' : '' }}">
                 <label for="amenities">{{ trans('cruds.price.fields.amenities') }}

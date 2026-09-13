@@ -31,7 +31,7 @@ class ConferenceMessageSeeder extends Seeder
                 'affiliation'   => 'Daffodil International University (DIU)',
                 'message'       => 'On behalf of Daffodil International University, it is my distinct privilege to welcome distinguished researchers, academicians, industry leaders, and participants to the International Conference on Multidisciplinary Research, Innovation and Applications 2027 (ICMRIA 2027). DIU has always been committed to fostering innovation, research excellence, and sustainable solutions that bridge academia and society. I wish all delegates an inspiring and fruitful conference.',
                 'sort_order'    => 1,
-                'is_published'  => true,
+                'is_published'  => false,
             ],
             [
                 'category_name' => 'Chief Patron & Patron',
@@ -41,7 +41,7 @@ class ConferenceMessageSeeder extends Seeder
                 'affiliation'   => 'Daffodil International University (DIU)',
                 'message'       => 'I am delighted to invite the global academic and scientific community to ICMRIA 2027 at Daffodil Smart City. In an era of rapid technological advancement and complex global challenges, multidisciplinary collaboration is essential. We look forward to meaningful scholarly discussions and impactful innovations.',
                 'sort_order'    => 2,
-                'is_published'  => true,
+                'is_published'  => false,
             ],
             [
                 'category_name' => 'Organizing Chair',
@@ -51,7 +51,7 @@ class ConferenceMessageSeeder extends Seeder
                 'affiliation'   => 'Daffodil International University (DIU)',
                 'message'       => 'Welcome to ICMRIA 2027. Our organizing committee has curated 8 vibrant tracks, keynote talks from globally renowned scholars, and rich co-located programs. We look forward to your active participation in making this conference a grand success.',
                 'sort_order'    => 3,
-                'is_published'  => true,
+                'is_published'  => false,
             ],
             [
                 'category_name' => 'General Chair',

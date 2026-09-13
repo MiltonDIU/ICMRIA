@@ -136,7 +136,7 @@
     }
 
     .intro-meta i {
-        color: var(--brand-green, #10BB43);
+        color: #7DD3FC;
         margin-right: 6px;
     }
 
@@ -155,15 +155,15 @@
         transition: all 0.3s ease;
         line-height: 1;
         color: #fff;
-        background: var(--brand-green, #10BB43);
-        border: 2px solid var(--brand-green, #10BB43);
+        background: #0055A0;
+        border: 2px solid #0055A0;
         margin: 5px 0 20px;
-        box-shadow: 0 4px 15px rgba(16, 187, 67, 0.35);
+        box-shadow: 0 4px 18px rgba(0, 85, 160, 0.4);
     }
 
     #intro .about-btn:hover {
-        background: transparent;
-        border: 2px solid #ffffff;
+        background: #003366;
+        border: 2px solid #7DD3FC;
         color: #ffffff;
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);

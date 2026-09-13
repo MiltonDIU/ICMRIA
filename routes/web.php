@@ -126,6 +126,12 @@ Route::get('/book-ticket/{title}', [HomeController::class,'bookTicket'])->name('
 Route::get('/check-referral-coupon', [HomeController::class,'checkReferralCoupon'])->name('checkReferralCoupon');
 
 Route::get('/privacy-policy', [HomeController::class,'privacyPolicy'])->name('privacy-policy');
+
+// Conference Guideline & Visualization Pages
+Route::get('/author-guidelines', [HomeController::class, 'authorGuidelines'])->name('author-guidelines');
+Route::get('/tracks', [HomeController::class, 'tracks'])->name('tracks');
+Route::get('/camera-ready-guidelines', [HomeController::class, 'cameraReadyGuidelines'])->name('camera-ready-guidelines');
+Route::get('/accommodation-transportation', [HomeController::class, 'accommodationTransportation'])->name('accommodation-transportation');
 Route::get('/event/{id}/{slug}', [HomeController::class, 'singleEvent'])->name('singleEvent');
 Route::get('speaker/{slug}', [HomeController::class, 'view'])->name('speaker');
 Route::redirect('/home', '/admin');

@@ -95,7 +95,7 @@
 
     .keynote-badge {
         background: rgba(0, 57, 107, 0.08);
-        color: #00396B;
+        color: #003366;
         border: 1px solid rgba(0, 57, 107, 0.2);
     }
 
@@ -108,7 +108,7 @@
     .group-title {
         font-size: 26px;
         font-weight: 800;
-        color: #00396B;
+        color: #003366;
         margin-bottom: 10px;
         letter-spacing: -0.3px;
     }
@@ -116,7 +116,7 @@
     .title-bar {
         width: 50px;
         height: 3px;
-        background: #10BB43;
+        background: #0055A0;
         margin: 0 auto 20px auto;
         border-radius: 2px;
     }
@@ -173,7 +173,7 @@
         position: absolute;
         top: 12px;
         right: 12px;
-        background: #10BB43;
+        background: #0055A0;
         color: #ffffff;
         font-size: 11px;
         font-weight: 700;
@@ -188,7 +188,7 @@
     }
 
     .speaker-track-badge:hover {
-        background: #0d9636;
+        background: #003366;
         transform: scale(1.05);
     }
 
@@ -207,13 +207,13 @@
     }
 
     .speaker-name a {
-        color: #00396B;
+        color: #003366;
         text-decoration: none;
         transition: color 0.2s ease;
     }
 
     .speaker-name a:hover {
-        color: #10BB43;
+        color: #0055A0;
     }
 
     .speaker-affiliation {

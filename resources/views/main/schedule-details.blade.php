@@ -49,7 +49,7 @@
 
 
 
-        <section class="content blogs margin-top-40" style="background: black;padding: 0 0 25px 0;color: #eee;font-size: 14px;">
+        <section class="content blogs margin-top-40" style="background: linear-gradient(135deg, #001f3f 0%, #003366 100%); padding: 35px 0 25px 0; color: #f8fafc; font-size: 14px;">
             <div class="container">
                 <div class="row padding-top-bottom-50">
                     @if($benefits>0)
@@ -138,7 +138,7 @@
                                                     </p>
 
                                                     @if($speaker->slug)
-                                                      <a class="btn btn-primary" style="background: white; color:#8D12D1" href="{{ route('speaker',['slug' => $speaker->slug]) }}"> View Profile</a>
+                                                      <a class="btn btn-primary" style="background: #0055A0; color: #ffffff; border-color: #0055A0;" href="{{ route('speaker',['slug' => $speaker->slug]) }}"> View Profile</a>
                                                     @endif
 
                                                 </div>
@@ -201,27 +201,27 @@
     <style>
         .reg-schedule-page {
             color: #fff;
-            background: #8D12D1;
-            background: #8D12D1;
-            background: #b332e2;
-            background: #8D12D1;
-            padding: 7px 22px;
+            background: #0055A0;
+            padding: 8px 24px;
             border-radius: 50px;
-            border: 2px solid #8D12D1;
-            border: 2px solid #8D12D1;
-            border: 2px solid #b332e2;
-            border: 2px solid #8D12D1;
+            border: 2px solid #0055A0;
             transition: all ease-in-out 0.3s;
-            font-weight: 500;
-            margin-top: 2px;
-            line-height: 5;
-            font-size: 15px;
-            font-width: bold;
+            font-weight: 600;
+            margin-top: 5px;
+            display: inline-block;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .reg-schedule-page:hover {
+            background: #003366;
+            border-color: #003366;
+            color: #fff;
         }
         .padding-top-bottom-50{ padding: 50px 0px;}
-        .schedule-date-time { font-size: 20px; color:  #8D12D1; }
+        .schedule-date-time { font-size: 20px; color: #0055A0; }
         .schedule-heading{ font-size: 33px; margin: 0px;  }
-        .schedule-heading-color{ color: #8D12D1;  }
+        .schedule-heading-color{ color: #003366;  }
         .schedule-heading-color-white{ color: white;  }
         .schedule-heading-bold{font-weight: bold;  }
         .about-schedule {
@@ -232,7 +232,7 @@
         /*owl carousel*/
         .carousel-1 > div > div > div {
             height: 190px;
-            background: #8D12D1;
+            background: #003366;
             border-radius: 10px;
             padding: 20px;
             font-size: 15px;
@@ -240,17 +240,17 @@
         }
         .carousel-2 > div > div > div {
             min-height: 190px;
-            background: #8D12D1;
+            background: #003366;
             border-radius: 10px;
             padding: 20px;
             font-size: 15px;
             font-weight: bold;
         }
         .owl-nav { float: right; }
-        .owl-nav > button > span { font-size: 60px; margin-right: 15px; color: #8D12D1; }
+        .owl-nav > button > span { font-size: 60px; margin-right: 15px; color: #0055A0; }
         .claim-button {
             background: white;
-            color: #8D12D1;
+            color: #0055A0;
             border-radius: 10px;
             padding: 5px 20px;
             font-weight: bold;

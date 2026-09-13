@@ -25,6 +25,14 @@ class StorePriceRequest extends FormRequest
             'price'       => [
                 'required',
             ],
+            'currency'    => [
+                'nullable',
+                'string',
+            ],
+            'registration_type' => [
+                'nullable',
+                'string',
+            ],
             'amenities.*' => [
                 'integer',
             ],

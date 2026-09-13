@@ -61,11 +61,11 @@ class SettingsTableSeeder extends Seeder
                 // DIU Engineering events office (WhatsApp) — carried over from the
                 // live database; confirm/replace with the official ICMRIA 2027 number.
                 'key'   => 'contact_phone',
-                'value' => '+8801715102634 (WhatsApp)',
+                'value' => '+8801946704373 (WhatsApp)',
             ],
             [
                 'key'   => 'contact_email',
-                'value' => 'events.eng@diu.edu.bd',
+                'value' => 'fahadhossain.swe@diu.edu.bd',
             ],
 
             // ---------------------------------------------------------------
@@ -129,9 +129,9 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'eur_regular_price',      'value' => '175'],
             ['key' => 'eur_participant_price',  'value' => '150'],
 
-            ['key' => 'inr_earlybird_price',    'value' => '100'], // SAARC (USD-equivalent)
-            ['key' => 'inr_regular_price',      'value' => '75'],
-            ['key' => 'inr_participant_price',  'value' => '100'],
+            ['key' => 'inr_earlybird_price',    'value' => '75'], // SAARC (USD-equivalent)
+            ['key' => 'inr_regular_price',      'value' => '175'],
+            ['key' => 'inr_participant_price',  'value' => '75'],
 
             ['key' => 'bdt_earlybird_price',    'value' => '6000'], // Academic (default local)
             ['key' => 'bdt_regular_price',      'value' => '7000'],

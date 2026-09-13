@@ -12,108 +12,72 @@
             'icon'      => 'fa-graduation-cap',
             'badge'     => 'Student Delegate',
             'target'    => 'Full-time Undergraduate, Graduate & PhD Students',
-            'color'     => '#10BB43',
-            'bg_tint'   => 'rgba(16, 187, 67, 0.1)',
+            'color'     => '#0055A0',
+            'bg_tint'   => 'rgba(0, 85, 160, 0.08)',
             'short'     => 'Student',
         ],
         'Academic Presenter / Participant' => [
             'icon'      => 'fa-university',
             'badge'     => 'Academic Scholar',
             'target'    => 'Faculty Members, Researchers & Postdoctoral Fellows',
-            'color'     => '#0055A0',
-            'bg_tint'   => 'rgba(0, 85, 160, 0.1)',
+            'color'     => '#003366',
+            'bg_tint'   => 'rgba(0, 51, 102, 0.08)',
             'short'     => 'Academic',
         ],
         'Industry / R&D Presenter / Participant' => [
             'icon'      => 'fa-briefcase',
             'badge'     => 'Corporate & Industry',
             'target'    => 'Corporate Practitioners, R&D Engineers & Tech Executives',
-            'color'     => '#6f42c1',
-            'bg_tint'   => 'rgba(111, 66, 193, 0.1)',
+            'color'     => '#004080',
+            'bg_tint'   => 'rgba(0, 64, 128, 0.08)',
             'short'     => 'Industry / R&D',
         ],
         'SAARC Presenter / Participant' => [
             'icon'      => 'fa-globe',
             'badge'     => 'SAARC Nations',
             'target'    => 'Delegates & Scholars from SAARC Member Countries',
-            'color'     => '#fd7e14',
-            'bg_tint'   => 'rgba(253, 126, 20, 0.1)',
+            'color'     => '#0055A0',
+            'bg_tint'   => 'rgba(0, 85, 160, 0.08)',
             'short'     => 'SAARC',
         ],
         'International Presenter / Participant' => [
             'icon'      => 'fa-plane',
             'badge'     => 'International Delegate',
             'target'    => 'Authors, Delegates & Speakers Worldwide',
-            'color'     => '#00396B',
-            'bg_tint'   => 'rgba(0, 57, 107, 0.1)',
+            'color'     => '#003366',
+            'bg_tint'   => 'rgba(0, 51, 102, 0.08)',
             'short'     => 'International',
         ],
     ];
 
-    // The 7 Universal Entitlements included in ALL registration tiers
+    // Core Conference Entitlements included in ALL registration tiers
     $privileges = [
         [
             'icon'        => 'fa-microphone',
-            'color'       => '#0055A0',
-            'bg'          => 'rgba(0, 85, 160, 0.12)',
+            'color'       => '#003366',
+            'bg'          => 'rgba(0, 51, 102, 0.08)',
             'title'       => 'Keynote & Technical Sessions',
-            'description' => 'Unrestricted access to all keynote addresses, invited speeches & parallel technical tracks.',
+            'description' => 'Full access to all keynote addresses, invited speeches, and 8 parallel technical tracks.',
             'tag'         => 'Full Access',
             'highlight'   => false,
         ],
         [
             'icon'        => 'fa-certificate',
-            'color'       => '#10BB43',
-            'bg'          => 'rgba(16, 187, 67, 0.12)',
+            'color'       => '#0055A0',
+            'bg'          => 'rgba(0, 85, 160, 0.08)',
             'title'       => 'Official Presentation Certificate',
             'description' => 'Formal, verifiable Certificate of Paper Presentation or Delegate Participation.',
             'tag'         => 'Official',
             'highlight'   => false,
         ],
         [
-            'icon'        => 'fa-desktop',
-            'color'       => '#00396B',
-            'bg'          => 'rgba(0, 57, 107, 0.12)',
-            'title'       => 'Hybrid Presentation Slot',
-            'description' => 'Guaranteed oral/poster slot with flexible Onsite (DIU Campus) or Live Virtual presentation.',
-            'tag'         => 'Onsite / Online',
-            'highlight'   => false,
-        ],
-        [
-            'icon'        => 'fa-id-badge',
-            'color'       => '#6f42c1',
-            'bg'          => 'rgba(111, 66, 193, 0.12)',
-            'title'       => 'Conference Kit & Badge',
-            'description' => 'Exclusive delegate kit bag, printed program book, abstract book, badge, and stationery.',
-            'tag'         => 'Official Kit',
-            'highlight'   => false,
-        ],
-        [
-            'icon'        => 'fa-cutlery',
-            'color'       => '#fd7e14',
-            'bg'          => 'rgba(253, 126, 20, 0.12)',
-            'title'       => 'Networking Lunch & High-Tea',
-            'description' => 'Complimentary daily networking buffet lunches and morning/afternoon refreshments.',
-            'tag'         => 'Catering',
-            'highlight'   => false,
-        ],
-        [
-            'icon'        => 'fa-star',
-            'color'       => '#ff9800',
-            'bg'          => 'rgba(255, 152, 0, 0.15)',
+            'icon'        => 'fa-book',
+            'color'       => '#003366',
+            'bg'          => 'rgba(0, 51, 102, 0.08)',
             'title'       => 'Scopus Q2 Journal Consideration',
-            'description' => 'Eligible accepted & presented papers will be considered for Scopus-indexed Q2 journal publication.',
+            'description' => 'Eligible accepted and presented papers will be considered for Scopus-indexed Q2 publication.',
             'tag'         => 'Scopus Q2',
             'highlight'   => true,
-        ],
-        [
-            'icon'        => 'fa-cogs',
-            'color'       => '#20c997',
-            'bg'          => 'rgba(32, 201, 151, 0.12)',
-            'title'       => 'Workshops & Exhibitions Access',
-            'description' => 'Full entry to all co-located technical workshops, hands-on tutorials, and tech exhibitions.',
-            'tag'         => 'Free Entry',
-            'highlight'   => false,
         ],
     ];
 
@@ -154,6 +118,7 @@
 @endphp
 
 <section id="buy-tickets" class="section-with-bg wow fadeInUp">
+  <span id="important-dates"></span>
   <div class="container">
 
     <div class="section-header text-center">
@@ -174,7 +139,7 @@
             </div>
             <h3 class="showcase-title">What Every Registration Package Includes</h3>
             <p class="showcase-subtitle mb-0">
-              Every registered author, presenter, and participant receives <strong>100% full access</strong> to the 7 essential conference privileges below. Only the registration fee varies based on delegate category.
+              Every registered author, presenter, and participant receives <strong>100% full access</strong> to the core conference entitlements below. Only the registration fee varies based on delegate category.
             </p>
           </div>
           <div class="col-lg-4 text-lg-right text-center mt-3 mt-lg-0">
@@ -206,10 +171,10 @@
       <!-- Universal Guarantee Strip -->
       <div class="privilege-guarantee-bar mt-3">
         <div class="d-flex align-items-center justify-content-center flex-wrap">
-          <span class="guarantee-item mr-3 mb-1"><i class="fa fa-check-circle text-success mr-1"></i> Universal Access to All Tracks</span>
-          <span class="guarantee-item mr-3 mb-1"><i class="fa fa-check-circle text-success mr-1"></i> Flexible Presentation (Onsite / Online)</span>
-          <span class="guarantee-item mr-3 mb-1"><i class="fa fa-check-circle text-success mr-1"></i> Official Verifiable Certificate</span>
-          <span class="guarantee-item mb-1"><i class="fa fa-check-circle text-success mr-1"></i> Scopus-Indexed Q2 Journal Eligibility</span>
+          <span class="guarantee-item mr-3 mb-1"><i class="fa fa-check-circle mr-1 text-primary"></i> Universal Access to All Tracks</span>
+          <span class="guarantee-item mr-3 mb-1"><i class="fa fa-check-circle mr-1 text-primary"></i> Flexible Presentation (Onsite / Online)</span>
+          <span class="guarantee-item mr-3 mb-1"><i class="fa fa-check-circle mr-1 text-primary"></i> Official Verifiable Certificate</span>
+          <span class="guarantee-item mb-1"><i class="fa fa-check-circle mr-1 text-primary"></i> Scopus-Indexed Q2 Journal Eligibility</span>
         </div>
       </div>
     </div>
@@ -222,7 +187,7 @@
         <li class="nav-item">
           <a class="nav-link active" id="tab-early-bird" data-toggle="pill" href="#early-bird-tickets" role="tab" aria-controls="early-bird-tickets" aria-selected="true">
             <i class="fa fa-clock-o mr-1"></i> Early Bird Rates
-            <span class="badge badge-pill badge-warning ml-1">Special Discount</span>
+            <span class="badge badge-pill ml-1" style="background: rgba(255,255,255,0.25); color: #ffffff;">Special Rate</span>
           </a>
         </li>
         @if($regularPrices->isNotEmpty())
@@ -295,7 +260,7 @@
                     </div>
                     @if($savings)
                       <div class="savings-tag mt-1">
-                        <span class="badge badge-success"><i class="fa fa-arrow-down mr-1"></i>Save {{ $currSymbol }} {{ number_format($savings) }}</span>
+                        <span class="badge" style="background: rgba(0, 85, 160, 0.12); color: #0055A0; font-weight: 700;"><i class="fa fa-arrow-down mr-1"></i>Save {{ $currSymbol }} {{ number_format($savings) }}</span>
                         <small class="text-muted ml-1">(Regular: {{ $currSymbol }}{{ number_format($regPrice) }})</small>
                       </div>
                     @else
@@ -308,15 +273,15 @@
                   <!-- Inclusions Summary (Highlighting All-Inclusive without duplicating 7 lines) -->
                   <div class="card-inclusions-summary mb-4">
                     <div class="inclusion-pill">
-                      <i class="fa fa-check-circle text-success mr-2"></i>
-                      <span><strong>Full Privileges:</strong> Includes all 7 conference perks</span>
+                      <i class="fa fa-check-circle text-primary mr-2"></i>
+                      <span><strong>Full Privileges:</strong> Keynotes, technical tracks & certificate</span>
                     </div>
                     <div class="inclusion-pill">
-                      <i class="fa fa-check-circle text-success mr-2"></i>
+                      <i class="fa fa-check-circle text-primary mr-2"></i>
                       <span><strong>Presentation Mode:</strong> Onsite (DIU) or Virtual (Online)</span>
                     </div>
                     <div class="inclusion-pill">
-                      <i class="fa fa-check-circle text-success mr-2"></i>
+                      <i class="fa fa-check-circle text-primary mr-2"></i>
                       <span><strong>Certificates & Kit:</strong> Official certificate & bag</span>
                     </div>
                   </div>
@@ -391,15 +356,15 @@
                     <!-- Inclusions Summary -->
                     <div class="card-inclusions-summary mb-4">
                       <div class="inclusion-pill">
-                        <i class="fa fa-check-circle text-success mr-2"></i>
-                        <span><strong>Full Privileges:</strong> Includes all 7 conference perks</span>
+                        <i class="fa fa-check-circle text-primary mr-2"></i>
+                        <span><strong>Full Privileges:</strong> Keynotes, technical tracks & certificate</span>
                       </div>
                       <div class="inclusion-pill">
-                        <i class="fa fa-check-circle text-success mr-2"></i>
+                        <i class="fa fa-check-circle text-primary mr-2"></i>
                         <span><strong>Presentation Mode:</strong> Onsite (DIU) or Virtual (Online)</span>
                       </div>
                       <div class="inclusion-pill">
-                        <i class="fa fa-check-circle text-success mr-2"></i>
+                        <i class="fa fa-check-circle text-primary mr-2"></i>
                         <span><strong>Certificates & Kit:</strong> Official certificate & bag</span>
                       </div>
                     </div>
@@ -431,7 +396,7 @@
               <h5 class="mb-1 font-weight-bold text-dark"><i class="fa fa-columns text-primary mr-2"></i>All-in-One Registration Fee Comparison</h5>
               <p class="text-muted small mb-0">Side-by-side rate matrix showing Early Bird vs Regular fees across all 5 delegate categories.</p>
             </div>
-            <span class="badge badge-success px-3 py-2 mt-2 mt-sm-0"><i class="fa fa-check mr-1"></i> All 7 Privileges Included in Every Category</span>
+            <span class="badge px-3 py-2 mt-2 mt-sm-0" style="background: #EEF4FA; color: #0055A0; font-weight: 600;"><i class="fa fa-check mr-1"></i> Full Privileges Included in Every Category</span>
           </div>
 
           <div class="table-responsive">
@@ -466,7 +431,7 @@
                     <td class="text-center matrix-td-highlight">
                       @if($row['eb_price'] !== null)
                         <span class="matrix-price-val">{{ $row['symbol'] }} {{ number_format($row['eb_price']) }}</span>
-                        <span class="badge badge-pill badge-success d-block mx-auto mt-1" style="max-width: 90px; font-size: 10px;">Early Bird</span>
+                        <span class="badge badge-pill d-block mx-auto mt-1" style="max-width: 90px; font-size: 10px; background: #EEF4FA; color: #0055A0; font-weight: 600;">Early Bird</span>
                       @else
                         <span class="text-muted">—</span>
                       @endif
@@ -481,7 +446,7 @@
                     </td>
                     <td class="text-center">
                       @if($row['savings'])
-                        <span class="badge badge-pill badge-warning text-dark font-weight-bold px-2 py-1">
+                        <span class="badge badge-pill px-2 py-1" style="background: rgba(0, 85, 160, 0.1); color: #0055A0; font-weight: 700;">
                           <i class="fa fa-arrow-down mr-1"></i>Save {{ $row['symbol'] }} {{ number_format($row['savings']) }}
                         </span>
                       @else
@@ -523,7 +488,7 @@
         <div class="col-md-4 mb-3">
           <div class="guideline-card h-100 p-3 shadow-sm">
             <div class="d-flex align-items-center mb-2">
-              <div class="guideline-icon mr-2 text-success"><i class="fa fa-globe fa-lg"></i></div>
+              <div class="guideline-icon mr-2 text-primary"><i class="fa fa-globe fa-lg"></i></div>
               <h6 class="mb-0 font-weight-bold text-dark">Hybrid Presentation Modes</h6>
             </div>
             <p class="small text-muted mb-0">
@@ -535,7 +500,7 @@
         <div class="col-md-4 mb-3">
           <div class="guideline-card h-100 p-3 shadow-sm">
             <div class="d-flex align-items-center mb-2">
-              <div class="guideline-icon mr-2 text-warning"><i class="fa fa-file-text-o fa-lg"></i></div>
+              <div class="guideline-icon mr-2 text-primary"><i class="fa fa-file-text-o fa-lg"></i></div>
               <h6 class="mb-0 font-weight-bold text-dark">Paper Coverage & Publication</h6>
             </div>
             <p class="small text-muted mb-0">
@@ -638,7 +603,7 @@
   }
 
   .privilege-pill-badge {
-    background: linear-gradient(135deg, #0055A0, #00396B);
+    background: linear-gradient(135deg, #0055A0, #003366);
     color: #ffffff;
     font-size: 12px;
     font-weight: 700;
@@ -651,8 +616,8 @@
   }
 
   .privilege-sub-badge {
-    background: rgba(16, 187, 67, 0.12);
-    color: #10BB43;
+    background: rgba(0, 85, 160, 0.08);
+    color: #0055A0;
     font-size: 12px;
     font-weight: 700;
     padding: 5px 14px;
@@ -664,7 +629,7 @@
   .showcase-title {
     font-size: 24px;
     font-weight: 800;
-    color: #00396B;
+    color: #003366;
     margin-top: 6px;
     margin-bottom: 8px;
     letter-spacing: -0.3px;
@@ -678,7 +643,7 @@
   }
 
   .btn-showcase-cta {
-    background: #10BB43;
+    background: #0055A0;
     color: #ffffff !important;
     font-weight: 700;
     font-size: 14.5px;
@@ -687,14 +652,14 @@
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(16, 187, 67, 0.35);
+    box-shadow: 0 4px 15px rgba(0, 85, 160, 0.25);
   }
 
   .btn-showcase-cta:hover {
-    background: #0d9635;
+    background: #003366;
     color: #ffffff !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(16, 187, 67, 0.45);
+    box-shadow: 0 6px 20px rgba(0, 51, 102, 0.35);
   }
 
   /* 7 Privileges Responsive Grid */
@@ -723,8 +688,8 @@
   }
 
   .privilege-card.highlight-privilege {
-    background: #fffdf5;
-    border-color: #ffe58f;
+    background: #F0F7FF;
+    border-color: #BAE6FD;
   }
 
   .privilege-icon-wrap {
@@ -746,7 +711,7 @@
   .privilege-card-title {
     font-size: 13.5px;
     font-weight: 700;
-    color: #00396B;
+    color: #003366;
     line-height: 1.3;
   }
 
@@ -762,8 +727,8 @@
   }
 
   .highlight-privilege .privilege-badge-tag {
-    background: #ffc107;
-    color: #212529;
+    background: #0055A0;
+    color: #ffffff;
   }
 
   .privilege-card-desc {
@@ -799,7 +764,7 @@
     font-weight: 700;
     font-size: 14.5px;
     padding: 12px 26px;
-    color: #00396B;
+    color: #003366;
     background: #ffffff;
     border: 1px solid #cbd5e1;
     transition: all 0.3s ease;
@@ -812,15 +777,15 @@
   }
 
   .pricing-tabs-wrapper .ticket-nav-tabs .nav-link.active {
-    background: linear-gradient(135deg, #0055A0, #00396B);
+    background: linear-gradient(135deg, #0055A0, #003366);
     color: #ffffff;
     border-color: transparent;
     box-shadow: 0 6px 18px rgba(0, 85, 160, 0.35);
   }
 
-  .pricing-tabs-wrapper .ticket-nav-tabs .nav-link.active .badge-warning {
-    background-color: #ffc107;
-    color: #212529;
+  .pricing-tabs-wrapper .ticket-nav-tabs .nav-link.active .badge-pill {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
   }
 
   /* Clean Pricing Cards */
@@ -860,7 +825,7 @@
   .ticket-card-title {
     font-size: 16px;
     font-weight: 700;
-    color: #00396B;
+    color: #003366;
     line-height: 1.35;
   }
 
@@ -884,7 +849,7 @@
   }
 
   .ticket-price-val {
-    color: #00396B;
+    color: #003366;
     font-weight: 800;
     line-height: 1.1;
     margin: 4px 0;
@@ -907,9 +872,7 @@
     font-size: 12px;
   }
 
-  .savings-tag .badge-success {
-    background-color: #10BB43;
-    font-weight: 600;
+  .savings-tag .badge {
     padding: 4px 8px;
   }
 
@@ -933,7 +896,7 @@
   }
 
   .btn-ticket-register {
-    background: linear-gradient(135deg, #0055A0, #00396B);
+    background: linear-gradient(135deg, #0055A0, #003366);
     color: #ffffff !important;
     font-weight: 700;
     font-size: 14px;
@@ -944,10 +907,10 @@
   }
 
   .btn-ticket-register:hover {
-    background: linear-gradient(135deg, #10BB43, #0d9635);
+    background: linear-gradient(135deg, #003366, #001f3f);
     color: #ffffff !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 187, 67, 0.35);
+    box-shadow: 0 6px 16px rgba(0, 51, 102, 0.35);
   }
 
   /* Comparison Matrix Table */
@@ -960,7 +923,7 @@
   .matrix-table thead th {
     font-size: 13px;
     font-weight: 700;
-    color: #00396B;
+    color: #003366;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-top: none;
@@ -1012,7 +975,7 @@
   }
 
   .btn-matrix-register:hover {
-    background: #10BB43;
+    background: #0055A0;
     color: #ffffff !important;
   }
 

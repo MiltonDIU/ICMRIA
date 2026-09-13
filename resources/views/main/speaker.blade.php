@@ -44,7 +44,7 @@
               @endif
             </div>
 
-            <h2 class="mb-1 font-weight-bold" style="color: var(--brand-navy, #00396B);">{{ $speaker->name }}</h2>
+            <h2 class="mb-1 font-weight-bold" style="color: var(--brand-navy, #003366);">{{ $speaker->name }}</h2>
 
             @if($speaker->affiliation || $speaker->country)
               <p class="text-muted font-weight-bold mb-2">
@@ -69,17 +69,17 @@
 
             @if(isset($schedules) && $schedules->isNotEmpty())
               <div class="speaker-schedule-assignments mt-4 pt-3 border-top">
-                <h4 class="font-weight-bold mb-3" style="color: var(--brand-navy, #00396B);">
-                  <i class="fa fa-calendar-check-o text-success mr-2"></i>Scheduled Program Sessions
+                <h4 class="font-weight-bold mb-3" style="color: var(--brand-navy, #003366);">
+                  <i class="fa fa-calendar-check-o text-primary mr-2"></i>Scheduled Program Sessions
                 </h4>
                 @foreach($schedules as $session)
                   @if($session->is_active == '1')
-                  <div class="card border-0 shadow-sm mb-2 p-3" style="background: #f8fafc; border-left: 4px solid #10BB43 !important;">
+                  <div class="card border-0 shadow-sm mb-2 p-3" style="background: #f8fafc; border-left: 4px solid #0055A0 !important;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                       <div>
-                        <span class="badge badge-success px-2 py-1 mb-1">Day {{ $session->day_number }}</span>
+                        <span class="badge px-2 py-1 mb-1" style="background: #EEF4FA; color: #0055A0; font-weight: 600;">Day {{ $session->day_number }}</span>
                         @if($session->scheduleCategory && $session->scheduleCategory->is_active)
-                          <span class="badge text-white px-2 py-1 mb-1 ml-1" style="background-color: {{ $session->scheduleCategory->color ?? '#00396B' }}; font-size: 11px;">
+                          <span class="badge text-white px-2 py-1 mb-1 ml-1" style="background-color: {{ $session->scheduleCategory->color ?? '#003366' }}; font-size: 11px;">
                             {{ $session->scheduleCategory->name }}
                           </span>
                         @endif

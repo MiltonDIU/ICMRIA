@@ -3,7 +3,7 @@
 @section('content')
     <main id="main" class="main-page">
         <section class="wow fadeIn">
-            <div class="title-section" style="background: linear-gradient(to bottom, black, black)">
+            <div class="title-section" style="background: linear-gradient(135deg, #001f3f 0%, #003366 55%, #004d80 100%); padding: 75px 0 45px;">
                 <div class="container">
                     <div class="section-header">
                         <h3>Register Now</h3>
@@ -854,7 +854,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
         .bg-color-form {
-            border-top: 5px solid #007bff;
+            border-top: 5px solid #0055A0;
         }
         .title-section {
             padding: 60px 0 30px;
@@ -863,7 +863,7 @@
         }
         .form-control:focus {
             box-shadow: none;
-            border-color: #007bff;
+            border-color: #0055A0;
         }
         label {
             font-size: 14px;
@@ -885,7 +885,7 @@
         }
         .fee-table thead th {
             background-color: #f8f9fa;
-            border-bottom: 2px solid #007bff;
+            border-bottom: 2px solid #0055A0;
             color: #333;
             font-weight: 600;
             text-transform: uppercase;
@@ -899,7 +899,7 @@
             border-top: 1px solid #eee;
         }
         .fee-table tbody tr:hover {
-            background-color: #f0f7ff;
+            background-color: #EEF4FA;
         }
 
 
@@ -1026,7 +1026,7 @@
             width: 100%;
         }
         .custom-check-card:hover {
-            border-color: #007bff;
+            border-color: #0055A0;
             background: #f0f7ff;
         }
         .custom-check-card input[type="checkbox"] {
@@ -1046,8 +1046,8 @@
             background: #fff;
         }
         .custom-check-card input[type="checkbox"]:checked ~ .custom-check-box {
-            background: #007bff;
-            border-color: #007bff;
+            background: #0055A0;
+            border-color: #0055A0;
         }
         .custom-check-card input[type="checkbox"]:checked ~ .custom-check-box::after {
             content: '';
@@ -1063,7 +1063,7 @@
             color: #0056cc;
         }
         .custom-check-card:has(input:checked) {
-            border-color: #007bff;
+            border-color: #0055A0;
             background: #f0f7ff;
         }
         .custom-check-content {
@@ -1167,7 +1167,7 @@
             width: 100%;
         }
         .presenting-author-card:hover {
-            border-color: #007bff;
+            border-color: #0055A0;
             background: #f0f7ff;
         }
         .presenting-author-card input[type="radio"] {
@@ -1186,8 +1186,8 @@
             background: #fff;
         }
         .presenting-author-card input[type="radio"]:checked ~ .presenting-radio-dot {
-            border-color: #007bff;
-            background: #007bff;
+            border-color: #0055A0;
+            background: #0055A0;
         }
         .presenting-author-card input[type="radio"]:checked ~ .presenting-radio-dot::after {
             content: '';
@@ -1198,7 +1198,7 @@
             background: #fff;
         }
         .presenting-author-card:has(input:checked) {
-            border-color: #007bff;
+            border-color: #0055A0;
             background: #f0f7ff;
         }
         .presenting-author-content {

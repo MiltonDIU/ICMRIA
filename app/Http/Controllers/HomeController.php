@@ -30,6 +30,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use App\Models\CommitteeType;
 use App\Models\ConferenceMessage;
+use App\Models\Track;
+use App\Models\SubTrack;
 class HomeController extends Controller
 {
 protected $noReferral = array(
@@ -454,5 +456,35 @@ $link = true;
         $settings = Setting::pluck('value', 'key');
         return view('main.call_for_pepper',compact('settings'));
     }
+
+
+    public function authorGuidelines()
+    {
+        $settings = Setting::pluck('value', 'key');
+        $prices = Price::with('amenities')->get();
+        return view('main.author_guidelines', compact('settings', 'prices'));
+    }
+
+    public function tracks()
+    {
+        $settings = Setting::pluck('value', 'key');
+        $tracks = Track::with('subTracks')->get();
+        return view('main.tracks', compact('settings', 'tracks'));
+    }
+
+    public function cameraReadyGuidelines()
+    {
+        $settings = Setting::pluck('value', 'key');
+        return view('main.camera_ready_guidelines', compact('settings'));
+    }
+
+    public function accommodationTransportation()
+    {
+        $settings = Setting::pluck('value', 'key');
+        $venues = Venue::all();
+        $hotels = Hotel::all();
+        return view('main.accommodation_transportation', compact('settings', 'venues', 'hotels'));
+    }
+
 
 }

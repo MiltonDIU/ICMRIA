@@ -6,14 +6,17 @@ use App\Models\Speaker;
 use App\Models\SpeakerType;
 use App\Models\Track;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
- * Keynote / Invited speakers and Session Chairs for ICMRIA 2027.
+ * Keynote and Invited speakers for ICMRIA 2027.
  * All speakers are seeded with a uniform, professional dummy picture (default-speaker.jpg)
  * until real photographs are uploaded via the admin panel.
  *
- * Source: Master Requirement Document (ICMRI 2027.docx), section 7 & 6.
+ * Source: Master Requirement Document (ICMRI 2027.docx), section 7.
+ * Exactly 7 legitimate speakers (4 Keynote Speakers + 3 Invited Speakers).
  */
 class KeynoteInvitedSpeakerSeeder extends Seeder
 {
@@ -22,7 +25,6 @@ class KeynoteInvitedSpeakerSeeder extends Seeder
         $keynote = SpeakerType::firstOrCreate(['title' => 'Keynote Speaker'], ['slug' => 'keynote-speaker', 'publication_status' => 1]);
         $invited = SpeakerType::firstOrCreate(['title' => 'Invited Speaker'], ['slug' => 'invited-speaker', 'publication_status' => 1]);
         $plenary = SpeakerType::firstOrCreate(['title' => 'Plenary Speaker'], ['slug' => 'plenary-speaker', 'publication_status' => 1]);
-        $chair   = SpeakerType::firstOrCreate(['title' => 'Session Chair & Organization'], ['slug' => 'session-chair', 'publication_status' => 1]);
 
         $t = fn (int $n) => optional(Track::where('name', 'like', "Track {$n}:%")->first())->id;
 
@@ -118,71 +120,22 @@ class KeynoteInvitedSpeakerSeeder extends Seeder
                 'serial'       => 12,
                 'show_home'    => 1,
             ],
-
-            // =========================================================================
-            // 4. Session Chairs & Co-located Organizations (For Schedule assignments)
-            // =========================================================================
-            [
-                'name'         => 'Conference Secretariat & Organizing Committee',
-                'type_id'      => $chair->id,
-                'track_id'     => null,
-                'focus'        => 'Conference Operations & Ceremonies',
-                'affiliation'  => 'Daffodil International University',
-                'country'      => 'Bangladesh',
-                'description'  => 'Presiding over Inaugural, Luncheon, and Valedictory Ceremonies.',
-                'full_desc'    => 'The Conference Organizing Committee oversees overall program logistics, keynote sessions, ceremonial activities, and delegate support.',
-                'serial'       => 20,
-                'show_home'    => 0,
-            ],
-            [
-                'name'         => 'Track Chairs & Co-Chairs',
-                'type_id'      => $chair->id,
-                'track_id'     => null,
-                'focus'        => 'Parallel Technical Paper Sessions',
-                'affiliation'  => 'Daffodil International University',
-                'country'      => 'Bangladesh',
-                'description'  => 'Chairs presiding over Parallel Technical Paper Sessions across all 8 tracks.',
-                'full_desc'    => 'Senior faculty deans and track chairs evaluating and moderating oral paper presentations across Tracks 1 through 8.',
-                'serial'       => 21,
-                'show_home'    => 0,
-            ],
-            [
-                'name'         => 'DIU Research Labs & Industry Partners',
-                'type_id'      => $chair->id,
-                'track_id'     => $t(1),
-                'focus'        => 'Applied Deep Learning & Generative AI Tutorials',
-                'affiliation'  => 'DIU Research Labs & Industry Partners',
-                'country'      => 'Bangladesh',
-                'description'  => 'Hands-on workshop instructors & laboratory domain experts.',
-                'full_desc'    => 'Industry practitioners and research lab fellows delivering intensive hands-on tutorials in generative AI and deep learning deployment.',
-                'serial'       => 22,
-                'show_home'    => 0,
-            ],
-            [
-                'name'         => 'Innovation & Entrepreneurship Lab / WIE',
-                'type_id'      => $chair->id,
-                'track_id'     => null,
-                'focus'        => 'Exhibition, Hackathon & Women in STEM',
-                'affiliation'  => 'DIU Innovation Lab & WIE Affinity Group',
-                'country'      => 'Bangladesh',
-                'description'  => 'Coordinators for Student Innovation Challenge, Posters, and Women in STEM.',
-                'full_desc'    => 'Mentoring sessions, prototype project exhibitions, hackathons, and panels championing women leadership across multidisciplinary STEM fields.',
-                'serial'       => 23,
-                'show_home'    => 0,
-            ],
-            [
-                'name'         => 'International Advisory Committee',
-                'type_id'      => $chair->id,
-                'track_id'     => null,
-                'focus'        => 'Doctoral Consortium & Research Mentorship',
-                'affiliation'  => 'International Advisory Committee',
-                'country'      => 'International',
-                'description'  => 'Mentoring panel for Ph.D. scholars and early-career researchers.',
-                'full_desc'    => 'Senior international professors providing critical feedback, publication strategies, and research guidance to doctoral candidates.',
-                'serial'       => 24,
-                'show_home'    => 0,
-            ],
         ];
+
+        // Delete any extra legacy or placeholder speakers not in the official 7 list
+        $officialNames = array_column($speakers, 'name');
+        $validSpeakerIds = Speaker::whereIn('name', $officialNames)->pluck('id');
+        $fallbackId = $validSpeakerIds->first();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if (Schema::hasTable('schedule_speaker')) {
+            DB::table('schedule_speaker')->whereNotIn('speaker_id', $validSpeakerIds)->delete();
+        }
+        if (Schema::hasTable('schedules') && $fallbackId) {
+            DB::table('schedules')->whereNotIn('speaker_id', $validSpeakerIds)->update(['speaker_id' => $fallbackId]);
+        }
+        Speaker::whereNotIn('name', $officialNames)->forceDelete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $defaultImg = public_path('img/default-speaker.jpg');
 
@@ -206,13 +159,12 @@ class KeynoteInvitedSpeakerSeeder extends Seeder
                 ]
             );
 
-            // Clean previous random faker media and use the uniform default dummy picture
-            if (file_exists($defaultImg)) {
-                $speaker->clearMediaCollection('photo');
+            // Attach uniform default picture if not already present
+            if (file_exists($defaultImg) && $speaker->getMedia('photo')->isEmpty()) {
                 try {
                     $speaker->addMedia($defaultImg)->preservingOriginal()->toMediaCollection('photo');
                 } catch (\Exception $e) {
-                    // Fail silently if media already attached
+                    // Fail silently
                 }
             }
         }
