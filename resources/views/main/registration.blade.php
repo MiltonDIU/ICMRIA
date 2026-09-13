@@ -7,11 +7,11 @@
                 <div class="container">
                     <div class="section-header">
                         <h3>Register Now</h3>
-{{--                        <p style="color: red">**Notice:** This registration form is currently under testing. Please do not submit any actual registration information at this time, as all submitted data will be deleted. The official registration will open soon.--}}
+                        {{--                        <p style="color: red">**Notice:** This registration form is currently under testing. Please do not submit any actual registration information at this time, as all submitted data will be deleted. The official registration will open soon.--}}
                         </p>
                     </div>
                 </div>
-                </div>
+            </div>
             </div>
             <div class="container">
                 @if(session()->has('message') || session()->has('success'))
@@ -59,95 +59,171 @@
                     $currentDate = \Carbon\Carbon::now();
                 @endphp
 
-                @if ($currentDate < $eventStartDate)
-                    <div class="row">
-                        <h1 class="text-center">The event registration has not started yet. It will start on {{ $eventStartDate->format('j F Y, g:i A') }}</h1>
-                    </div>
-                @elseif ($currentDate >= $eventStartDate && $currentDate <= $eventCloseDate)
-
-                    @if(($settings['seat_is_full'] ?? 'false') == 'false')
+                @php
+                    $registrationNotStarted = $currentDate < $eventStartDate;
+                    $registrationClosed = $currentDate > $eventCloseDate;
+                    $seatIsFull = ($settings['seat_is_full'] ?? 'false') != 'false';
+                @endphp
                         <div class="row">
                             <div class="col-md-5 line">
-                                <div class="bg-color">
-{{--                                    <h4><strong> {!! $settings['title'] ?? 'Conference Title' !!}</strong></h4>--}}
-{{--                                    <span class="main-title">International Conference on</span>--}}
-{{--                                    <img src="{{ asset('/') }}img/eng-con_logo.png">--}}
-                                    <span class="second-title">ICMRIA 2027</span>
-                                    <span class="sub-title">Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future</span>
+                                <div class="bg-color sidebar-conference-card">
+                                    {{-- Brand / Logo Header --}}
+                                    <div class="text-center mb-3">
+                                        <img src="{{ asset('img/icmria27-logo.png') }}" alt="ICMRIA 2027" class="img-fluid sidebar-logo mb-2" style="max-height: 52px;">
+                                        <h4 class="conference-name mb-1">ICMRIA 2027</h4>
+                                        <div class="conference-theme-tag">Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future</div>
+                                    </div>
 
+                                    {{-- Quick Info Badges --}}
+                                    <div class="sidebar-meta-list mb-3">
+                                        <div class="meta-item-pill">
+                                            <i class="fa fa-calendar-check-o text-primary mr-2" style="font-size: 16px;"></i>
+                                            <div>
+                                                <div class="meta-item-label">Conference Dates</div>
+                                                <div class="meta-item-val">{!! $settings['about_when'] ?? '9–10 January 2027' !!}</div>
+                                            </div>
+                                        </div>
+                                        <div class="meta-item-pill mt-2">
+                                            <i class="fa fa-map-marker text-primary mr-2" style="font-size: 18px;"></i>
+                                            <div>
+                                                <div class="meta-item-label">Venue & Mode</div>
+                                                <div class="meta-item-val">Daffodil Smart City, Dhaka &bull; Hybrid (Onsite / Online)</div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                    <div><img width="20px;" src="{{ asset('/') }}img/calendar.png"> {!! $settings['about_when'] ?? '' !!} </div>
-                                    <div><img width="20px;" src="{{ asset('/') }}img/clock.png"> 08:30 AM - 06:00 PM</div>
-                                    <div style="color:#000000;"><img width="20px;" src="{{ asset('/') }}img/location.png">Location: {{ $settings['about_where'] ?? '' }}</div>
-                                    <br/>
-                                    <div class="fee-information">
+                                    {{-- Official Registration Fees --}}
+                                    <div class="fee-information mb-3">
+                                        <div class="mb-2">
+                                            <h6 class="sidebar-section-title mb-0">
+                                                <i class="fa fa-tags text-primary mr-1"></i> Registration & Delegate Fees
+                                            </h6>
+                                        </div>
+
                                         <div class="table-responsive">
-                                            <table class="table table-sm fee-table shadow-sm text-center">
+                                            <table class="table table-sm fee-table shadow-sm text-center mb-2" style="font-size: 12px;">
                                                 <thead>
-                                                    <tr>
-                                                        <th rowspan="2" style="vertical-align: middle;">Currency</th>
-                                                        <th colspan="2" class="bg-light">Author</th>
-                                                        <th rowspan="2" style="vertical-align: middle;">Participant</th>
-                                                    </tr>
-                                                    <tr>
-                                                        <th>Early Bird</th>
-                                                        <th>Regular</th>
-                                                    </tr>
+                                                <tr style="background-color: #F1F5F9;">
+                                                    <th class="text-left" style="width: 48%; padding: 8px 6px;">Delegate Category</th>
+                                                    <th class="text-primary font-weight-bold" style="width: 26%; padding: 8px 6px;">Early Bird</th>
+                                                    <th style="width: 26%; padding: 8px 6px;">Regular</th>
+                                                </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr>
-                                                        <td><strong>USD</strong></td>
-                                                        <td class="text-primary font-weight-bold">{{ $settings['usd_earlybird_price'] ?? '0' }}</td>
-                                                        <td>{{ $settings['usd_regular_price'] ?? '0' }}</td>
-                                                        <td class="text-success font-weight-bold">{{ $settings['usd_participant_price'] ?? '0' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>BDT</strong></td>
-                                                        <td class="text-primary font-weight-bold">{{ $settings['bdt_earlybird_price'] ?? '0' }}</td>
-                                                        <td>{{ $settings['bdt_regular_price'] ?? '0' }}</td>
-                                                        <td class="text-success font-weight-bold">{{ $settings['bdt_participant_price'] ?? '0' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>INR</strong></td>
-                                                        <td class="text-primary font-weight-bold">{{ $settings['inr_earlybird_price'] ?? '0' }}</td>
-                                                        <td>{{ $settings['inr_regular_price'] ?? '0' }}</td>
-                                                        <td class="text-success font-weight-bold">{{ $settings['inr_participant_price'] ?? '0' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>EUR</strong></td>
-                                                        <td class="text-primary font-weight-bold">{{ $settings['eur_earlybird_price'] ?? '0' }}</td>
-                                                        <td>{{ $settings['eur_regular_price'] ?? '0' }}</td>
-                                                        <td class="text-success font-weight-bold">{{ $settings['eur_participant_price'] ?? '0' }}</td>
-                                                    </tr>
+                                                <tr style="background: #F8FAFC;">
+                                                    <td colspan="3" class="text-left font-weight-bold py-1 px-2" style="font-size: 11px; color: #003366;">
+                                                        <i class="fa fa-flag text-primary mr-1"></i> National Delegates (BDT - ৳)
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">Student</span> Presenter / Delegate</td>
+                                                    <td class="text-primary font-weight-bold py-2">৳4,000</td>
+                                                    <td class="py-2">৳5,000</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">Academic</span> Faculty / Scholar</td>
+                                                    <td class="text-primary font-weight-bold py-2">৳6,000</td>
+                                                    <td class="py-2">৳7,000</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">Industry</span> Corporate / R&D</td>
+                                                    <td class="text-primary font-weight-bold py-2">৳6,500</td>
+                                                    <td class="py-2">৳7,500</td>
+                                                </tr>
+                                                <tr style="background: #F8FAFC;">
+                                                    <td colspan="3" class="text-left font-weight-bold py-1 px-2" style="font-size: 11px; color: #003366;">
+                                                        <i class="fa fa-globe text-primary mr-1"></i> International & SAARC (USD - $)
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">SAARC</span> Nations Delegate</td>
+                                                    <td class="text-primary font-weight-bold py-2">US$ 75</td>
+                                                    <td class="py-2">US$ 175</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">International</span> Delegate</td>
+                                                    <td class="text-primary font-weight-bold py-2">US$ 150</td>
+                                                    <td class="py-2">US$ 175</td>
+                                                </tr>
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <hr>
-                                        <div><strong>Reg. Starting: {{ $eventStartDate->format('j F Y, g:i A') }} </strong></div>
-                                        <div><strong>Abstract Submission Deadline: {{ $eventAbstractDeadline->format('j F Y, g:i A') }} </strong></div>
-                                        <div><strong>Early Bird Payment Timeline: Till {{ $eventEarlyRegDate->format('j F Y, g:i A') }} </strong></div>
-                                        <div><strong>Regular Payment: {{ $eventEarlyRegDate->copy()->addSecond()->format('j F Y, g:i A') }} to {{ $eventPaymentLastDate->format('j F Y, g:i A') }} </strong></div>
                                     </div>
-                                    <br/>
 
-{{--                                    <h5><strong>Participation Benefits</strong> </h5>--}}
-{{--                                    <ul>--}}
-{{--                                        @isset($aminities)--}}
-{{--                                            @foreach($aminities as $aminity)--}}
-{{--                                                <li>{{ $aminity->name }}</li>--}}
-{{--                                            @endforeach--}}
-{{--                                        @endisset--}}
-{{--                                    </ul>--}}
+                                    {{-- Key Timelines --}}
+                                    <div class="sidebar-timeline-card mb-3 p-3 rounded" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
+                                        <h6 class="sidebar-section-title mb-2">
+                                            <i class="fa fa-clock-o text-primary mr-1"></i> Critical Deadlines
+                                        </h6>
+                                        <div class="timeline-row d-flex justify-content-between py-1 border-bottom" style="font-size: 12px;">
+                                            <span class="text-muted"><i class="fa fa-circle text-info mr-1" style="font-size: 8px;"></i> Abstract Deadline</span>
+                                            <span class="font-weight-bold text-dark">30 Oct 2026</span>
+                                        </div>
+                                        <div class="timeline-row d-flex justify-content-between py-1 border-bottom" style="font-size: 12px;">
+                                            <span class="text-muted"><i class="fa fa-circle text-primary mr-1" style="font-size: 8px;"></i> Early Bird Payment</span>
+                                            <span class="font-weight-bold text-primary">Till 10 Dec 2026</span>
+                                        </div>
+                                        <div class="timeline-row d-flex justify-content-between py-1 border-bottom" style="font-size: 12px;">
+                                            <span class="text-muted"><i class="fa fa-circle text-danger mr-1" style="font-size: 8px;"></i> Registration Close</span>
+                                            <span class="font-weight-bold text-danger">26 Dec 2026</span>
+                                        </div>
+                                        <div class="timeline-row d-flex justify-content-between py-1" style="font-size: 12px;">
+                                            <span class="text-muted"><i class="fa fa-flag text-success mr-1" style="font-size: 8px;"></i> Conference Dates</span>
+                                            <span class="font-weight-bold text-success">9–10 Jan 2027</span>
+                                        </div>
+                                    </div>
 
-{{--                                    <hr>--}}
-{{--                                    <div style="text-align:justify;">--}}
-{{--                                        {!! $settings['about_description'] ?? '' !!}--}}
-{{--                                    </div>--}}
+                                    {{-- Key Benefits Highlights --}}
+                                    <div class="sidebar-entitlements p-3 rounded mb-3" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
+                                        <h6 class="sidebar-section-title mb-2">
+                                            <i class="fa fa-check-circle text-success mr-1"></i> Included Delegate Entitlements
+                                        </h6>
+                                        <ul class="list-unstyled mb-0 pl-1" style="font-size: 12px; line-height: 1.8; color: #334155;">
+                                            <li><i class="fa fa-check text-primary mr-2"></i> Full access to all 8 tracks & keynote sessions</li>
+                                            <li><i class="fa fa-check text-primary mr-2"></i> Official Presentation & Participation Certificate</li>
+                                            <li><i class="fa fa-check text-primary mr-2"></i> Scopus-Indexed Q2 Journal Publication eligibility</li>
+                                        </ul>
+                                    </div>
+
+                                    {{-- Secretariat Support --}}
+                                    <div class="sidebar-contact text-center p-3 rounded" style="background: #EEF4FA; border: 1px dashed #0055A0;">
+                                        <div class="small font-weight-bold text-primary mb-1">
+                                            <i class="fa fa-envelope-o mr-1"></i> Secretariat & Submission Inquiries
+                                        </div>
+                                        <div class="small text-dark font-weight-bold">
+                                            <a href="mailto:{{ $settings['contact_email'] ?? 'fahadhossain.swe@diu.edu.bd' }}" style="color: #003366;">
+                                                {{ $settings['contact_email'] ?? 'fahadhossain.swe@diu.edu.bd' }}
+                                            </a>
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <i class="fa fa-whatsapp text-success mr-1"></i> {{ $settings['contact_phone'] ?? '+8801946704373' }}
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
 
                             <div class="col-md-7 line">
                                 <div class="bg-color-form">
+                                    @if($registrationNotStarted)
+                                        <div class="text-center py-5">
+                                            <i class="fa fa-hourglass-start fa-3x text-primary mb-3"></i>
+                                            <h4>Registration Has Not Started Yet</h4>
+                                            <p class="text-muted mb-0">Registration will open on {{ $eventStartDate->format('j F Y, g:i A') }}.</p>
+                                        </div>
+                                    @elseif($seatIsFull)
+                                        <div class="text-center py-5">
+                                            <i class="fa fa-users fa-3x text-danger mb-3"></i>
+                                            <h4>Registration is Full</h4>
+                                            <p class="text-muted mb-0">All available seats have been taken.</p>
+                                        </div>
+                                    @elseif($registrationClosed)
+                                        <div class="text-center py-5">
+                                            <i class="fa fa-lock fa-3x text-danger mb-3"></i>
+                                            <h4>Registration Has Closed</h4>
+                                            <p class="text-muted mb-0">The registration window closed on {{ $eventCloseDate->format('j F Y, g:i A') }}.</p>
+                                        </div>
+                                    @else
                                     <form method="POST" action="{{ route('register') }}" id="registrationForm">
                                         @csrf
 
@@ -222,17 +298,17 @@
                                             </div>
                                         </div>
 
-{{--                                        <div class="mb-4">--}}
-{{--                                            <label><strong>Mode of Participation*</strong></label><br>--}}
-{{--                                            <div class="form-check form-check-inline">--}}
-{{--                                                <input class="form-check-input" type="radio" name="participation_mode" id="onsite" value="onsite" {{ old('participation_mode', 'onsite') == 'onsite' ? 'checked' : '' }}>--}}
-{{--                                                <label class="form-check-label" for="onsite">Onsite</label>--}}
-{{--                                            </div>--}}
-{{--                                            <div class="form-check form-check-inline">--}}
-{{--                                                <input class="form-check-input" type="radio" name="participation_mode" id="online" value="online" {{ old('participation_mode') == 'online' ? 'checked' : '' }}>--}}
-{{--                                                <label class="form-check-label" for="online">Online</label>--}}
-{{--                                            </div>--}}
-{{--                                        </div>--}}
+                                        {{--                                        <div class="mb-4">--}}
+                                        {{--                                            <label><strong>Mode of Participation*</strong></label><br>--}}
+                                        {{--                                            <div class="form-check form-check-inline">--}}
+                                        {{--                                                <input class="form-check-input" type="radio" name="participation_mode" id="onsite" value="onsite" {{ old('participation_mode', 'onsite') == 'onsite' ? 'checked' : '' }}>--}}
+                                        {{--                                                <label class="form-check-label" for="onsite">Onsite</label>--}}
+                                        {{--                                            </div>--}}
+                                        {{--                                            <div class="form-check form-check-inline">--}}
+                                        {{--                                                <input class="form-check-input" type="radio" name="participation_mode" id="online" value="online" {{ old('participation_mode') == 'online' ? 'checked' : '' }}>--}}
+                                        {{--                                                <label class="form-check-label" for="online">Online</label>--}}
+                                        {{--                                            </div>--}}
+                                        {{--                                        </div>--}}
                                         <div class="mb-4">
                                             <label><strong>Mode of Participation*</strong></label>
                                             <div class="participation-pill-group">
@@ -341,7 +417,7 @@
                                                 <label class="custom-check-card" for="is_corresponding_author">
                                                     <input type="hidden" name="is_corresponding_author" value="0">
                                                     <input type="checkbox" name="is_corresponding_author" id="is_corresponding_author" value="1"
-                                                           {{ old('is_corresponding_author', '1') ? 'checked' : '' }}>
+                                                        {{ old('is_corresponding_author', '1') ? 'checked' : '' }}>
                                                     <span class="custom-check-box"></span>
                                                     <span class="custom-check-content">
                                                         <span class="custom-check-title">I am the corresponding author</span>
@@ -438,18 +514,10 @@
                                             </div>
                                         </div>
                                     </form>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                    @else
-                        <div class="row"><h1 class="text-center">Registration is full.</h1></div>
-                    @endif
-
-                @else
-                    <div class="row">
-                        <h1 class="text-center">The event registration has closed on {{ $eventCloseDate->format('j F Y, g:i A') }} </h1>
-                    </div>
-                @endif
             </div>
         </section>
     </main>
@@ -513,7 +581,7 @@
             const wordCount = wordsArray.length;
 
             const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Escape'];
-            
+
             if (event.ctrlKey || event.metaKey) {
                 return;
             }
@@ -551,7 +619,7 @@
         function preventExtraKeywords(event) {
             const input = event.target;
             const value = input.value;
-            
+
             let commaCount = 0;
             for (let i = 0; i < value.length; i++) {
                 if (value[i] === ',') {
@@ -638,7 +706,7 @@
             const display = document.getElementById(inputId + '_count_display');
 
             let value = input.value;
-            
+
             let commaCount = 0;
             let fifthCommaIndex = -1;
             for (let i = 0; i < value.length; i++) {
@@ -673,7 +741,7 @@
                 } else {
                     input.value = nonEmptyKeywords.slice(0, 5).join(', ');
                 }
-                
+
                 value = input.value;
                 keywords = value.split(',');
                 nonEmptyKeywords = keywords.map(k => k.trim()).filter(k => k !== '');
@@ -748,21 +816,21 @@
 
             // If it's Author but submission is closed, show a "Register" button instead of "Submit Abstract"
             @if(($settings['is_abstract_submission_open'] ?? 'true') == 'false')
-                if (participantButtons) {
-                    const btn = participantButtons.querySelector('button');
-                        if (isAuthor) {
-                            btn.innerHTML = '<i class="fa fa-user-plus"></i> Register as Author';
-                            btn.value = 'save-close';
-                        } else {
-                            if ({{ ($settings['is_payment_enabled'] ?? 'true') == 'true' ? 'true' : 'false' }}) {
-                                btn.innerHTML = '<i class="fa fa-credit-card"></i> Save & Continue to Payment';
-                                btn.value = 'save-pay';
-                            } else {
-                                btn.innerHTML = '<i class="fa fa-user-plus"></i> Complete Registration';
-                                btn.value = 'save-close';
-                            }
-                        }
+            if (participantButtons) {
+                const btn = participantButtons.querySelector('button');
+                if (isAuthor) {
+                    btn.innerHTML = '<i class="fa fa-user-plus"></i> Register as Author';
+                    btn.value = 'save-close';
+                } else {
+                    if ({{ ($settings['is_payment_enabled'] ?? 'true') == 'true' ? 'true' : 'false' }}) {
+                        btn.innerHTML = '<i class="fa fa-credit-card"></i> Save & Continue to Payment';
+                        btn.value = 'save-pay';
+                    } else {
+                        btn.innerHTML = '<i class="fa fa-user-plus"></i> Complete Registration';
+                        btn.value = 'save-close';
+                    }
                 }
+            }
             @endif
         }
 
@@ -825,9 +893,9 @@
 
         // Initialize co-authors if we have old data (validation failed)
         @if(old('co_authors'))
-            @foreach(old('co_authors') as $idx => $author)
-                addCoAuthor(@json($author));
-            @endforeach
+        @foreach(old('co_authors') as $idx => $author)
+        addCoAuthor(@json($author));
+        @endforeach
         @endif
 
 
@@ -846,6 +914,47 @@
 
 @push('style')
     <style>
+        .sidebar-conference-card {
+            border-top: 5px solid #003366;
+            padding: 24px;
+        }
+        .conference-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #003366;
+            letter-spacing: 0.5px;
+        }
+        .conference-theme-tag {
+            font-size: 12px;
+            color: #64748B;
+            font-style: italic;
+        }
+        .meta-item-pill {
+            display: flex;
+            align-items: center;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        .meta-item-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748B;
+            font-weight: 600;
+        }
+        .meta-item-val {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1E293B;
+            line-height: 1.3;
+        }
+        .sidebar-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #003366;
+        }
         .bg-color, .bg-color-form {
             background: #ffffff;
             padding: 30px;
