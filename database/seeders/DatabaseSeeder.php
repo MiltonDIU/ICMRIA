@@ -22,6 +22,10 @@ class DatabaseSeeder extends Seeder
             RoleUserTableSeeder::class,
             SettingsTableSeeder::class,
             TrackSubTrackSeeder::class,
+            TrackChairSeeder::class,
+            ReviewerSeeder::class,
+            // Demonstration authors and papers. Refuses to run in production.
+            DemoAuthorSeeder::class,
             SpeakerTypeSeeder::class,
             SpeakersTableSeeder::class,
             ScheduleCategorySeeder::class,

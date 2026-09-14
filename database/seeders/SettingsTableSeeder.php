@@ -108,6 +108,26 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'seat_is_full',                  'value' => 'false'],
             ['key' => 'is_payment_enabled',            'value' => 'true'],
 
+            // Requirement document, "Author Guidelines": abstracts of 200-250 words
+            // and 4-6 keywords. Read through App\Services\SubmissionRules so the
+            // forms and the validators can never drift apart.
+            ['key' => 'abstract_min_words',            'value' => '200'],
+            ['key' => 'abstract_max_words',            'value' => '250'],
+            ['key' => 'keywords_min',                  'value' => '4'],
+            ['key' => 'keywords_max',                  'value' => '6'],
+
+            // Review workload. These are the conference-wide figures; any track
+            // needing different ones overrides them on its own row (tracks table),
+            // and a blank override falls back to the value here.
+            // "at least 2 to 3 independent reviewers per paper" (document, Phase 3).
+            // 'double' hides author identities from reviewers, 'single' does not
+            // (document, Phase 1: "blind review settings").
+            ['key' => 'blind_review_mode',             'value' => 'double'],
+
+            ['key' => 'reviewers_per_paper',           'value' => '3'],
+            ['key' => 'min_reviewers_per_paper',       'value' => '2'],
+            ['key' => 'max_papers_per_reviewer',       'value' => '10'],
+
             // ---------------------------------------------------------------
             // Registration fees
             //   NOTE: the current PricingService keys fees by country->currency

@@ -305,6 +305,17 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
 
     Route::resource('data-banks', DataBanksController::class);
 
+    // Tracks and Sub-Tracks
+    Route::delete('tracks/destroy', [\App\Http\Controllers\Admin\TrackController::class, 'massDestroy'])->name('tracks.massDestroy');
+    Route::resource('tracks', \App\Http\Controllers\Admin\TrackController::class)->except('show');
+    Route::delete('sub-tracks/destroy', [\App\Http\Controllers\Admin\SubTrackController::class, 'massDestroy'])->name('sub-tracks.massDestroy');
+    Route::resource('sub-tracks', \App\Http\Controllers\Admin\SubTrackController::class)->except('show');
+
+    // Reviewer pool, managed by the chairs of each track
+    Route::get('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'index'])->name('track-reviewers.index');
+    Route::post('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'store'])->name('track-reviewers.store');
+    Route::delete('track-reviewers/{trackAssignment}', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'destroy'])->name('track-reviewers.destroy');
+
     // Committee Types
     Route::delete('committee-types/destroy', [CommitteeTypeController::class, 'massDestroy'])->name('committee-types.massDestroy');
     Route::resource('committee-types', CommitteeTypeController::class);
@@ -357,6 +368,13 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('papers/{paper}/edit', [App\Http\Controllers\Admin\PaperController::class, 'edit'])->name('papers.edit');
     Route::put('papers/{paper}', [App\Http\Controllers\Admin\PaperController::class, 'update'])->name('papers.update');
     Route::get('papers/{paper}/pricing', [App\Http\Controllers\Admin\PaperController::class, 'getPaperPricing'])->name('papers.pricing');
+
+    // Full manuscript and conflict-of-interest declarations
+    Route::post('papers/{paper}/manuscript', [App\Http\Controllers\Admin\PaperController::class, 'uploadManuscript'])->name('papers.manuscript.upload');
+    Route::get('papers/{paper}/manuscript', [App\Http\Controllers\Admin\PaperController::class, 'downloadManuscript'])->name('papers.manuscript.download');
+    Route::get('papers/{paper}/manuscript/v{version}', [App\Http\Controllers\Admin\PaperController::class, 'downloadManuscript'])->name('papers.manuscript.version');
+    Route::post('papers/{paper}/conflicts', [App\Http\Controllers\Admin\PaperController::class, 'declareConflict'])->name('papers.conflicts.store');
+    Route::delete('papers/{paper}/conflicts/{conflict}', [App\Http\Controllers\Admin\PaperController::class, 'removeConflict'])->name('papers.conflicts.destroy');
 
     // Payments
     Route::get('set/payment/{data}', [PaymentController::class, 'setPayment'])->name('setPayment');

@@ -20,6 +20,7 @@ class PaperAuthor extends Model
         'is_presenting_author',
         'author_order',
         'is_student',
+        'price_id',
     ];
 
     protected $casts = [
@@ -35,5 +36,10 @@ class PaperAuthor extends Model
     public function country()
     {
         return $this->belongsTo(Country::class);
+    }
+
+    public function price()
+    {
+        return $this->belongsTo(Price::class);
     }
 }

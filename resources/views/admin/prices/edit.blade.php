@@ -24,11 +24,20 @@
             </div>
             <div class="row">
                 <div class="col-md-4">
-                    <div class="form-group {{ $errors->has('price') ? 'has-error' : '' }}">
-                        <label for="price">{{ trans('cruds.price.fields.price') }}*</label>
-                        <input type="number" id="price" name="price" class="form-control" value="{{ old('price', isset($price) ? $price->price : '') }}" step="0.01" required>
-                        @if($errors->has('price'))
-                            <p class="help-block">{{ $errors->first('price') }}</p>
+                    <div class="form-group {{ $errors->has('early_bird_price') ? 'has-error' : '' }}">
+                        <label for="early_bird_price">Early Bird Price*</label>
+                        <input type="number" id="early_bird_price" name="early_bird_price" class="form-control" value="{{ old('early_bird_price', $price->early_bird_price ?? '') }}" step="0.01" required>
+                        @if($errors->has('early_bird_price'))
+                            <p class="help-block">{{ $errors->first('early_bird_price') }}</p>
+                        @endif
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group {{ $errors->has('regular_price') ? 'has-error' : '' }}">
+                        <label for="regular_price">Regular / Late Price*</label>
+                        <input type="number" id="regular_price" name="regular_price" class="form-control" value="{{ old('regular_price', $price->regular_price ?? '') }}" step="0.01" required>
+                        @if($errors->has('regular_price'))
+                            <p class="help-block">{{ $errors->first('regular_price') }}</p>
                         @endif
                     </div>
                 </div>
@@ -41,15 +50,19 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="form-group {{ $errors->has('registration_type') ? 'has-error' : '' }}">
-                        <label for="registration_type">Registration Stage*</label>
-                        <select id="registration_type" name="registration_type" class="form-control" required>
-                            <option value="early_bird" {{ (old('registration_type', $price->registration_type ?? '') == 'early_bird') ? 'selected' : '' }}>Early Bird</option>
-                            <option value="regular" {{ (old('registration_type', $price->registration_type ?? '') == 'regular') ? 'selected' : '' }}>Regular / Standard</option>
-                        </select>
-                    </div>
-                </div>
+            </div>
+            <div class="form-group {{ $errors->has('category') ? 'has-error' : '' }}">
+                <label for="category">Registration Category*</label>
+                <select id="category" name="category" class="form-control" required>
+                    <option value="">-- Select --</option>
+                    @foreach(\App\Services\PricingService::CATEGORIES as $category)
+                        <option value="{{ $category }}" {{ (old('category', $price->category ?? '') == $category) ? 'selected' : '' }}>{{ ucfirst($category) }}</option>
+                    @endforeach
+                </select>
+                <p class="helper-block">Fees are matched on this category. A price without one is never charged to anyone.</p>
+                @if($errors->has('category'))
+                    <p class="help-block">{{ $errors->first('category') }}</p>
+                @endif
             </div>
             <div class="form-group {{ $errors->has('amenities') ? 'has-error' : '' }}">
                 <label for="amenities">{{ trans('cruds.price.fields.amenities') }}

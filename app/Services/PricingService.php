@@ -5,90 +5,175 @@ namespace App\Services;
 use App\Models\Setting;
 use App\Models\Profile;
 use App\Models\Domain;
+use App\Models\Price;
 use Carbon\Carbon;
 
+/**
+ * Fees come from the prices table, keyed by registration category and stage.
+ * Settings still supply the dates and the domain-discount switch, but no longer
+ * any amount: the old per-currency keys (usd_earlybird_price, bdt_regular_price, ...)
+ * could not express the Industry/R&D tier at all.
+ */
 class PricingService
 {
+    public const CATEGORIES = ['student', 'academic', 'industry', 'saarc', 'international'];
+
+    /**
+     * SAARC member states other than Bangladesh, matched against countries.name in
+     * lower case. Bangladesh is deliberately absent: local delegates are billed on
+     * the BDT tiers (student / academic / industry), not the USD SAARC rate.
+     * All eight names below were verified against the countries table.
+     */
+    private const SAARC_COUNTRIES = ['afghanistan', 'bhutan', 'india', 'maldives', 'nepal', 'pakistan', 'sri lanka'];
+
+    private const HOST_COUNTRY = 'bangladesh';
+
+    /**
+     * Which fee tiers a delegate from this country is entitled to choose.
+     *
+     * @param string|null $countryName
+     * @return array<int, string>
+     */
+    public static function allowedCategoriesFor($countryName)
+    {
+        $country = strtolower(trim($countryName ?? ''));
+
+        if ($country === self::HOST_COUNTRY) {
+            return ['student', 'academic', 'industry'];
+        }
+
+        if (in_array($country, self::SAARC_COUNTRIES, true)) {
+            return ['saarc'];
+        }
+
+        return ['international'];
+    }
+
+    /**
+     * Whether early-bird or regular rates currently apply.
+     *
+     * @return string 'early_bird' or 'regular'
+     */
+    public static function currentStage()
+    {
+        $configured = Setting::where('key', 'early_registration_last_date')->value('value');
+
+        try {
+            $earlyBirdDateLimit = $configured ? Carbon::parse($configured) : Carbon::parse('2000-01-01');
+        } catch (\Exception $e) {
+            \Log::warning("PricingService: Invalid early_registration_last_date format: '{$configured}'. Falling back to regular price.");
+            $earlyBirdDateLimit = Carbon::parse('2000-01-01');
+        }
+
+        return $earlyBirdDateLimit->gt(Carbon::now()) ? 'early_bird' : 'regular';
+    }
+
+    /**
+     * Work out which fee tier someone falls into when they have not been given an
+     * explicit price row: derived from student status and country.
+     *
+     * @param string|null $countryName
+     * @param bool $isStudent
+     * @return string one of self::CATEGORIES
+     */
+    public static function resolveCategory($countryName, $isStudent = false)
+    {
+        $allowed = self::allowedCategoriesFor($countryName);
+
+        // SAARC and international delegates have only one tier, so there is nothing to pick.
+        if (count($allowed) === 1) {
+            return $allowed[0];
+        }
+
+        // Bangladesh: students get the student tier, everyone else defaults to academic.
+        return $isStudent ? 'student' : 'academic';
+    }
+
+    /**
+     * @return Price|null
+     */
+    public static function priceFor($category)
+    {
+        $price = Price::where('category', $category)->first();
+
+        if (!$price) {
+            \Log::error("PricingService: No price row for category '{$category}'.");
+        }
+
+        return $price;
+    }
+
+    /**
+     * The price row that applies to a profile or paper author: the one explicitly
+     * assigned to them if there is one, otherwise the tier their country and
+     * student status put them in.
+     *
+     * @param \App\Models\Profile|\App\Models\PaperAuthor $holder
+     * @param string|null $fallbackCountryName
+     * @return Price|null
+     */
+    public static function priceRowFor($holder, $fallbackCountryName = null)
+    {
+        if ($holder->price_id && $holder->relationLoaded('price') === false) {
+            $holder->load('price');
+        }
+
+        if ($holder->price) {
+            return $holder->price;
+        }
+
+        return self::priceFor(self::resolveCategory(
+            $holder->country->name ?? $fallbackCountryName,
+            (bool) ($holder->is_student ?? false)
+        ));
+    }
+
     /**
      * Calculate the cost for a single abstract
-     * 
+     *
      * @param Profile $profile The user's profile
      * @param \App\Models\Paper|null $paper The paper being checked out
      * @return array Contains base_price, discount, final_price, currency, stage, authors_count
      */
     public static function calculatePaperCost(Profile $profile, ?\App\Models\Paper $paper = null)
     {
-        $settings = Setting::pluck('value', 'key');
-        
+        $stage = self::currentStage();
         $countryName = $profile->country->name ?? '';
-        
-        // 1. Determine base currency prefix
-        $prefix = self::determineCurrencyPrefix($countryName);
-        
-        // 2. Determine if earlybird or regular
-        $currentDate = Carbon::now();
-        $earlyBirdSetting = $settings['early_registration_last_date'] ?? null;
-        
-        try {
-            $earlyBirdDateLimit = $earlyBirdSetting ? Carbon::parse($earlyBirdSetting) : Carbon::parse('2000-01-01');
-        } catch (\Exception $e) {
-            \Log::warning("PricingService: Invalid early_registration_last_date format: '{$earlyBirdSetting}'. Falling back to regular price.");
-            $earlyBirdDateLimit = Carbon::parse('2000-01-01'); // Force regular
-        }
-        
-        $stage = $earlyBirdDateLimit->gt($currentDate) ? 'earlybird' : 'regular';
-        
-        // 3. Construct setting key
-        $settingKey = "{$prefix}_{$stage}_price";
-        if (!isset($settings[$settingKey])) {
-            \Log::error("PricingService: Missing pricing setting key: '{$settingKey}'");
-        }
-        $basePrice = (float) ($settings[$settingKey] ?? 0);
-        
-        // 4. Check for special domain discount (DEN Users)
-        $isSpecialDiscountTrue = ($settings['special_discount_is_true'] ?? 'false') === 'true';
-        $finalPrice = $basePrice;
-        
-        if ($isSpecialDiscountTrue) {
-            $userEmail = $profile->user->email ?? '';
-            $emailParts = explode('@', $userEmail);
-            $domain = end($emailParts);
-            
-            $allowedDomains = Domain::where('status', 1)->pluck('domain_name')->toArray();
-            
-            // If the user matches an allowed domain, they get the strict domain discount flat price
-            if (in_array($domain, $allowedDomains)) {
-                $flatDomainDiscountPrice = (float) ($settings['selected_domain_discount'] ?? $basePrice);
-                // Ensure we don't accidentally increase the price if the discount is misconfigured
-                if ($flatDomainDiscountPrice < $basePrice) {
-                    $finalPrice = $flatDomainDiscountPrice;
-                }
-            }
-        }
-        
-        $currencyCode = 'USD';
-        if ($prefix === 'bdt') $currencyCode = 'BDT';
-        elseif ($prefix === 'inr') $currencyCode = 'INR';
-        elseif ($prefix === 'eur') $currencyCode = 'EUR';
+
+        $profilePrice = self::priceRowFor($profile);
+
+        $basePrice = $profilePrice ? $profilePrice->amountFor($stage) : 0.0;
+        $currencyCode = strtoupper($profilePrice->currency ?? 'USD');
+        $finalPrice = self::applyDomainDiscount($profile, $basePrice);
 
         $totalBasePrice = 0;
         $totalFinalPrice = 0;
         $authorFees = [];
+
         if ($paper !== null) {
             $authors = $paper->authors()->get();
             $authorCount = max(1, $authors->count());
+
             foreach ($authors as $author) {
-                $authorCountryName = $author->country->name ?? $countryName;
-                $authorPrefix = self::determineCurrencyPrefix($authorCountryName);
-                if ($author->is_student && $authorPrefix === 'bdt') {
-                    $fee = 2000.0;
-                    $totalBasePrice += 2000.0;
-                    $totalFinalPrice += 2000.0;
+                $authorPrice = self::priceRowFor($author, $countryName);
+
+                // A paper carries one currency and one total, so an author whose own
+                // tier is priced in a different currency is billed at the registering
+                // author's rate rather than producing an uncomparable sum.
+                //
+                // Provisional, agreed with the organisers 2026-09-14: a foreign
+                // co-author therefore does not pay their own country's rate. Revisit
+                // by adding a configurable exchange rate if that becomes a problem.
+                if ($authorPrice && strtoupper($authorPrice->currency) === $currencyCode) {
+                    $authorBase = $authorPrice->amountFor($stage);
+                    $fee = self::applyDomainDiscount($profile, $authorBase);
                 } else {
+                    $authorBase = $basePrice;
                     $fee = $finalPrice;
-                    $totalBasePrice += $basePrice;
-                    $totalFinalPrice += $finalPrice;
                 }
+
+                $totalBasePrice += $authorBase;
+                $totalFinalPrice += $fee;
                 $authorFees[$author->id] = $fee;
             }
         } else {
@@ -110,37 +195,27 @@ class PricingService
             'author_fees' => $authorFees
         ];
     }
-    
+
     /**
      * Calculate the cost for a participant (non-author)
-     * 
+     *
      * @param Profile $profile
      * @return array Contains final_price and currency
      */
     public static function calculateParticipantPrice(Profile $profile)
     {
-        $settings = Setting::pluck('value', 'key');
-        $countryName = $profile->country->name ?? '';
-        $prefix = self::determineCurrencyPrefix($countryName);
-        
-        $settingKey = "{$prefix}_participant_price";
-        if (!isset($settings[$settingKey])) {
-            \Log::error("PricingService: Missing participant pricing setting key: '{$settingKey}'");
-        }
-        $price = (float) ($settings[$settingKey] ?? 0);
-        
-        $currencyCode = strtoupper($prefix);
+        $price = self::priceRowFor($profile);
 
         return [
-            'final_price' => $price,
-            'currency' => $currencyCode
+            'final_price' => $price ? $price->amountFor() : 0.0,
+            'currency' => strtoupper($price->currency ?? 'USD')
         ];
     }
 
     /**
      * Recalculates the total amount due for a user and updates their profile.
      * This is the "Source of Truth" for profiles.pay_amount.
-     * 
+     *
      * @param Profile $profile
      * @return void
      */
@@ -166,10 +241,8 @@ class PricingService
                       ->orWhere('payment_status', '!=', '1');
                 })
                 ->get();
-            
+
             foreach ($papers as $paper) {
-                // Determine the cost based on the number of co-authors
-                // We use the same Prefix and Stage as participants
                 $paperPricing = self::calculatePaperCost($profile, $paper);
                 $totalAmount += $paperPricing['final_price'];
                 $currency = $paperPricing['currency'];
@@ -181,44 +254,33 @@ class PricingService
             'currency' => $currency
         ]);
     }
-    
+
     /**
-     * Determines whether to charge BDT, INR, EUR, or USD
-     * 
-     * @param string $countryName Profile country name
-     * @return string Prefix
+     * Users on an approved email domain pay a flat negotiated rate, but only where
+     * that rate is actually lower than the tier they would otherwise pay.
+     *
+     * @return float
      */
-    public static function determineCurrencyPrefix($countryName)
+    private static function applyDomainDiscount(Profile $profile, $basePrice)
     {
-        $countryName = strtolower(trim($countryName ?? ''));
-        
-        if (empty($countryName)) {
-            return 'usd';
+        $settings = Setting::pluck('value', 'key');
+
+        if (($settings['special_discount_is_true'] ?? 'false') !== 'true') {
+            return $basePrice;
         }
-        
-        if ($countryName === 'bangladesh') {
-            return 'bdt';
+
+        $userEmail = $profile->user->email ?? '';
+        $emailParts = explode('@', $userEmail);
+        $domain = end($emailParts);
+
+        $allowedDomains = Domain::where('status', 1)->pluck('domain_name')->toArray();
+
+        if (!in_array($domain, $allowedDomains)) {
+            return $basePrice;
         }
-        
-        if ($countryName === 'india') {
-            return 'inr';
-        }
-        
-        $europeanCountries = [
-            'albania', 'andorra', 'austria', 'belarus', 'belgium', 'bosnia and herzegovina', 
-            'bulgaria', 'croatia', 'cyprus', 'czech republic', 'denmark', 'estonia', 
-            'finland', 'france', 'germany', 'greece', 'hungary', 'iceland', 'ireland', 
-            'italy', 'kosovo', 'latvia', 'liechtenstein', 'lithuania', 'luxembourg', 
-            'malta', 'moldova', 'monaco', 'montenegro', 'netherlands', 'north macedonia', 
-            'norway', 'poland', 'portugal', 'romania', 'russia', 'san marino', 
-            'serbia', 'slovakia', 'slovenia', 'spain', 'sweden', 'switzerland', 
-            'ukraine', 'united kingdom', 'vatican city'
-        ];
-        
-        if (in_array($countryName, $europeanCountries)) {
-            return 'eur';
-        }
-        
-        return 'usd';
+
+        $flatDomainDiscountPrice = (float) ($settings['selected_domain_discount'] ?? $basePrice);
+
+        return $flatDomainDiscountPrice < $basePrice ? $flatDomainDiscountPrice : $basePrice;
     }
 }

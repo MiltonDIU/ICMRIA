@@ -28,10 +28,26 @@
                     </tr>
                     <tr>
                         <th>
-                            {{ trans('cruds.price.fields.price') }}
+                            Category
                         </th>
                         <td>
-                            ${{ $price->price }}
+                            {{ $price->category ? ucfirst($price->category) : 'Not set' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            Early Bird Price
+                        </th>
+                        <td>
+                            {{ $price->currency_symbol }}{{ number_format($price->early_bird_price, 2) }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            Regular / Late Price
+                        </th>
+                        <td>
+                            {{ $price->currency_symbol }}{{ number_format($price->regular_price, 2) }}
                         </td>
                     </tr>
                     <tr>

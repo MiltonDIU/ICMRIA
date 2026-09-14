@@ -213,7 +213,30 @@ protected $noReferral = array(
             $aminities = Amenity::orderBy('id','desc')->get();
             $countries = \App\Models\Country::where('is_active', 1)->orderBy('name', 'asc')->get(['id', 'name']);
             $tracks = \App\Models\Track::with('subTracks')->get();
-            return view('main.registration',compact('settings','schedules','referral','aminities', 'countries', 'tracks'));
+            $prices = Price::orderBy('id')->get();
+            // Only the countries that are not plain "international" need listing;
+            // the form treats anything absent from this map as international.
+            $countryCategories = $countries->mapWithKeys(function ($country) {
+                return [$country->id => \App\Services\PricingService::allowedCategoriesFor($country->name)];
+            })->reject(function ($categories) {
+                return $categories === ['international'];
+            });
+            // Feeds the live "amount payable" figure shown above the submit button.
+            $priceTable = $prices->keyBy('id')->map(function ($price) {
+                return [
+                    'name'       => $price->name,
+                    'category'   => $price->category,
+                    'currency'   => $price->currency,
+                    'early_bird' => (float) $price->early_bird_price,
+                    'regular'    => (float) $price->regular_price,
+                ];
+            });
+            $currentStage = \App\Services\PricingService::currentStage();
+            $abstractMinWords = \App\Services\SubmissionRules::abstractMinWords();
+            $abstractMaxWords = \App\Services\SubmissionRules::abstractMaxWords();
+            $keywordsMin = \App\Services\SubmissionRules::keywordsMin();
+            $keywordsMax = \App\Services\SubmissionRules::keywordsMax();
+            return view('main.registration',compact('settings','schedules','referral','aminities', 'countries', 'tracks', 'prices', 'countryCategories', 'priceTable', 'currentStage', 'abstractMinWords', 'abstractMaxWords', 'keywordsMin', 'keywordsMax'));
         }
 
     }

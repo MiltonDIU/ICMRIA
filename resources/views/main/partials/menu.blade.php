@@ -333,6 +333,30 @@
                 </li>
                 @endif
                 @endcan
+                @can('track_access')
+                <li class="nav-item">
+                    <a href="{{ route("admin.tracks.index") }}" class="nav-link {{ request()->is('admin/tracks') || request()->is('admin/tracks/*') || request()->is('admin/sub-tracks*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-sitemap">
+
+                        </i>
+                        <p>
+                            <span>Tracks &amp; Chairs</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
+                @can('review_assign')
+                <li class="nav-item">
+                    <a href="{{ route("admin.track-reviewers.index") }}" class="nav-link {{ request()->is('admin/track-reviewers*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-user-check">
+
+                        </i>
+                        <p>
+                            <span>Reviewers by Track</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
                 @can('track_report')
                 <li class="nav-item">
                     <a href="{{ route("admin.tracks-report") }}" class="nav-link {{ request()->is('admin/tracks-report*') ? 'active' : '' }}">

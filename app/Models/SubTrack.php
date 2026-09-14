@@ -20,4 +20,14 @@ class SubTrack extends Model
     {
         return $this->hasMany(Paper::class);
     }
+
+    public function assignments()
+    {
+        return $this->hasMany(TrackAssignment::class);
+    }
+
+    public function chairs()
+    {
+        return $this->hasMany(TrackAssignment::class)->chairs();
+    }
 }

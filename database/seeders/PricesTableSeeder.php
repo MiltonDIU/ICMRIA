@@ -11,12 +11,14 @@ use Illuminate\Support\Facades\Schema;
  * ICMRIA 2027 Conference Registration Pricing.
  * Source: Requirement document, section 5 "Registration Info and Cost Structure".
  *
- * Categories:
- *   - International Presenter/Participant: Early US$ 150 / Late US$ 175
- *   - SAARC Presenter/Participant:         Early US$ 100 / Late US$ 75
- *   - Student Presenter/Participant:       Early BDT 4,000 / Late BDT 5,000
- *   - Industry/R&D Presenter/Participant:  Early BDT 6,500 / Late BDT 7,500
- *   - Academic Presenter/Participant:      Early BDT 6,000 / Late BDT 7,000
+ * One row per category, carrying both stages. A profile stores this row's id, so
+ * when early-bird closes the amount due moves to regular_price without the profile
+ * ever having to point at a different row.
+ *
+ * The requirement document prints SAARC as "Early US$ 100 / Late US$ 75". That row
+ * is wrong on its face (late cheaper than early); the organisers confirmed 75/175.
+ *
+ * `category` is the slug PricingService matches on, never the display name.
  */
 class PricesTableSeeder extends Seeder
 {
@@ -33,72 +35,40 @@ class PricesTableSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         $prices = [
-            // ==========================================
-            // Early Bird Registration
-            // ==========================================
             [
-                'name'              => 'Student Presenter / Participant',
-                'price'             => 4000,
-                'currency'          => 'BDT',
-                'registration_type' => 'early_bird',
+                'name'             => 'Student Presenter / Participant',
+                'category'         => 'student',
+                'early_bird_price' => 4000,
+                'regular_price'    => 5000,
+                'currency'         => 'BDT',
             ],
             [
-                'name'              => 'Academic Presenter / Participant',
-                'price'             => 6000,
-                'currency'          => 'BDT',
-                'registration_type' => 'early_bird',
+                'name'             => 'Academic Presenter / Participant',
+                'category'         => 'academic',
+                'early_bird_price' => 6000,
+                'regular_price'    => 7000,
+                'currency'         => 'BDT',
             ],
             [
-                'name'              => 'Industry / R&D Presenter / Participant',
-                'price'             => 6500,
-                'currency'          => 'BDT',
-                'registration_type' => 'early_bird',
+                'name'             => 'Industry / R&D Presenter / Participant',
+                'category'         => 'industry',
+                'early_bird_price' => 6500,
+                'regular_price'    => 7500,
+                'currency'         => 'BDT',
             ],
             [
-                'name'              => 'SAARC Presenter / Participant',
-                'price'             => 75,
-                'currency'          => 'USD',
-                'registration_type' => 'early_bird',
+                'name'             => 'SAARC Presenter / Participant',
+                'category'         => 'saarc',
+                'early_bird_price' => 75,
+                'regular_price'    => 175,
+                'currency'         => 'USD',
             ],
             [
-                'name'              => 'International Presenter / Participant',
-                'price'             => 150,
-                'currency'          => 'USD',
-                'registration_type' => 'early_bird',
-            ],
-
-            // ==========================================
-            // Regular / Late Registration
-            // ==========================================
-            [
-                'name'              => 'Student Presenter / Participant',
-                'price'             => 5000,
-                'currency'          => 'BDT',
-                'registration_type' => 'regular',
-            ],
-            [
-                'name'              => 'Academic Presenter / Participant',
-                'price'             => 7000,
-                'currency'          => 'BDT',
-                'registration_type' => 'regular',
-            ],
-            [
-                'name'              => 'Industry / R&D Presenter / Participant',
-                'price'             => 7500,
-                'currency'          => 'BDT',
-                'registration_type' => 'regular',
-            ],
-            [
-                'name'              => 'SAARC Presenter / Participant',
-                'price'             => 175,
-                'currency'          => 'USD',
-                'registration_type' => 'regular',
-            ],
-            [
-                'name'              => 'International Presenter / Participant',
-                'price'             => 175,
-                'currency'          => 'USD',
-                'registration_type' => 'regular',
+                'name'             => 'International Presenter / Participant',
+                'category'         => 'international',
+                'early_bird_price' => 150,
+                'regular_price'    => 175,
+                'currency'         => 'USD',
             ],
         ];
 

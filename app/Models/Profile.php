@@ -17,6 +17,8 @@ class Profile extends Model
         'designation',
         'department',
         'institution',
+        'orcid_id',
+        'price_id',
         'country_id',
         'registration_id',
         'whatsapp_number',
@@ -50,5 +52,10 @@ class Profile extends Model
     public function country()
     {
         return $this->belongsTo(Country::class);
+    }
+
+    public function price()
+    {
+        return $this->belongsTo(Price::class);
     }
 }

@@ -110,41 +110,40 @@
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                <tr style="background: #F8FAFC;">
-                                                    <td colspan="3" class="text-left font-weight-bold py-1 px-2" style="font-size: 11px; color: #003366;">
-                                                        <i class="fa fa-flag text-primary mr-1"></i> National Delegates (BDT - ৳)
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">Student</span> Presenter / Delegate</td>
-                                                    <td class="text-primary font-weight-bold py-2">৳4,000</td>
-                                                    <td class="py-2">৳5,000</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">Academic</span> Faculty / Scholar</td>
-                                                    <td class="text-primary font-weight-bold py-2">৳6,000</td>
-                                                    <td class="py-2">৳7,000</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">Industry</span> Corporate / R&D</td>
-                                                    <td class="text-primary font-weight-bold py-2">৳6,500</td>
-                                                    <td class="py-2">৳7,500</td>
-                                                </tr>
-                                                <tr style="background: #F8FAFC;">
-                                                    <td colspan="3" class="text-left font-weight-bold py-1 px-2" style="font-size: 11px; color: #003366;">
-                                                        <i class="fa fa-globe text-primary mr-1"></i> International & SAARC (USD - $)
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">SAARC</span> Nations Delegate</td>
-                                                    <td class="text-primary font-weight-bold py-2">US$ 75</td>
-                                                    <td class="py-2">US$ 175</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-left py-2 px-2"><span class="badge badge-light border mr-1">International</span> Delegate</td>
-                                                    <td class="text-primary font-weight-bold py-2">US$ 150</td>
-                                                    <td class="py-2">US$ 175</td>
-                                                </tr>
+                                                @php
+                                                    $feeGroups = [
+                                                        'BDT' => ['label' => 'National Delegates (BDT - ৳)', 'icon' => 'fa-flag'],
+                                                        'USD' => ['label' => 'International & SAARC (USD - $)', 'icon' => 'fa-globe'],
+                                                    ];
+                                                    $feeRowLabels = [
+                                                        'student'       => ['Student', 'Presenter / Delegate'],
+                                                        'academic'      => ['Academic', 'Faculty / Scholar'],
+                                                        'industry'      => ['Industry', 'Corporate / R&D'],
+                                                        'saarc'         => ['SAARC', 'Nations Delegate'],
+                                                        'international' => ['International', 'Delegate'],
+                                                    ];
+                                                @endphp
+                                                @foreach($feeGroups as $groupCurrency => $group)
+                                                    @php $groupPrices = $prices->where('currency', $groupCurrency); @endphp
+                                                    @if($groupPrices->isNotEmpty())
+                                                        <tr style="background: #F8FAFC;">
+                                                            <td colspan="3" class="text-left font-weight-bold py-1 px-2" style="font-size: 11px; color: #003366;">
+                                                                <i class="fa {{ $group['icon'] }} text-primary mr-1"></i> {{ $group['label'] }}
+                                                            </td>
+                                                        </tr>
+                                                        @foreach($groupPrices as $feeRow)
+                                                            <tr>
+                                                                @php $feeLabel = $feeRowLabels[$feeRow->category] ?? [ucfirst((string) $feeRow->category), 'Delegate']; @endphp
+                                                                <td class="text-left py-2 px-2">
+                                                                    <span class="badge badge-light border mr-1">{{ $feeLabel[0] }}</span>
+                                                                    {{ $feeLabel[1] }}
+                                                                </td>
+                                                                <td class="text-primary font-weight-bold py-2">{{ $feeRow->currency_symbol }}{{ number_format($feeRow->early_bird_price) }}</td>
+                                                                <td class="py-2">{{ $feeRow->currency_symbol }}{{ number_format($feeRow->regular_price) }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endif
+                                                @endforeach
                                                 </tbody>
                                             </table>
                                         </div>
@@ -157,19 +156,19 @@
                                         </h6>
                                         <div class="timeline-row d-flex justify-content-between py-1 border-bottom" style="font-size: 12px;">
                                             <span class="text-muted"><i class="fa fa-circle text-info mr-1" style="font-size: 8px;"></i> Abstract Deadline</span>
-                                            <span class="font-weight-bold text-dark">30 Oct 2026</span>
+                                            <span class="font-weight-bold text-dark">{{ $eventAbstractDeadline->format('j M Y') }}</span>
                                         </div>
                                         <div class="timeline-row d-flex justify-content-between py-1 border-bottom" style="font-size: 12px;">
                                             <span class="text-muted"><i class="fa fa-circle text-primary mr-1" style="font-size: 8px;"></i> Early Bird Payment</span>
-                                            <span class="font-weight-bold text-primary">Till 10 Dec 2026</span>
+                                            <span class="font-weight-bold text-primary">Till {{ $eventEarlyRegDate->format('j M Y') }}</span>
                                         </div>
                                         <div class="timeline-row d-flex justify-content-between py-1 border-bottom" style="font-size: 12px;">
                                             <span class="text-muted"><i class="fa fa-circle text-danger mr-1" style="font-size: 8px;"></i> Registration Close</span>
-                                            <span class="font-weight-bold text-danger">26 Dec 2026</span>
+                                            <span class="font-weight-bold text-danger">{{ $eventCloseDate->format('j M Y') }}</span>
                                         </div>
                                         <div class="timeline-row d-flex justify-content-between py-1" style="font-size: 12px;">
                                             <span class="text-muted"><i class="fa fa-flag text-success mr-1" style="font-size: 8px;"></i> Conference Dates</span>
-                                            <span class="font-weight-bold text-success">9–10 Jan 2027</span>
+                                            <span class="font-weight-bold text-success">{!! $settings['about_when'] ?? '9–10 Jan 2027' !!}</span>
                                         </div>
                                     </div>
 
@@ -298,6 +297,32 @@
                                             </div>
                                         </div>
 
+                                        <div class="mb-3">
+                                            <label for="orcid_id"><strong>ORCID iD</strong></label>
+                                            <input type="text" id="orcid_id" name="orcid_id" class="form-control @error('orcid_id') is-invalid @enderror"
+                                                   value="{{ old('orcid_id') }}" placeholder="0000-0000-0000-0000" maxlength="19">
+                                            <small class="form-text text-muted">
+                                                Optional. Sixteen digits in four groups, e.g. 0000-0002-1825-0097. The last character may be an X.
+                                            </small>
+                                            @error('orcid_id') <span class="invalid-feedback"><strong>{{ $message }}</strong></span> @enderror
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="price_id"><strong>Delegate Category*</strong></label>
+                                            <select id="price_id" name="price_id" class="form-control @error('price_id') is-invalid @enderror" required>
+                                                <option value="">Select the category that applies to you</option>
+                                                @foreach($prices as $priceOption)
+                                                    <option value="{{ $priceOption->id }}" data-category="{{ $priceOption->category }}" {{ old('price_id') == $priceOption->id ? 'selected' : '' }}>
+                                                        {{ $priceOption->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <small class="form-text text-muted">
+                                                See the fee table for the rate of each category. Early bird rates apply until {{ $eventEarlyRegDate->format('j M Y') }}.
+                                            </small>
+                                            @error('price_id') <span class="invalid-feedback"><strong>{{ $message }}</strong></span> @enderror
+                                        </div>
+
                                         {{--                                        <div class="mb-4">--}}
                                         {{--                                            <label><strong>Mode of Participation*</strong></label><br>--}}
                                         {{--                                            <div class="form-check form-check-inline">--}}
@@ -381,19 +406,17 @@
                                             </div>
 
                                             <div class="mb-3">
-                                                <label for="abstract_text"><strong>Abstract (Max 300 words)*</strong></label>
+                                                <label for="abstract_text"><strong>Abstract ({{ $abstractMinWords }}-{{ $abstractMaxWords }} words)*</strong></label>
                                                 <textarea id="abstract_text" name="abstract_text" class="form-control" rows="6" oninput="countWords()" onkeydown="preventExtraWords(event)">{{ old('abstract_text') }}</textarea>
-                                                <div id="word_count_display" class="small mt-1 text-muted">Words: <span id="word_count">0</span> / 300</div>
+                                                <div id="word_count_display" class="small mt-1 text-muted">Words: <span id="word_count">0</span> / {{ $abstractMaxWords }}</div>
                                                 @error('abstract_text') <span class="text-danger small"><strong>{{ $message }}</strong></span> @enderror
                                             </div>
 
+                                            <div class="mb-3">
+                                                @include('partials.keyword-tags')
+                                            </div>
+
                                             <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="keywords"><strong>Keywords (3-5 separated by commas)*</strong></label>
-                                                    <input type="text" id="keywords" name="keywords" class="form-control" placeholder="keyword1, keyword2, ..." value="{{ old('keywords') }}" oninput="countKeywords('keywords', 'keyword_count')" onkeydown="preventExtraKeywords(event)">
-                                                    <div id="keyword_count_display" class="small mt-1 text-muted">Keywords: <span id="keyword_count">0</span> / 5</div>
-                                                    @error('keywords') <span class="text-danger small"><strong>{{ $message }}</strong></span> @enderror
-                                                </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="track_id"><strong>Conference Track*</strong></label>
                                                     <select id="track_id" name="track_id" class="form-control" onchange="updateSubTracks()">
@@ -493,6 +516,8 @@
                                             <input type="text" name="extra_info" id="extra_info" value="">
                                         </div>
 
+                                        @include('partials.fee-summary')
+
                                         <div class="row pt-4 border-top">
                                             <div class="col-md-12">
                                                 <div id="action_buttons_participant" style="display: {{ old('is_author') == '1' ? 'none' : 'block' }};">
@@ -548,12 +573,31 @@
                     <input type="text" name="co_authors[{index}][institution]" class="form-control form-control-sm" placeholder="Institution*" required>
                 </div>
                 <div class="col-md-6 mb-2">
-                    <select name="co_authors[{index}][country_id]" class="form-control form-control-sm" required>
+                    <select name="co_authors[{index}][country_id]" class="form-control form-control-sm delegate-country-select" required>
                         <option value="">Select Country*</option>
                         @foreach($countries as $country)
                             <option value="{{ $country->id }}">{{ $country->name }}</option>
                         @endforeach
                     </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <select name="co_authors[{index}][price_id]" class="form-control form-control-sm delegate-category-select" required>
+                        <option value="">Delegate Category*</option>
+                        @foreach($prices as $priceOption)
+                            <option value="{{ $priceOption->id }}" data-category="{{ $priceOption->category }}">{{ $priceOption->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6 mb-2 d-flex align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="hidden" name="co_authors[{index}][is_student]" value="0">
+                        <input type="checkbox" class="custom-control-input co-author-student" id="co_student_{index}" name="co_authors[{index}][is_student]" value="1">
+                        <label class="custom-control-label" for="co_student_{index}">
+                            This co-author is a student
+                        </label>
+                    </div>
                 </div>
             </div>
             <label class="presenting-author-card mt-2" for="presenter_{index}">
@@ -574,90 +618,36 @@
         let coAuthorIndex = {{ old('co_authors') ? count(old('co_authors')) : 0 }};
         const tracks = @json($tracks);
 
-        function preventExtraWords(event) {
-            const textarea = event.target;
-            const text = textarea.value;
-            const wordsArray = text.trim().split(/\s+/).filter(w => w !== '');
-            const wordCount = wordsArray.length;
+        // Limits come from the settings table via App\Services\SubmissionRules,
+        // so these counters can never disagree with the server-side validator.
+        const ABSTRACT_MIN_WORDS = {{ $abstractMinWords }};
+        const ABSTRACT_MAX_WORDS = {{ $abstractMaxWords }};
 
-            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Escape'];
-
-            if (event.ctrlKey || event.metaKey) {
-                return;
-            }
-
-            // If key is a character/space/punctuation key
-            if (event.key.length === 1 && !allowedKeys.includes(event.key)) {
-                if (textarea.selectionStart !== textarea.selectionEnd) {
-                    return; // Allow replacing selection
-                }
-
-                // If strictly greater than 300 words, block all character typing
-                if (wordCount > 300) {
-                    event.preventDefault();
-                    return;
-                }
-
-                // If exactly 300 words
-                if (wordCount === 300) {
-                    // Block space (which would start the 301st word)
-                    if (event.key === ' ' || event.key === 'Spacebar') {
-                        event.preventDefault();
-                        return;
-                    }
-
-                    // If the last character is whitespace and the cursor is at the end,
-                    // typing any character would start the 301st word. Block it!
-                    const lastChar = text.slice(-1);
-                    if (/\s/.test(lastChar) && textarea.selectionStart === text.length) {
-                        event.preventDefault();
-                    }
-                }
-            }
+        function splitWords(text) {
+            return text.trim().split(/\s+/).filter(w => w !== '');
         }
 
-        function preventExtraKeywords(event) {
-            const input = event.target;
-            const value = input.value;
+        // Stops the abstract growing past the limit. Editing or deleting inside the
+        // existing text stays free; only keystrokes that would start a new word are
+        // refused once the cap is reached.
+        function preventExtraWords(event) {
+            const textarea = event.target;
+            if (event.ctrlKey || event.metaKey) return;
+            if (event.key.length !== 1) return;
+            if (textarea.selectionStart !== textarea.selectionEnd) return;
 
-            let commaCount = 0;
-            for (let i = 0; i < value.length; i++) {
-                if (value[i] === ',') {
-                    commaCount++;
-                }
-            }
+            const wordCount = splitWords(textarea.value).length;
+            if (wordCount < ABSTRACT_MAX_WORDS) return;
 
-            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Escape'];
-
-            if (event.ctrlKey || event.metaKey) {
+            if (wordCount > ABSTRACT_MAX_WORDS) {
+                event.preventDefault();
                 return;
             }
 
-            if (event.key.length === 1 && !allowedKeys.includes(event.key)) {
-                if (input.selectionStart !== input.selectionEnd) {
-                    return;
-                }
-
-                // Block the 5th comma
-                if (commaCount >= 4 && event.key === ',') {
-                    event.preventDefault();
-                    return;
-                }
-
-                // Lock character typing completely if there are already 5 keywords and they are typing after a trailing comma
-                const keywords = value.split(',');
-                const nonEmptyKeywords = keywords.map(k => k.trim()).filter(k => k !== '');
-
-                if (nonEmptyKeywords.length >= 5) {
-                    if (event.key === ',') {
-                        event.preventDefault();
-                        return;
-                    }
-                    const trimmedValue = value.trim();
-                    if (trimmedValue.endsWith(',') && input.selectionStart === value.length) {
-                        event.preventDefault();
-                    }
-                }
+            const atEnd = textarea.selectionStart === textarea.value.length;
+            const wouldStartNewWord = event.key === ' ' || /\s$/.test(textarea.value);
+            if (atEnd && wouldStartNewWord) {
+                event.preventDefault();
             }
         }
 
@@ -667,102 +657,29 @@
             const counter = document.getElementById('word_count');
             const display = document.getElementById('word_count_display');
 
-            let text = textarea.value;
-            const wordsArray = text.trim().split(/\s+/).filter(w => w !== '');
-            let wordCount = wordsArray.length;
-
-            if (wordCount > 300) {
-                let count = 0;
-                let lastIndex = 0;
-                const regex = /\S+/g;
-                let match;
-                while ((match = regex.exec(text)) !== null) {
-                    count++;
-                    if (count === 300) {
-                        lastIndex = regex.lastIndex;
-                        break;
-                    }
-                }
-                if (lastIndex > 0) {
-                    textarea.value = text.substring(0, lastIndex);
-                }
-                wordCount = 300;
+            // Pasting can still overshoot the cap, so trim back to it.
+            let words = splitWords(textarea.value);
+            if (words.length > ABSTRACT_MAX_WORDS) {
+                textarea.value = words.slice(0, ABSTRACT_MAX_WORDS).join(' ');
+                words = splitWords(textarea.value);
             }
 
+            const wordCount = words.length;
             counter.innerText = wordCount;
 
-            if (wordCount > 300) {
-                display.classList.remove('text-muted');
-                display.classList.add('text-danger', 'font-weight-bold');
-            } else {
-                display.classList.remove('text-danger', 'font-weight-bold');
-                display.classList.add('text-muted');
-            }
+            // Empty is flagged at once because the abstract is mandatory. Once there
+            // is text it stays green: being short of the minimum only means the
+            // author is not finished writing. Red returns if the cap is exceeded.
+            const ok = wordCount > 0 && wordCount <= ABSTRACT_MAX_WORDS;
+            display.classList.remove('text-muted');
+            display.classList.toggle('text-success', ok);
+            display.classList.toggle('text-danger', !ok);
+            display.classList.toggle('font-weight-bold', !ok);
         }
 
-        function countKeywords(inputId, countId) {
-            const input = document.getElementById(inputId);
-            const counter = document.getElementById(countId);
-            const display = document.getElementById(inputId + '_count_display');
-
-            let value = input.value;
-
-            let commaCount = 0;
-            let fifthCommaIndex = -1;
-            for (let i = 0; i < value.length; i++) {
-                if (value[i] === ',') {
-                    commaCount++;
-                    if (commaCount === 5) {
-                        fifthCommaIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            let keywords = value.split(',');
-            let nonEmptyKeywords = keywords.map(k => k.trim()).filter(k => k !== '');
-
-            if (fifthCommaIndex !== -1 || nonEmptyKeywords.length > 5) {
-                let truncateIndex = fifthCommaIndex;
-                if (truncateIndex === -1) {
-                    let c = 0;
-                    for (let i = 0; i < value.length; i++) {
-                        if (value[i] === ',') {
-                            c++;
-                            if (c === 5) {
-                                truncateIndex = i;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (truncateIndex !== -1) {
-                    input.value = value.substring(0, truncateIndex);
-                } else {
-                    input.value = nonEmptyKeywords.slice(0, 5).join(', ');
-                }
-
-                value = input.value;
-                keywords = value.split(',');
-                nonEmptyKeywords = keywords.map(k => k.trim()).filter(k => k !== '');
-            }
-
-            const count = nonEmptyKeywords.length;
-            counter.innerText = count;
-
-            if (count < 3 || count > 5) {
-                display.classList.remove('text-muted');
-                display.classList.add('text-danger', 'font-weight-bold');
-            } else {
-                display.classList.remove('text-danger', 'font-weight-bold');
-                display.classList.add('text-muted');
-            }
-        }
-
-        // Initialize counts on load
+        // Initialize counts on load. The keyword chips bring their own init.
         document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('abstract_text')) countWords();
-            if (document.getElementById('keywords')) countKeywords('keywords', 'keyword_count');
         });
 
         function updateSubTracks() {
@@ -797,8 +714,10 @@
             if (abstractSection) {
                 abstractSection.style.display = showForm ? 'block' : 'none';
 
-                // Toggle required attributes for ALL fields within abstract section
-                const fields = abstractSection.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea, select');
+                // Every field in the section becomes required, except those marked to
+                // opt out — the keyword chip editor is emptied after each entry, so
+                // requiring it would make the form impossible to submit.
+                const fields = abstractSection.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([data-skip-required]), textarea, select');
                 fields.forEach(el => {
                     if (showForm) {
                         el.setAttribute('required', '');
@@ -854,6 +773,19 @@
                 if (countrySelect && data.country_id) {
                     countrySelect.value = data.country_id;
                 }
+
+                const priceSelect = entry.querySelector(`select[name="co_authors[${coAuthorIndex}][price_id]"]`);
+                if (countrySelect && priceSelect) {
+                    syncCategoryOptions(countrySelect, priceSelect);
+                    if (data.price_id) {
+                        priceSelect.value = data.price_id;
+                    }
+                }
+
+                const studentCheckbox = entry.querySelector('.co-author-student');
+                if (studentCheckbox) {
+                    studentCheckbox.checked = String(data.is_student) === '1';
+                }
             }
 
             // Restore presenting author radio selection if it matches the old index
@@ -866,6 +798,7 @@
 
             updateAuthorIndices();
             coAuthorIndex++;
+            renderFeeSummary();
         }
 
         function removeCoAuthor(btn) {
@@ -882,6 +815,8 @@
                     mainPresenter.checked = true;
                 }
             }
+
+            renderFeeSummary();
         }
 
         function updateAuthorIndices() {
@@ -899,9 +834,65 @@
         @endif
 
 
+        // Delegate category depends on country: Bangladesh gets the BDT tiers, the
+        // other SAARC states get the SAARC rate, everyone else is international.
+        // Countries absent from this map are international. The server enforces the
+        // same rule via App\Rules\DelegateCategoryMatchesCountry.
+        const allowedCategoriesByCountry = @json($countryCategories);
+        const defaultAllowedCategories = ['international'];
+
+        function allowedCategoriesFor(countryId) {
+            return allowedCategoriesByCountry[countryId] || defaultAllowedCategories;
+        }
+
+        function syncCategoryOptions(countrySelect, categorySelect) {
+            if (!countrySelect || !categorySelect) return;
+
+            const allowed = allowedCategoriesFor(countrySelect.value);
+            let selectedStillAllowed = false;
+
+            Array.from(categorySelect.options).forEach(option => {
+                if (!option.value) return;
+                const permitted = allowed.includes(option.dataset.category);
+                option.hidden = !permitted;
+                option.disabled = !permitted;
+                if (permitted && option.selected) selectedStillAllowed = true;
+            });
+
+            if (!selectedStillAllowed) {
+                categorySelect.value = allowed.length === 1
+                    ? (Array.from(categorySelect.options).find(o => o.dataset.category === allowed[0])?.value || '')
+                    : '';
+            }
+        }
+
+        function syncMainCategoryOptions() {
+            syncCategoryOptions(
+                document.getElementById('country_id'),
+                document.getElementById('price_id')
+            );
+        }
+
+        document.addEventListener('change', event => {
+            if (event.target.id === 'country_id') {
+                syncMainCategoryOptions();
+                renderFeeSummary();
+                return;
+            }
+            if (event.target.classList.contains('delegate-country-select')) {
+                const row = event.target.closest('.co-author-entry');
+                if (row) {
+                    syncCategoryOptions(event.target, row.querySelector('.delegate-category-select'));
+                }
+            }
+            renderFeeSummary();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             toggleAbstractSection();
             updateSubTracks();
+            syncMainCategoryOptions();
+            renderFeeSummary();
         });
 
         // Placeholder — reserved for future submit button state logic

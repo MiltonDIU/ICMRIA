@@ -22,16 +22,23 @@ class UpdatePriceRequest extends FormRequest
             'name'        => [
                 'required',
             ],
-            'price'       => [
+            'early_bird_price' => [
                 'required',
+                'numeric',
+                'min:0',
+            ],
+            'regular_price' => [
+                'required',
+                'numeric',
+                'min:0',
             ],
             'currency'    => [
                 'nullable',
                 'string',
             ],
-            'registration_type' => [
-                'nullable',
-                'string',
+            'category'    => [
+                'required',
+                'in:' . implode(',', \App\Services\PricingService::CATEGORIES),
             ],
             'amenities.*' => [
                 'integer',

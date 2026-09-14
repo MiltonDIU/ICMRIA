@@ -462,7 +462,7 @@ We are pleased to inform you that your payment has been <strong>successfully</st
                                                         @endphp
                                                         <tr class="border-bottom">
                                                             <td class="py-3 font-weight-bold text-dark">{{ $up->submission_id }} <small class="text-muted">({{ $pricing['authors_count'] }} author{{ $pricing['authors_count'] > 1 ? 's' : '' }})</small></td>
-                                                            <td class="py-3 align-middle"><span class="badge badge-info">{{ ucfirst($pricing['stage']) }} Price</span></td>
+                                                            <td class="py-3 align-middle"><span class="badge badge-info">{{ ucwords(str_replace('_', ' ', $pricing['stage'])) }} Price</span></td>
                                                             <td class="py-3 text-right font-weight-bold text-dark">{{ $pricing['currency'] }} {{ number_format($pricing['final_price'], 2) }}</td>
                                                         </tr>
                                                         @if($pricing['authors_count'] > 1)

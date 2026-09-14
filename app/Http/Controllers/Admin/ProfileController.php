@@ -38,7 +38,10 @@ class ProfileController extends Controller
 
         $user = auth()->user()->roles->contains(3);
         if ($user === true){
-            $emails = 'Null';
+            // An author sees only their own record, and none of the bulk-mail options.
+            // Kept as an empty collection rather than a string so the view can iterate
+            // it safely whatever the caller does.
+            $emails = collect();
             $profiles = Profile::where('user_id',$loged->id)->with(['user.papers.authors', 'country'])->get();
         }else{
             $emails = CustomMail::where('publication_status',1)->get();
@@ -257,7 +260,7 @@ class ProfileController extends Controller
         $user = auth()->user()->roles->contains(3);
         $loged = Auth::user();
         if ($user === true){
-            $emails = 'Null';
+            $emails = collect();
             $profiles = Profile::where('user_id',$loged->id)->with(['user.papers.authors', 'country'])->get();
         }else{
             $emails = CustomMail::where('publication_status',1)->get();

@@ -95,6 +95,9 @@ class RegisterController extends Controller
             'designation' => ['required', 'string', 'max:255', $noPhpTags],
             'institution' => ['required', 'string', 'max:255', $noPhpTags],
             'country_id' => ['required', 'exists:countries,id'],
+            'price_id' => ['required', 'exists:prices,id', new \App\Rules\DelegateCategoryMatchesCountry($data['country_id'] ?? null)],
+            // ORCID iDs are 16 digits in groups of four; the final character may be X.
+            'orcid_id' => ['nullable', 'regex:/^\d{4}-\d{4}-\d{4}-\d{3}[\dXx]$/'],
             'whatsapp_number' => ['required', 'string', 'max:20', $noPhpTags],
 //            'participation_mode' => ['required', 'in:onsite,online'],
 //            'is_author' => ['required', 'boolean'],
@@ -111,19 +114,8 @@ class RegisterController extends Controller
 
             if ($isSubmissionOpen) {
                 $rules['paper_title'] = ['required', 'string', 'max:500', $noPhpTags];
-                $rules['abstract_text'] = ['required', 'string', $noPhpTags, function ($attribute, $value, $fail) {
-                    $wordCount = !empty(trim($value)) ? preg_match_all('/\s+/', trim($value)) + 1 : 0;
-                    if ($wordCount > 300) {
-                        $fail('The abstract must not exceed 300 words. (Current count: ' . $wordCount . ')');
-                    }
-                }];
-                $rules['keywords'] = ['required', 'string', 'max:255', $noPhpTags, function ($attribute, $value, $fail) {
-                    $keywords = array_filter(array_map('trim', explode(',', $value)));
-                    $count = count($keywords);
-                    if ($count < 3 || $count > 5) {
-                        $fail('Please provide between 3 and 5 keywords separated by commas. (Current count: ' . $count . ')');
-                    }
-                }];
+                $rules['abstract_text'] = \App\Services\SubmissionRules::abstractRules([$noPhpTags]);
+                $rules['keywords'] = \App\Services\SubmissionRules::keywordRules([$noPhpTags]);
                 $rules['track_id'] = ['required', 'exists:tracks,id'];
                 $rules['sub_track_id'] = ['required', 'exists:sub_tracks,id'];
                 $rules['is_corresponding_author'] = ['required', 'boolean'];
@@ -143,6 +135,8 @@ class RegisterController extends Controller
                         $rules["co_authors.$index.designation"] = ['required', 'string', 'max:255', $noPhpTags];
                         $rules["co_authors.$index.institution"] = ['required', 'string', 'max:255', $noPhpTags];
                         $rules["co_authors.$index.country_id"] = ['required', 'exists:countries,id'];
+                        $rules["co_authors.$index.price_id"] = ['required', 'exists:prices,id', new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
+                        $rules["co_authors.$index.is_student"] = ['nullable', 'in:0,1'];
                     }
                 }
             }
@@ -194,6 +188,8 @@ class RegisterController extends Controller
                 'institution' => $data['institution'],
                 'department' => $data['department'] ?? null,
                 'country_id' => $data['country_id'],
+                'orcid_id' => $data['orcid_id'] ?? null,
+                'price_id' => $data['price_id'] ?? null,
                 'is_author' => isset($data['is_author']) && $data['is_author'] == "1",
                 'participation_mode' => $data['participation_mode'] ?? 'onsite',
                 'registration_id' => \App\Services\IdGeneratorService::generateRegistrationId(),
@@ -213,7 +209,7 @@ class RegisterController extends Controller
                     'submission_id' => \App\Services\IdGeneratorService::generateSubmissionId(),
                     'title' => $data['paper_title'] ?? 'N/A',
                     'abstract' => $data['abstract_text'] ?? 'N/A',
-                    'keywords' => $data['keywords'] ?? 'N/A',
+                    'keywords' => \App\Services\SubmissionRules::splitKeywords($data['keywords'] ?? null),
                     'track_id' => $data['track_id'] ?? null,
                     'sub_track_id' => $data['sub_track_id'] ?? null,
                     'mode_of_participation' => $data['participation_mode'] ?? 'onsite',
@@ -233,6 +229,7 @@ class RegisterController extends Controller
                     'department' => $profile->department,
                     'institution' => $profile->institution,
                     'country_id' => $profile->country_id,
+                    'price_id' => $profile->price_id,
                     'is_presenting_author' => $submitterIsPresenting,
                     'author_order' => 1,
                 ]);
@@ -247,6 +244,8 @@ class RegisterController extends Controller
                             'department' => $co_author['department'] ?? null,
                             'institution' => $co_author['institution'],
                             'country_id' => $co_author['country_id'],
+                            'price_id' => $co_author['price_id'] ?? null,
+                            'is_student' => ($co_author['is_student'] ?? '0') == '1',
                             'is_presenting_author' => (string) $presentingAuthorIndex === (string) $index,
                             'author_order' => $index + 2,
                         ]);

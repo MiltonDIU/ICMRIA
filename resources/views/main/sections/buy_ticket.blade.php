@@ -1,10 +1,8 @@
 @php
-    $earlyBirdPrices = $prices->filter(fn($p) => ($p->registration_type ?? '') === 'early_bird');
-    $regularPrices   = $prices->filter(fn($p) => ($p->registration_type ?? '') === 'regular');
-
-    if ($earlyBirdPrices->isEmpty() && $regularPrices->isEmpty()) {
-        $earlyBirdPrices = $prices;
-    }
+    // One row per category now carries both stages, so the two tabs render the same
+    // rows and differ only in which column they read.
+    $earlyBirdPrices = $prices;
+    $regularPrices   = $prices;
 
     // Category Metadata for visual identity and audience descriptions
     $categoryMeta = [
@@ -99,8 +97,8 @@
         $currency = ($eb && strtoupper((string)($eb->currency ?? '')) === 'USD') || ($reg && strtoupper((string)($reg->currency ?? '')) === 'USD') ? 'USD' : 'BDT';
         $currSymbol = $currency === 'USD' ? 'US$' : '৳';
 
-        $ebPrice = $eb ? (float)$eb->price : null;
-        $regPrice = $reg ? (float)$reg->price : null;
+        $ebPrice = $eb ? (float)$eb->early_bird_price : null;
+        $regPrice = $reg ? (float)$reg->regular_price : null;
         $savings = ($ebPrice && $regPrice && $regPrice > $ebPrice) ? ($regPrice - $ebPrice) : null;
 
         $comparisonRows[] = [
@@ -227,10 +225,9 @@
                 ];
                 $currSymbol = strtoupper((string)($price->currency ?? '')) === 'USD' ? 'US$' : '৳';
                 
-                // Find matching regular price for comparison & savings
-                $matchingRegular = $regularPrices->firstWhere('name', $price->name);
-                $regPrice = $matchingRegular ? (float)$matchingRegular->price : null;
-                $savings = ($regPrice && $regPrice > (float)$price->price) ? ($regPrice - (float)$price->price) : null;
+                $ebPrice = (float)$price->early_bird_price;
+                $regPrice = (float)$price->regular_price;
+                $savings = $regPrice > $ebPrice ? ($regPrice - $ebPrice) : null;
             @endphp
             <div class="col-lg-4 col-md-6 mb-4">
               <div class="card ticket-card h-100 shadow-sm">
@@ -258,7 +255,7 @@
                     <span class="price-rate-label d-block text-uppercase">Early Bird Special</span>
                     <div class="ticket-price-val">
                       <span class="currency-symbol">{{ $currSymbol }}</span>
-                      <span class="price-num">{{ number_format($price->price) }}</span>
+                      <span class="price-num">{{ number_format($ebPrice) }}</span>
                     </div>
                     @if($savings)
                       <div class="savings-tag mt-1">
@@ -348,7 +345,7 @@
                       <span class="price-rate-label d-block text-uppercase text-secondary">Regular / Standard Rate</span>
                       <div class="ticket-price-val">
                         <span class="currency-symbol">{{ $currSymbol }}</span>
-                        <span class="price-num">{{ number_format($price->price) }}</span>
+                        <span class="price-num">{{ number_format($price->regular_price) }}</span>
                       </div>
                       <div class="savings-tag mt-1">
                         <span class="badge badge-light border text-muted">Standard Registration</span>
@@ -543,7 +540,7 @@
                   <optgroup label="Early Bird Registration (Special Rate)">
                     @foreach($earlyBirdPrices as $price)
                       <option value="{{ Str::slug($price->name . '-early-bird') }}">
-                        {{ $price->name }} (Early Bird — {{ $price->formatted_price ?? (strtoupper((string)($price->currency ?? '')) === 'USD' ? 'US$ ' : '৳ ') . number_format($price->price) }})
+                        {{ $price->name }} (Early Bird — {{ $price->currency_symbol }}{{ number_format($price->early_bird_price) }})
                       </option>
                     @endforeach
                   </optgroup>
@@ -552,7 +549,7 @@
                   <optgroup label="Regular / Late Registration">
                     @foreach($regularPrices as $price)
                       <option value="{{ Str::slug($price->name . '-regular') }}">
-                        {{ $price->name }} (Regular — {{ $price->formatted_price ?? (strtoupper((string)($price->currency ?? '')) === 'USD' ? 'US$ ' : '৳ ') . number_format($price->price) }})
+                        {{ $price->name }} (Regular — {{ $price->currency_symbol }}{{ number_format($price->regular_price) }})
                       </option>
                     @endforeach
                   </optgroup>

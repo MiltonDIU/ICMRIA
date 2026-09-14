@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -398,9 +399,190 @@ class PaperController extends Controller
             abort_if(Gate::denies('paper_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         }
 
-        $paper->load('authors', 'user', 'reviewHistory.reviewer');
+        $paper->load('authors', 'user', 'reviewHistory.reviewer', 'conflicts.conflictedUser',
+            'manuscriptVersions.uploadedBy');
 
-        return view('admin.papers.show', compact('paper'));
+        return view('admin.papers.show', [
+            'paper' => $paper,
+            'manuscriptWindowOpen' => \App\Services\SubmissionRules::manuscriptWindowIsOpen(),
+            'manuscriptOpensAt' => \App\Services\SubmissionRules::manuscriptWindowOpensAt(),
+            'manuscriptClosesAt' => \App\Services\SubmissionRules::manuscriptWindowClosesAt(),
+            'conflictCandidates' => $this->conflictCandidates($paper),
+        ]);
+    }
+
+    /**
+     * The manuscript the author submits for review, uploaded or replaced while the
+     * window in the settings is open.
+     */
+    public function uploadManuscript(Request $request, Paper $paper)
+    {
+        $user = Auth::user();
+        $isAuthor = $user->roles->contains('id', 3);
+
+        if ($isAuthor) {
+            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+            if (!\App\Services\SubmissionRules::manuscriptWindowIsOpen()) {
+                return back()->with('error', 'The manuscript submission window is closed.');
+            }
+        } else {
+            abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        }
+
+        $request->validate([
+            'manuscript' => [
+                'required',
+                'file',
+                'mimes:' . implode(',', \App\Services\SubmissionRules::MANUSCRIPT_MIMES),
+                'max:' . \App\Services\SubmissionRules::MANUSCRIPT_MAX_KB,
+            ],
+            // The system cannot strip names from inside a PDF, so under double-blind
+            // review the author has to state that they have done it.
+            'anonymity_confirmed' => \App\Services\SubmissionRules::isDoubleBlind() ? ['accepted'] : ['nullable'],
+        ], [
+            'manuscript.mimes' => 'The manuscript must be a PDF or Word document.',
+            'manuscript.max' => 'The manuscript may not be larger than 20 MB.',
+            'anonymity_confirmed.accepted' => 'Please confirm the file carries no author names or affiliations.',
+        ]);
+
+        $file = $request->file('manuscript');
+        $replacing = $paper->manuscript_path;
+
+        // Kept off the public disk: an anonymised manuscript under review must not be
+        // reachable by guessing a URL.
+        $path = $file->store('manuscripts/' . $paper->id);
+
+        $paper->update([
+            'manuscript_path' => $path,
+            'manuscript_original_name' => $file->getClientOriginalName(),
+            'manuscript_uploaded_at' => now(),
+            'manuscript_status' => $replacing ? 'revised' : 'submitted',
+        ]);
+
+        // The superseded file is kept. Once review has begun it is the only record of
+        // what a reviewer actually read, and discarding submitted work cannot be undone.
+        \App\Models\PaperManuscriptVersion::create([
+            'paper_id' => $paper->id,
+            'uploaded_by' => $user->id,
+            'version' => (int) $paper->manuscriptVersions()->max('version') + 1,
+            'path' => $path,
+            'original_name' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'anonymity_confirmed' => (bool) $request->boolean('anonymity_confirmed'),
+        ]);
+
+        try {
+            Mail::to($paper->user->email)->queue(new \App\Mail\ManuscriptReceived($paper->fresh()));
+        } catch (\Exception $e) {
+            Log::error('Manuscript confirmation mail failed', ['paper' => $paper->id, 'error' => $e->getMessage()]);
+        }
+
+        return back()->with('success', $replacing
+            ? 'Manuscript replaced. The earlier version is kept on record.'
+            : 'Manuscript uploaded.');
+    }
+
+    /**
+     * Streams a stored manuscript to anyone allowed to read the paper. Without a
+     * version it serves the current file; with one it serves that earlier upload,
+     * which is how a chair checks what a reviewer was given.
+     */
+    public function downloadManuscript(Paper $paper, ?int $version = null)
+    {
+        $user = Auth::user();
+
+        if ($user->roles->contains('id', 3)) {
+            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        } else {
+            abort_if(Gate::denies('paper_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        }
+
+        if ($version !== null) {
+            $record = $paper->manuscriptVersions()->where('version', $version)->first();
+            abort_if(!$record || !Storage::exists($record->path), Response::HTTP_NOT_FOUND, 'That version is not on file.');
+
+            return Storage::download($record->path, $record->original_name);
+        }
+
+        abort_if(!$paper->manuscript_path || !Storage::exists($paper->manuscript_path),
+            Response::HTTP_NOT_FOUND, 'No manuscript on file.');
+
+        return Storage::download($paper->manuscript_path, $paper->manuscript_original_name);
+    }
+
+    /**
+     * Conflicts of interest the author declares, so that reviewer assignment can
+     * steer around them (document, Phase 2).
+     */
+    public function declareConflict(Request $request, Paper $paper)
+    {
+        $user = Auth::user();
+
+        if ($user->roles->contains('id', 3)) {
+            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        } else {
+            abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        }
+
+        $data = $request->validate([
+            'conflicted_user_id' => 'nullable|exists:users,id',
+            'conflicted_institution' => 'nullable|string|max:255',
+            'note' => 'nullable|string|max:255',
+        ]);
+
+        // validate() leaves out keys the request never sent, so read them defensively.
+        $conflictedUserId = $data['conflicted_user_id'] ?? null;
+        $conflictedInstitution = $data['conflicted_institution'] ?? null;
+
+        if (empty($conflictedUserId) && empty($conflictedInstitution)) {
+            return back()->with('error', 'Name either a person or an institution for the conflict.');
+        }
+
+        \App\Models\PaperConflict::firstOrCreate([
+            'paper_id' => $paper->id,
+            'conflicted_user_id' => $conflictedUserId ?: null,
+            'conflicted_institution' => $conflictedInstitution ?: null,
+        ], [
+            'declared_by_user_id' => $user->id,
+            'note' => $data['note'] ?? null,
+        ]);
+
+        return back()->with('success', 'Conflict of interest recorded. Reviewer assignment will avoid it.');
+    }
+
+    public function removeConflict(Paper $paper, \App\Models\PaperConflict $conflict)
+    {
+        $user = Auth::user();
+
+        if ($user->roles->contains('id', 3)) {
+            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        } else {
+            abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        }
+
+        abort_if($conflict->paper_id !== $paper->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        $conflict->delete();
+
+        return back()->with('success', 'Conflict removed.');
+    }
+
+    /**
+     * People an author might reasonably declare a conflict with: the chairs and
+     * reviewers who could end up handling this paper's track.
+     */
+    private function conflictCandidates(Paper $paper)
+    {
+        if (!$paper->track_id) {
+            return collect();
+        }
+
+        return \App\Models\User::whereHas('trackAssignments', function ($query) use ($paper) {
+                $query->where('track_id', $paper->track_id);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     public function create()
@@ -437,8 +619,12 @@ class PaperController extends Controller
 
         $countries = Country::all();
         $tracks = Track::with('subTracks')->get();
+        $prices = \App\Models\Price::orderBy('id')->get();
+        $countryCategories = $this->countryCategoryMap($countries);
+        $priceTable = $this->priceTableForJs($prices);
+        $currentStage = \App\Services\PricingService::currentStage();
 
-        return view('admin.papers.create', compact('countries', 'tracks'));
+        return view('admin.papers.create', compact('countries', 'tracks', 'prices', 'countryCategories', 'priceTable', 'currentStage'));
     }
 
     public function store(Request $request)
@@ -472,21 +658,10 @@ class PaperController extends Controller
         // PHP Tag Check Regex
         $noPhpTags = 'regex:/^((?!(<\?php|<\?|\?>)).)*$/is';
 
-        $request->validate([
+        $rules = [
             'paper_title' => ['required', 'string', 'max:255', $noPhpTags],
-            'abstract_text' => ['required', 'string', $noPhpTags, function ($attribute, $value, $fail) {
-                $wordCount = !empty(trim($value)) ? preg_match_all('/\s+/', trim($value)) + 1 : 0;
-                if ($wordCount > 300) {
-                    $fail('The abstract must not exceed 300 words. (Current count: ' . $wordCount . ')');
-                }
-            }],
-            'keywords' => ['required', 'string', 'max:255', $noPhpTags, function ($attribute, $value, $fail) {
-                $keywords = array_filter(array_map('trim', explode(',', $value)));
-                $count = count($keywords);
-                if ($count < 3 || $count > 5) {
-                    $fail('Please provide between 3 and 5 keywords separated by commas. (Current count: ' . $count . ')');
-                }
-            }],
+            'abstract_text' => \App\Services\SubmissionRules::abstractRules([$noPhpTags]),
+            'keywords' => \App\Services\SubmissionRules::keywordRules([$noPhpTags]),
             'track_id' => ['required', 'exists:tracks,id'],
             'sub_track_id' => ['required', 'exists:sub_tracks,id'],
             'is_corresponding_author' => ['required', 'boolean'],
@@ -499,7 +674,16 @@ class PaperController extends Controller
             'co_authors.*.designation' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.institution' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.country_id' => ['required', 'exists:countries,id'],
-        ], [
+            'co_authors.*.is_student' => ['nullable', 'in:0,1'],
+        ];
+
+        // The category rule needs that row's country, so it cannot use a wildcard.
+        foreach ((array) $request->input('co_authors', []) as $index => $author) {
+            $rules["co_authors.$index.price_id"] = ['required', 'exists:prices,id',
+                new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
+        }
+
+        $request->validate($rules, [
             'regex' => 'The :attribute contains forbidden characters (PHP tags are not allowed).',
         ]);
 
@@ -514,7 +698,7 @@ class PaperController extends Controller
                 'submission_id' => $submissionId,
                 'title' => $request->paper_title,
                 'abstract' => $request->abstract_text,
-                'keywords' => $request->keywords,
+                'keywords' => \App\Services\SubmissionRules::splitKeywords($request->keywords),
                 'track_id' => $request->track_id,
                 'sub_track_id' => $request->sub_track_id,
                 'mode_of_participation' => $profile->participation_mode ?? 'onsite',
@@ -534,6 +718,8 @@ class PaperController extends Controller
                         'department' => $authorData['department'] ?? 'N/A',
                         'institution' => $authorData['institution'],
                         'country_id' => $authorData['country_id'],
+                        'price_id' => $authorData['price_id'] ?? null,
+                        'is_student' => ($authorData['is_student'] ?? '0') == '1',
                         'author_order' => $index + 1,
                         'is_presenting_author' => ($index == $presentingAuthorIndex) ? 1 : 0,
                     ]);
@@ -547,6 +733,7 @@ class PaperController extends Controller
                     'department' => $profile->department ?? null,
                     'institution' => $profile->institution ?? null,
                     'country_id' => $profile->country_id ?? null,
+                    'price_id' => $profile->price_id,
                     'email' => $user->email,
                     'author_order' => 1,
                     'is_presenting_author' => 1,
@@ -580,6 +767,34 @@ class PaperController extends Controller
         }
     }
 
+    /**
+     * Which fee tiers each country may pick, for the browser-side filter. Countries
+     * that are plain "international" are left out and treated as the default, so the
+     * map stays a handful of entries instead of 260.
+     */
+    private function countryCategoryMap($countries)
+    {
+        return $countries->mapWithKeys(function ($country) {
+            return [$country->id => \App\Services\PricingService::allowedCategoriesFor($country->name)];
+        })->reject(function ($categories) {
+            return $categories === ['international'];
+        });
+    }
+
+    /** Feeds the live "amount payable" panel above the submit button. */
+    private function priceTableForJs($prices)
+    {
+        return $prices->keyBy('id')->map(function ($price) {
+            return [
+                'name'       => $price->name,
+                'category'   => $price->category,
+                'currency'   => $price->currency,
+                'early_bird' => (float) $price->early_bird_price,
+                'regular'    => (float) $price->regular_price,
+            ];
+        });
+    }
+
     public function edit(Paper $paper)
     {
         $user = Auth::user();
@@ -604,8 +819,12 @@ class PaperController extends Controller
         $tracks = Track::with('subTracks')->get();
         $countries = Country::where('is_active', 1)->orderBy('name', 'asc')->get();
         $paper->load('authors');
+        $prices = \App\Models\Price::orderBy('id')->get();
+        $countryCategories = $this->countryCategoryMap($countries);
+        $priceTable = $this->priceTableForJs($prices);
+        $currentStage = \App\Services\PricingService::currentStage();
 
-        return view('admin.papers.edit', compact('paper', 'tracks', 'countries'));
+        return view('admin.papers.edit', compact('paper', 'tracks', 'countries', 'prices', 'countryCategories', 'priceTable', 'currentStage'));
     }
 
     public function update(Request $request, Paper $paper)
@@ -631,21 +850,10 @@ class PaperController extends Controller
 
         $noPhpTags = 'regex:/^((?!(<\?php|<\?|\?>)).)*$/is';
 
-        $request->validate([
+        $rules = [
             'paper_title' => ['required', 'string', 'max:255', $noPhpTags],
-            'abstract_text' => ['required', 'string', $noPhpTags, function ($attribute, $value, $fail) {
-                // Simplified word count logic to match RegisterController logic
-                $wordCount = !empty(trim($value)) ? preg_match_all('/\s+/', trim($value)) + 1 : 0;
-                if ($wordCount > 300) {
-                    $fail('The abstract must not exceed 300 words. (Current count: ' . $wordCount . ')');
-                }
-            }],
-            'keywords' => ['required', 'string', 'max:255', $noPhpTags, function ($attribute, $value, $fail) {
-                $keywords = array_filter(array_map('trim', explode(',', $value)));
-                if (count($keywords) < 3 || count($keywords) > 5) {
-                    $fail('Please provide between 3 and 5 keywords.');
-                }
-            }],
+            'abstract_text' => \App\Services\SubmissionRules::abstractRules([$noPhpTags]),
+            'keywords' => \App\Services\SubmissionRules::keywordRules([$noPhpTags]),
             'track_id' => 'required|exists:tracks,id',
             'sub_track_id' => 'required|exists:sub_tracks,id',
             'is_corresponding_author' => 'required|boolean',
@@ -659,7 +867,15 @@ class PaperController extends Controller
             'co_authors.*.institution' => 'required|string|max:255',
             'co_authors.*.country_id' => 'required|exists:countries,id',
             'co_authors.*.is_student' => 'nullable|in:0,1',
-        ]);
+        ];
+
+        // The category rule needs that row's country, so it cannot use a wildcard.
+        foreach ((array) $request->input('co_authors', []) as $index => $author) {
+            $rules["co_authors.$index.price_id"] = ['required', 'exists:prices,id',
+                new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
+        }
+
+        $request->validate($rules);
 
         try {
             DB::beginTransaction();
@@ -669,7 +885,7 @@ class PaperController extends Controller
             $paper->update([
                 'title' => $request->paper_title,
                 'abstract' => $request->abstract_text,
-                'keywords' => $request->keywords,
+                'keywords' => \App\Services\SubmissionRules::splitKeywords($request->keywords),
                 'track_id' => $request->track_id,
                 'sub_track_id' => $request->sub_track_id,
                 'is_corresponding_author' => $request->is_corresponding_author,
@@ -694,6 +910,7 @@ class PaperController extends Controller
                 'department' => $primaryAuthorFromForm['department'] ?? ($profile?->department ?? 'N/A'),
                 'institution' => $primaryAuthorFromForm['institution'] ?? ($profile?->institution ?? 'N/A'),
                 'country_id' => $primaryAuthorFromForm['country_id'] ?? ($profile?->country_id ?? 1),
+                'price_id' => $primaryAuthorFromForm['price_id'] ?? ($primaryAuthorModel?->price_id ?? $profile?->price_id),
                 'email' => $primaryEmail,
                 'author_order' => $orderOffset++,
                 'is_presenting_author' => ($presentingAuthorIndex == $primaryAuthorIndexInForm) ? 1 : 0,
@@ -728,6 +945,7 @@ class PaperController extends Controller
                         'department' => $authorData['department'] ?? 'N/A',
                         'institution' => $authorData['institution'],
                         'country_id' => $authorData['country_id'],
+                        'price_id' => $authorData['price_id'] ?? ($existingAuthor?->price_id),
                         'author_order' => $orderOffset++,
                         'is_presenting_author' => ($presentingAuthorIndex == $index) ? 1 : 0,
                         'is_student' => isset($authorData['is_student']) && $authorData['is_student'] !== '' ? (bool)$authorData['is_student'] : ($existingAuthor?->is_student ?? null),

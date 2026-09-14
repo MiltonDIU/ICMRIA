@@ -17,6 +17,10 @@ class Paper extends Model
         'title',
         'abstract',
         'keywords',
+        'manuscript_path',
+        'manuscript_original_name',
+        'manuscript_uploaded_at',
+        'manuscript_status',
         'mode_of_participation',
         'is_corresponding_author',
         'has_multiple_authors',
@@ -30,7 +34,9 @@ class Paper extends Model
     ];
 
     protected $casts = [
+        'keywords' => 'array',
         'reviewed_at' => 'datetime',
+        'manuscript_uploaded_at' => 'datetime',
         'user_id' => 'integer',
         'payment_status' => 'integer',
         'has_multiple_authors' => 'boolean',
@@ -64,5 +70,20 @@ class Paper extends Model
     public function reviewHistory()
     {
         return $this->hasMany(PaperReview::class)->latest();
+    }
+
+    public function conflicts()
+    {
+        return $this->hasMany(PaperConflict::class);
+    }
+
+    public function manuscriptVersions()
+    {
+        return $this->hasMany(PaperManuscriptVersion::class)->orderByDesc('version');
+    }
+
+    public function hasManuscript(): bool
+    {
+        return $this->manuscript_path !== null;
     }
 }

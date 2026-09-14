@@ -93,7 +93,7 @@
                         <i class="fas fa-tags mr-2"></i> Keywords
                     </h6>
                     <div class="d-flex flex-wrap">
-                        @foreach(explode(',', $paper->keywords) as $keyword)
+                        @foreach(\App\Services\SubmissionRules::splitKeywords($paper->keywords) as $keyword)
                             <span class="badge badge-white border text-dark px-3 mt-1 py-2 rounded-lg mr-2 shadow-xs" style="font-weight: 500;">
                                 {{ trim($keyword) }}
                             </span>
@@ -102,6 +102,8 @@
                 </div>
             </div>
         </div>
+
+        @include('admin.papers.partials.manuscript')
 
         <!-- Authors Section -->
         <div class="card shadow-sm border-0 rounded-lg">

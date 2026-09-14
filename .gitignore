@@ -70,3 +70,6 @@ Homestead.yaml
 *.tmp
 *.temp
 /storage/media-library/*
+
+# Internal planning docs (publicly served directory)
+/public/documents/ICMRIA-2027-Submission-Portal-Implementation-Plan.md

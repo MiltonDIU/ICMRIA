@@ -118,4 +118,25 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Paper::class, 'user_id', 'id');
     }
+
+    public function trackAssignments()
+    {
+        return $this->hasMany(TrackAssignment::class);
+    }
+
+    /** Tracks this user chairs as a whole, i.e. every sub-track under them. */
+    public function chairedTracks()
+    {
+        return $this->belongsToMany(Track::class, 'track_assignments')
+            ->wherePivot('role', 'chair')
+            ->wherePivotNull('sub_track_id');
+    }
+
+    /** Sub-tracks this user chairs individually. */
+    public function chairedSubTracks()
+    {
+        return $this->belongsToMany(SubTrack::class, 'track_assignments')
+            ->wherePivot('role', 'chair')
+            ->wherePivotNotNull('sub_track_id');
+    }
 }

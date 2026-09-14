@@ -22,9 +22,9 @@
             </div>
 
             <div class="form-group">
-                <label class="required" for="abstract_text">Abstract (Max 300 words)*</label>
+                <label class="required" for="abstract_text">Abstract ({{ \App\Services\SubmissionRules::abstractMinWords() }}-{{ \App\Services\SubmissionRules::abstractMaxWords() }} words)*</label>
                 <textarea class="form-control {{ $errors->has('abstract_text') ? 'is-invalid' : '' }}" name="abstract_text" id="abstract_text" rows="6" oninput="countWords()" required>{{ old('abstract_text') }}</textarea>
-                <div id="word_count_display" class="small mt-1 text-muted">Words: <span id="word_count">0</span> / 300</div>
+                <div id="word_count_display" class="small mt-1 text-muted">Words: <span id="word_count">0</span> / {{ \App\Services\SubmissionRules::abstractMaxWords() }}</div>
                 @if($errors->has('abstract_text'))
                     <div class="invalid-feedback">
                         {{ $errors->first('abstract_text') }}
@@ -35,14 +35,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label class="required" for="keywords">Keywords (3-5 separated by commas)*</label>
-                        <input class="form-control {{ $errors->has('keywords') ? 'is-invalid' : '' }}" type="text" name="keywords" id="keywords" value="{{ old('keywords', '') }}" placeholder="keyword1, keyword2, ..." required oninput="countKeywords('keywords', 'keyword_count')">
-                        <div id="keyword_count_display" class="small mt-1 text-muted">Keywords: <span id="keyword_count">0</span> / 5</div>
-                        @if($errors->has('keywords'))
-                            <div class="invalid-feedback">
-                                {{ $errors->first('keywords') }}
-                            </div>
-                        @endif
+                        @include('partials.keyword-tags', ['labelClass' => 'required'])
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -117,7 +110,9 @@
                 </div>
             </div>
 
-            <div class="form-group mb-0">
+            @include('partials.fee-summary')
+
+            <div class="form-group mb-0 mt-4">
                 <button class="btn btn-success" type="submit">
                     <i class="fa fa-paper-plane"></i> Submit Abstract
                 </button>
@@ -154,12 +149,27 @@
                 <input type="text" name="co_authors[{index}][institution]" class="form-control form-control-sm" placeholder="Institution*" required>
             </div>
             <div class="col-md-3 mb-2">
-                <select name="co_authors[{index}][country_id]" class="form-control form-control-sm" required>
+                <select name="co_authors[{index}][country_id]" class="form-control form-control-sm delegate-country-select" required>
                     <option value="">Country*</option>
                     @foreach($countries as $country)
                         <option value="{{ $country->id }}">{{ $country->name }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="col-md-6 mb-2">
+                <select name="co_authors[{index}][price_id]" class="form-control form-control-sm delegate-category-select" required>
+                    <option value="">Delegate Category*</option>
+                    @foreach($prices as $priceOption)
+                        <option value="{{ $priceOption->id }}" data-category="{{ $priceOption->category }}">{{ $priceOption->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-6 mb-2 d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    <input type="hidden" name="co_authors[{index}][is_student]" value="0">
+                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{index}" name="co_authors[{index}][is_student]" value="1">
+                    <label class="custom-control-label" for="author_student_{index}">This author is a student</label>
+                </div>
             </div>
         </div>
     </div>
@@ -210,39 +220,20 @@
 
         counter.innerText = count;
 
-        if (count > 300) {
-            display.classList.remove('text-muted');
-            display.classList.add('text-danger', 'font-weight-bold');
-        } else {
-            display.classList.remove('text-danger', 'font-weight-bold');
-            display.classList.add('text-muted');
-        }
+        // Empty is flagged at once because the abstract is mandatory. Being short of
+        // the minimum only means it is unfinished, so that stays green.
+        const ok = count > 0 && count <= {{ \App\Services\SubmissionRules::abstractMaxWords() }};
+        display.classList.remove('text-muted');
+        display.classList.toggle('text-success', ok);
+        display.classList.toggle('text-danger', !ok);
+        display.classList.toggle('font-weight-bold', !ok);
     }
 
-    function countKeywords(inputId, countId) {
-        const input = document.getElementById(inputId);
-        const counter = document.getElementById(countId);
-        const display = document.getElementById(inputId + '_count_display');
-
-        const keywords = input.value ? input.value.split(',').map(k => k.trim()).filter(k => k !== '') : [];
-        const count = keywords.length;
-
-        counter.innerText = count;
-
-        if (count < 3 || count > 5) {
-            display.classList.remove('text-muted');
-            display.classList.add('text-danger', 'font-weight-bold');
-        } else {
-            display.classList.remove('text-danger', 'font-weight-bold');
-            display.classList.add('text-muted');
-        }
-    }
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         updateSubTracks();
         countWords();
-        countKeywords('keywords', 'keyword_count');
 
         // Automatically add the submitter as the primary author
         const currentUserData = {
@@ -251,9 +242,46 @@
             designation: @json(Auth::user()->profile?->designation ?? ''),
             department: @json(Auth::user()->profile?->department ?? ''),
             institution: @json(Auth::user()->profile?->institution ?? ''),
-            country_id: @json(Auth::user()->profile?->country_id ?? '')
+            country_id: @json(Auth::user()->profile?->country_id ?? ''),
+            price_id: @json(Auth::user()->profile?->price_id ?? '')
         };
         addCoAuthor(currentUserData, true);
+    });
+
+    // Delegate category depends on country. Countries absent from this map are
+    // international. The server enforces the same rule via
+    // App\Rules\DelegateCategoryMatchesCountry.
+    const allowedCategoriesByCountry = @json($countryCategories);
+    const defaultAllowedCategories = ['international'];
+
+    function syncCategoryOptions(countrySelect, categorySelect) {
+        if (!countrySelect || !categorySelect) return;
+
+        const allowed = allowedCategoriesByCountry[countrySelect.value] || defaultAllowedCategories;
+        let selectedStillAllowed = false;
+
+        Array.from(categorySelect.options).forEach(option => {
+            if (!option.value) return;
+            const permitted = allowed.includes(option.dataset.category);
+            option.hidden = !permitted;
+            option.disabled = !permitted;
+            if (permitted && option.selected) selectedStillAllowed = true;
+        });
+
+        if (!selectedStillAllowed) {
+            categorySelect.value = allowed.length === 1
+                ? (Array.from(categorySelect.options).find(o => o.dataset.category === allowed[0])?.value || '')
+                : '';
+        }
+    }
+
+    document.addEventListener('change', event => {
+        if (event.target.classList.contains('delegate-country-select')) {
+            const row = event.target.closest('.co-author-entry');
+            if (row) {
+                syncCategoryOptions(event.target, row.querySelector('.delegate-category-select'));
+            }
+        }
     });
 
     function addCoAuthor(data = null, isPrimary = false) {
@@ -288,7 +316,16 @@
             }
         }
 
-        container.appendChild(div.firstElementChild);
+        const entry = div.firstElementChild;
+        container.appendChild(entry);
+
+        const countrySelect = entry.querySelector('.delegate-country-select');
+        const categorySelect = entry.querySelector('.delegate-category-select');
+        syncCategoryOptions(countrySelect, categorySelect);
+        if (data && data.price_id && categorySelect) {
+            categorySelect.value = data.price_id;
+        }
+
         coAuthorIndex++;
     }
 

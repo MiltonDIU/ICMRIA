@@ -29,13 +29,16 @@
                             {{ trans('cruds.price.fields.name') }}
                         </th>
                         <th>
-                            {{ trans('cruds.price.fields.price') }}
+                            Early Bird
+                        </th>
+                        <th>
+                            Regular / Late
                         </th>
                         <th>
                             Currency
                         </th>
                         <th>
-                            Registration Type
+                            Category
                         </th>
                         <th>
                             {{ trans('cruds.price.fields.amenities') }}
@@ -58,13 +61,20 @@
                                 {{ $price->name ?? '' }}
                             </td>
                             <td>
-                                <strong>{{ $price->currency === 'USD' ? 'US$' : '৳' }} {{ number_format($price->price, 2) }}</strong>
+                                <strong>{{ $price->currency_symbol }}{{ number_format($price->early_bird_price, 2) }}</strong>
+                            </td>
+                            <td>
+                                <strong>{{ $price->currency_symbol }}{{ number_format($price->regular_price, 2) }}</strong>
                             </td>
                             <td>
                                 <span class="badge badge-primary">{{ strtoupper($price->currency ?? 'BDT') }}</span>
                             </td>
                             <td>
-                                <span class="badge badge-info">{{ ucwords(str_replace('_', ' ', $price->registration_type ?? 'early_bird')) }}</span>
+                                @if($price->category)
+                                    <span class="badge badge-success">{{ ucfirst($price->category) }}</span>
+                                @else
+                                    <span class="badge badge-danger" title="This price is never charged until a category is set">Not set</span>
+                                @endif
                             </td>
                             <td>
                                 @foreach($price->amenities as $key => $item)

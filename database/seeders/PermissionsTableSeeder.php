@@ -517,6 +517,60 @@ class PermissionsTableSeeder extends Seeder
             [
                 'title' => 'domain_delete',
             ],
+            [
+                'title' => 'track_access',
+            ],
+            [
+                'title' => 'track_create',
+            ],
+            [
+                'title' => 'track_show',
+            ],
+            [
+                'title' => 'track_edit',
+            ],
+            [
+                'title' => 'track_delete',
+            ],
+            [
+                'title' => 'sub_track_access',
+            ],
+            [
+                'title' => 'sub_track_create',
+            ],
+            [
+                'title' => 'sub_track_show',
+            ],
+            [
+                'title' => 'sub_track_edit',
+            ],
+            [
+                'title' => 'sub_track_delete',
+            ],
+            [
+                'title' => 'review_access',
+            ],
+            [
+                'title' => 'review_submit',
+            ],
+            [
+                'title' => 'review_assign',
+            ],
+            [
+                'title' => 'decision_access',
+            ],
+            [
+                'title' => 'decision_make',
+            ],
+            [
+                'title' => 'final_approval',
+            ],
+            [
+                'title' => 'camera_ready_access',
+            ],
+            [
+                'title' => 'camera_ready_review',
+            ],
         ];
 
         foreach ($permissions as $permission) {

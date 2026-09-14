@@ -1,7 +1,10 @@
 @extends('layouts.admin')
 @section('content')
     <div class="card">
-        @can('profile_edit')
+        {{-- Bulk mail is an administrative tool. It used to be gated on profile_edit,
+             which every author holds in order to edit their own profile, so authors
+             were shown a form whose data they were never given. --}}
+        @can('custom_email_access')
             <div class="card-body">
                 <form action="{{ route('send-message') }}" method="POST">
                     @csrf
@@ -285,7 +288,7 @@
                                                     @endphp
                                                     <tr>
                                                         <td class="font-weight-bold">{{ $up->submission_id }} <small class="text-muted">({{ $pricing['authors_count'] }} author{{ $pricing['authors_count'] > 1 ? 's' : '' }})</small></td>
-                                                        <td>{{ ucfirst($pricing['stage']) }} Price @if($pricing['discount'] > 0)<br><small class="text-success">-{{ $pricing['currency'] }} {{ number_format($pricing['individual_discount'], 2) }} discount per author</small>@endif</td>
+                                                        <td>{{ ucwords(str_replace('_', ' ', $pricing['stage'])) }} Price @if($pricing['discount'] > 0)<br><small class="text-success">-{{ $pricing['currency'] }} {{ number_format($pricing['individual_discount'], 2) }} discount per author</small>@endif</td>
                                                         <td class="text-right">{{ $pricing['currency'] }} {{ number_format($pricing['final_price'], 2) }}</td>
                                                     </tr>
                                                     @if($pricing['authors_count'] > 1)
