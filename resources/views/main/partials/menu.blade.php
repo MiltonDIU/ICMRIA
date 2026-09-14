@@ -347,6 +347,16 @@
                 @endcan
                 @can('review_assign')
                 <li class="nav-item">
+                    <a href="{{ route("admin.review-assignments.index") }}" class="nav-link {{ request()->is('admin/review-assignments*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-clipboard-list">
+
+                        </i>
+                        <p>
+                            <span>Assign Reviewers</span>
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route("admin.track-reviewers.index") }}" class="nav-link {{ request()->is('admin/track-reviewers*') ? 'active' : '' }}">
                         <i class="fa-fw fas fa-user-check">
 

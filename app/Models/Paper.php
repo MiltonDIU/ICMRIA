@@ -82,6 +82,11 @@ class Paper extends Model
         return $this->hasMany(PaperManuscriptVersion::class)->orderByDesc('version');
     }
 
+    public function reviewerAssignments()
+    {
+        return $this->hasMany(PaperReviewerAssignment::class);
+    }
+
     public function hasManuscript(): bool
     {
         return $this->manuscript_path !== null;

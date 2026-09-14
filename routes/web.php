@@ -311,6 +311,13 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::delete('sub-tracks/destroy', [\App\Http\Controllers\Admin\SubTrackController::class, 'massDestroy'])->name('sub-tracks.massDestroy');
     Route::resource('sub-tracks', \App\Http\Controllers\Admin\SubTrackController::class)->except('show');
 
+    // Handing papers to reviewers
+    Route::get('review-assignments', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'index'])->name('review-assignments.index');
+    Route::get('review-assignments/{paper}', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'show'])->name('review-assignments.show');
+    Route::post('review-assignments/{paper}', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'store'])->name('review-assignments.store');
+    Route::post('review-assignments/{paper}/auto', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'auto'])->name('review-assignments.auto');
+    Route::delete('review-assignments/{paper}/{assignment}', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'destroy'])->name('review-assignments.destroy');
+
     // Reviewer pool, managed by the chairs of each track
     Route::get('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'index'])->name('track-reviewers.index');
     Route::post('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'store'])->name('track-reviewers.store');
