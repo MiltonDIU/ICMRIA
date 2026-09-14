@@ -158,6 +158,29 @@ class SubmissionRules
     }
 
     /**
+     * Turns a track or sub-track title into the topics it covers.
+     *
+     * The titles are headings, not keyword lists &mdash; "Civil Engineering: Structural,
+     * Geotechnical, Transportation & Infrastructure Resilience" names one discipline and
+     * four topics under it. Splitting on the separators the titles actually use gives
+     * terms worth matching keywords against; the "Track 7:" numbering is dropped
+     * because it says nothing about the subject.
+     *
+     * @return array<int, string>
+     */
+    public static function topicsFrom(string $title): array
+    {
+        $title = preg_replace('/^\s*Track\s*\d+\s*:\s*/i', '', $title);
+
+        $parts = preg_split('/[,:&]+/', $title);
+        $parts = array_map('trim', $parts ?: []);
+        // One- and two-letter fragments are separator debris, not subjects.
+        $parts = array_filter($parts, fn ($p) => mb_strlen($p) > 2);
+
+        return self::splitKeywords(array_values($parts));
+    }
+
+    /**
      * Validation rules for the abstract body. Pass the extra rules the caller
      * needs (the PHP-tag guard, for instance) and they are kept in front.
      *

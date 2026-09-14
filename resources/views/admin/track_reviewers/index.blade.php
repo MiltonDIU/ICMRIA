@@ -105,10 +105,47 @@
                 </div>
             @endif
 
+            @if($pool->isNotEmpty())
+                <form action="{{ route('admin.track-reviewers.store') }}" method="POST" class="mb-3 pb-3 border-bottom">
+                    @csrf
+                    <input type="hidden" name="track_id" value="{{ $track->id }}">
+                    <input type="hidden" name="sub_track_id" value="{{ $subTrack->id ?? '' }}">
+
+                    <div class="form-row align-items-end">
+                        <div class="col-md-6 mb-2">
+                            <label class="small font-weight-bold mb-1">Add someone who already reviews</label>
+                            <select name="reviewer_id" class="form-control form-control-sm js-reviewer-pool" required
+                                    data-topics="{{ implode(',', $scopeTopics[$key] ?? []) }}"
+                                    data-here="{{ $assigned->pluck('user_id')->implode(',') }}">
+                                <option value="">Loading the reviewer pool&hellip;</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="small font-weight-bold mb-1">Expertise here</label>
+                            <input type="text" name="expertise" class="form-control form-control-sm"
+                                   placeholder="blank = carry over what they already cover">
+                        </div>
+                        <div class="col-md-2 mb-2">
+                            <button type="submit" class="btn btn-sm btn-primary btn-block">
+                                <i class="fa fa-user-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">
+                        Anyone holding the Reviewer role can be added here, whichever track brought them in &mdash;
+                        one person, one account, as many tracks as needed.
+                        <strong>&#9733;</strong> marks those whose recorded expertise overlaps this subject; the rest are
+                        still listed, because a suitable reviewer may simply not have their topics written down yet.
+                    </small>
+                </form>
+            @endif
+
             <form action="{{ route('admin.track-reviewers.store') }}" method="POST" id="{{ $formId }}">
                 @csrf
                 <input type="hidden" name="track_id" value="{{ $track->id }}">
                 <input type="hidden" name="sub_track_id" value="{{ $subTrack->id ?? '' }}">
+
+                <label class="small font-weight-bold mb-2 d-block">Or invite somebody new</label>
 
                 <div class="form-row align-items-end">
                     <div class="col-md-3 mb-2">
@@ -140,3 +177,59 @@
 @endforeach
 
 @endsection
+
+@push('script')
+<script>
+// The pool is the same for every scope on the page, so it is sent once and each
+// picker is filled from it. Rendering the options into every form instead would
+// repeat a hundred-odd names across forty tracks for an administrator.
+document.addEventListener('DOMContentLoaded', function () {
+    var pool = @json($pool);
+
+    document.querySelectorAll('.js-reviewer-pool').forEach(function (select) {
+        var topics = (select.dataset.topics || '').split(',').filter(Boolean);
+        var here = (select.dataset.here || '').split(',').filter(Boolean).map(Number);
+
+        var rows = pool
+            .filter(function (person) { return here.indexOf(person.id) === -1; })
+            .map(function (person) {
+                var hits = person.slugs.filter(function (slug) {
+                    return topics.indexOf(slug) !== -1;
+                }).length;
+
+                return { person: person, hits: hits };
+            })
+            // Best subject match first, then alphabetically, so a chair scanning the
+            // list meets the relevant people before the merely available ones.
+            .sort(function (a, b) {
+                return b.hits - a.hits || a.person.name.localeCompare(b.person.name);
+            });
+
+        select.innerHTML = '';
+
+        var blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = rows.length
+            ? 'Choose a reviewer… (' + rows.length + ' available)'
+            : 'Everyone in the pool is already listed here';
+        select.appendChild(blank);
+
+        rows.forEach(function (row) {
+            var option = document.createElement('option');
+            option.value = row.person.id;
+
+            var parts = [row.person.name];
+            if (row.person.tracks.length) {
+                parts.push('in ' + row.person.tracks.join(', '));
+            }
+            if (row.person.expertise.length) {
+                parts.push(row.person.expertise.slice(0, 3).join(' / '));
+            }
+
+            option.textContent = (row.hits ? '★ ' : '') + parts.join(' — ');
+            select.appendChild(option);
+        });
+    });
+});
+</script>
+@endpush

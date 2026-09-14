@@ -127,7 +127,7 @@ class ReviewerSeeder extends Seeder
 
                         // Leave an expertise a chair has since refined by hand.
                         if (!$row->exists || blank($row->expertise)) {
-                            $row->expertise = $this->topicsFrom($subTrack->name);
+                            $row->expertise = SubmissionRules::topicsFrom($subTrack->name);
                         }
 
                         $row->save();
@@ -192,20 +192,4 @@ class ReviewerSeeder extends Seeder
         return [$user, true];
     }
 
-    /**
-     * Sub-track titles are headings, not keyword lists. Split them on the separators
-     * they actually use so the terms are worth matching paper keywords against.
-     *
-     * @return array<int, string>
-     */
-    private function topicsFrom(string $title): array
-    {
-        $title = preg_replace('/^\s*Track\s*\d+\s*:\s*/i', '', $title);
-
-        $parts = preg_split('/[,:&]+/', $title);
-        $parts = array_map('trim', $parts ?: []);
-        $parts = array_filter($parts, fn ($p) => mb_strlen($p) > 2);
-
-        return SubmissionRules::splitKeywords(array_values($parts));
-    }
 }

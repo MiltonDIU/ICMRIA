@@ -248,7 +248,7 @@ class TrackChairSeeder extends Seeder
 
                 // Leave an expertise a chair has since refined for themselves.
                 if (!$row->exists || blank($row->expertise)) {
-                    $row->expertise = $this->topicsFrom($assignment['expertise']);
+                    $row->expertise = \App\Services\SubmissionRules::topicsFrom($assignment['expertise']);
                 }
 
                 $row->save();
@@ -300,28 +300,6 @@ class TrackChairSeeder extends Seeder
         // that already drives the public Committee page.
 
         return $user->fresh('roles');
-    }
-
-    /**
-     * Turns a track or sub-track title into the topics a chair covers.
-     *
-     * The titles are headings, not keyword lists — "Civil Engineering: Structural,
-     * Geotechnical, Transportation & Infrastructure Resilience" names one discipline
-     * and four topics under it. Splitting on the separators the titles actually use
-     * gives terms worth matching paper keywords against; the "Track 7:" numbering is
-     * dropped because it says nothing about the subject.
-     *
-     * @return array<int, string>
-     */
-    private function topicsFrom(string $title): array
-    {
-        $title = preg_replace('/^\s*Track\s*\d+\s*:\s*/i', '', $title);
-
-        $parts = preg_split('/[,:&]+/', $title);
-        $parts = array_map('trim', $parts ?: []);
-        $parts = array_filter($parts, fn ($p) => mb_strlen($p) > 2);
-
-        return \App\Services\SubmissionRules::splitKeywords(array_values($parts));
     }
 
     private function placeholderEmail(string $name): string
