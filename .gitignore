@@ -30,8 +30,7 @@ pnpm-debug.log
 # Build files
 /public/build
 /public/mix-manifest.json
-/public/js
-/public/css
+
 
 # Vite
 vite.config.js.timestamp*
