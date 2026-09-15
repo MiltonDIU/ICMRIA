@@ -199,7 +199,7 @@
     </div>
 </div>
 
-@can('paper_access')
+@can('abstract_review')
 <!-- Review Modal -->
 <div class="modal fade" id="reviewModal" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">

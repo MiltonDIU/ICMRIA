@@ -110,15 +110,36 @@ class ChairScope
      */
     public function papers()
     {
-        return \App\Models\Paper::query()
-            ->underConsideration()
-            ->whereIn('track_id', $this->trackIds() ?: [0])
-            ->when(!$this->seesEverything(), function ($query) {
-                $query->where(function ($q) {
-                    $q->whereIn('sub_track_id', $this->subTrackIds() ?: [0])
-                      ->orWhereIn('track_id', $this->wholeTrackIds() ?: [0]);
-                });
-            });
+        return $this->constrainPapers(\App\Models\Paper::query()->underConsideration());
+    }
+
+    /**
+     * Narrows a paper query to what this person may see as a chair. Nothing is removed for
+     * SuperAdmin, Admin or the TPC Chair; a Track Chair keeps every sub-track of their
+     * track; a Sub-Track Chair keeps only their own sub-tracks; someone who chairs nothing
+     * is left with no papers.
+     */
+    public function constrainPapers($query)
+    {
+        if ($this->seesEverything()) {
+            return $query;
+        }
+
+        return $query->where(function ($q) {
+            $q->whereIn('papers.sub_track_id', $this->subTrackIds() ?: [0])
+              ->orWhereIn('papers.track_id', $this->wholeTrackIds() ?: [0]);
+        });
+    }
+
+    /** Whether this person may open the paper as a chair. */
+    public function canSee(\App\Models\Paper $paper): bool
+    {
+        if ($this->seesEverything()) {
+            return true;
+        }
+
+        return $paper->track_id
+            && $this->canManage((int) $paper->track_id, $paper->sub_track_id ? (int) $paper->sub_track_id : null);
     }
 
     /**

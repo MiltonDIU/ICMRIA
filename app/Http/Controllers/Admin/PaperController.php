@@ -41,12 +41,25 @@ class PaperController extends Controller
         if ($request->ajax()) {
             $user = Auth::user();
 
-            if ($user->roles->contains('id', 3)) {
-                $query = Paper::select('papers.*')->where('user_id', $user->id)->with('user.papers', 'user.profile.country', 'track', 'subTrack', 'authors.country');
-            } else {
-                abort_if(Gate::denies('paper_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-                $query = Paper::select('papers.*')->with('user.papers', 'user.profile.country', 'track', 'subTrack', 'authors.country')->orderBy('id', 'desc');
-            }
+            abort_if(Gate::denies('paper_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+            // Which papers are listed follows who is asking, not the permission alone.
+            // SuperAdmin, Admin and the TPC Chair see every paper; a Track Chair the papers of
+            // their whole track; a Sub-Track Chair those of their own sub-tracks. Everyone also
+            // sees their own submissions, so a chair who is an author still finds theirs.
+            $scope = \App\Services\ChairScope::for($user);
+            $query = Paper::select('papers.*')
+                ->with('user.papers', 'user.profile.country', 'track', 'subTrack', 'authors.country')
+                ->when(!$scope->seesEverything(), function ($query) use ($scope, $user) {
+                    $query->where(function ($visible) use ($scope, $user) {
+                        $visible->where('papers.user_id', $user->id);
+
+                        if (!$scope->isEmpty()) {
+                            $visible->orWhere(fn ($chaired) => $scope->constrainPapers($chaired));
+                        }
+                    });
+                })
+                ->orderBy('id', 'desc');
 
             // Apply Filters
             if ($request->filled('status')) {
@@ -337,7 +350,11 @@ class PaperController extends Controller
             }
         }
 
-        $tracks = Track::all();
+        // A chair filters only among the tracks they can see.
+        $scope = $user ? \App\Services\ChairScope::for($user) : null;
+        $tracks = $scope && !$scope->seesEverything() && !$scope->isEmpty()
+            ? Track::whereIn('id', $scope->trackIds())->get()
+            : Track::all();
         $countries = Country::orderBy('name', 'asc')->get();
         return view('admin.papers.index', compact('tracks', 'countries', 'myProfile', 'unpaidPapers'));
     }
@@ -345,7 +362,11 @@ class PaperController extends Controller
     public function getPaperPricing(Paper $paper)
     {
         $user = Auth::user();
-        if ($user->roles->contains('id', 3) && $paper->user_id != $user->id) {
+        // The response names every author, so only the paper's own author or a chair whose
+        // scope covers it may ask; anyone else, a reviewer included, could otherwise read
+        // author names that double-blind review withholds.
+        $isOwner = (int) $paper->user_id === (int) $user->id;
+        if (!$isOwner && !(Gate::allows('paper_access') && \App\Services\ChairScope::for($user)->canSee($paper))) {
             return response()->json(['error' => 'Unauthorized access to this paper.'], 403);
         }
 
@@ -388,16 +409,13 @@ class PaperController extends Controller
     public function show(Paper $paper)
     {
         $user = Auth::user();
-        // Access check: Participant can only see their own paper
-        if ($user->roles->contains('id', 3)) {
 
-            if ($paper->user_id != $user->id) {
-                abort(403);
-            }
-        } else {
+        // The paper's author, or someone with paper access whose chair scope covers it
+        // (SuperAdmin, Admin and the TPC Chair cover every paper).
+        $isOwner = (int) $paper->user_id === (int) $user->id;
+        $chairsIt = Gate::allows('paper_access') && \App\Services\ChairScope::for($user)->canSee($paper);
 
-            abort_if(Gate::denies('paper_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        }
+        abort_unless($isOwner || $chairsIt, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $paper->load('authors', 'user', 'reviewHistory.reviewer', 'conflicts.conflictedUser',
             'manuscriptVersions.uploadedBy', 'decision', 'reviewerAssignments.evaluation',
@@ -1002,7 +1020,7 @@ class PaperController extends Controller
 
     public function review(Request $request, Paper $paper)
     {
-        abort_if(Gate::denies('paper_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $this->authoriseAbstractReview($paper);
 
         $request->validate([
             'status' => 'required|in:approved,rejected',
@@ -1046,14 +1064,25 @@ class PaperController extends Controller
     public function approve(Paper $paper)
     {
         // Old action endpoint, can be redirected/handled
-        abort_if(Gate::denies('paper_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $this->authoriseAbstractReview($paper);
         return back()->with('error', 'Please use the review modal to approve papers.');
     }
 
     public function reject(Paper $paper)
     {
         // Old action endpoint, can be redirected/handled
-        abort_if(Gate::denies('paper_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $this->authoriseAbstractReview($paper);
         return back()->with('error', 'Please use the review modal to reject papers.');
+    }
+
+    /**
+     * Approving or rejecting an abstract needs abstract_review, the same permission that
+     * shows the button on the paper page, and only for papers the person can see.
+     * paper_access alone had let any chair decide abstracts in every track.
+     */
+    private function authoriseAbstractReview(Paper $paper): void
+    {
+        abort_if(Gate::denies('abstract_review'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        abort_unless(\App\Services\ChairScope::for(Auth::user())->canSee($paper), Response::HTTP_FORBIDDEN, '403 Forbidden');
     }
 }
