@@ -432,6 +432,9 @@
                                     <strong>{{ $profile->designation ?? 'N/A' }}</strong><br>
                                     {{ $profile->department ?? '' }} @if($profile->department && $profile->institution)<br>@endif
                                     <span class="text-muted">{{ $profile->institution ?? '' }}</span>
+                                    @if($profile->orcid_id)
+                                        <br>ORCID: <a href="https://orcid.org/{{ $profile->orcid_id }}" target="_blank" rel="noopener">{{ $profile->orcid_id }}</a>
+                                    @endif
                                 </div>
                             </td>
                             <td>

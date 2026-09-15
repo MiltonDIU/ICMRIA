@@ -59,6 +59,13 @@
                             <label for="institution">Institution *</label>
                             <input type="text" id="institution" name="institution" class="form-control" value="{{ old('institution', $profile->institution) }}" required>
                         </div>
+                        <div class="form-group">
+                            <label for="orcid_id">ORCID iD</label>
+                            <input type="text" id="orcid_id" name="orcid_id" class="form-control @error('orcid_id') is-invalid @enderror"
+                                   value="{{ old('orcid_id', $profile->orcid_id) }}" placeholder="0000-0000-0000-0000" maxlength="19">
+                            <small class="form-text text-muted">Optional. Sixteen digits in four groups; the last character may be an X.</small>
+                            @error('orcid_id') <span class="invalid-feedback"><strong>{{ $message }}</strong></span> @enderror
+                        </div>
                     </div>
                     <div class="col-md-12">
                         <div class="form-group">

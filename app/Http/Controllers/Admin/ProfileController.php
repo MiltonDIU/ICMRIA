@@ -204,6 +204,8 @@ class ProfileController extends Controller
             'designation' => 'required|string|max:255',
             'institution' => 'required|string|max:255',
             'country_id' => 'required|exists:countries,id',
+            // Same rule as registration: 16 digits in groups of four, the last may be X.
+            'orcid_id' => ['nullable', 'regex:/^\d{4}-\d{4}-\d{4}-\d{3}[\dXx]$/'],
             'whatsapp_number' => 'required|string|max:20',
             'participation_mode' => 'required|in:onsite,online',
             'id' => 'required|exists:profiles,id',
@@ -222,8 +224,9 @@ class ProfileController extends Controller
             'first_name', 'last_name', 'designation', 'department', 'institution', 
             'country_id', 'whatsapp_number', 'registration_id', 'is_author', 
             'participation_mode', 'pay_amount', 'currency', 'payment_status', 'coupon_code',
-            'author_list_confirmed'
+            'author_list_confirmed', 'orcid_id'
         ]);
+        $profileData['orcid_id'] = $profileData['orcid_id'] ? strtoupper($profileData['orcid_id']) : null;
         
         $userSchedule = $request->input('schedule_ids', []);
 
