@@ -24,6 +24,9 @@ class DatabaseSeeder extends Seeder
             TrackSubTrackSeeder::class,
             TrackChairSeeder::class,
             ReviewerSeeder::class,
+            // Placeholder reviewers on @icmria.com for when the faculty directory is empty.
+            // Refuses to run in production.
+            ReviewerPoolSeeder::class,
             // Demonstration authors and papers. Refuses to run in production.
             DemoAuthorSeeder::class,
             SpeakerTypeSeeder::class,
