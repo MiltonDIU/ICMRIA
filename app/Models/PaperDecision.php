@@ -27,17 +27,17 @@ class PaperDecision extends Model
         'paper_id',
         'decision',
         'status',
+        'round',
         'note_to_authors',
-        'note_to_tpc',
         'decided_by',
         'decided_at',
         'approved_by',
         'approved_at',
-        'return_note',
         'notified_at',
     ];
 
     protected $casts = [
+        'round' => 'integer',
         'decided_at' => 'datetime',
         'approved_at' => 'datetime',
         'notified_at' => 'datetime',
@@ -56,6 +56,11 @@ class PaperDecision extends Model
     public function paper()
     {
         return $this->belongsTo(Paper::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(PaperDecisionComment::class)->orderBy('created_at')->orderBy('id');
     }
 
     public function decidedBy()

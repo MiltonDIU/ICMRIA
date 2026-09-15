@@ -147,15 +147,16 @@
     <div class="card-body">
         @if($decision)
             @if($decision->status === 'returned')
+                @php $lastReturn = $paper->decisionComments->where('kind', 'returned')->last(); @endphp
                 <div class="alert alert-danger">
-                    <strong>Returned by the TPC Chair:</strong> {{ $decision->return_note }}
-                    <br><small>Revise the decision below and send it again.</small>
+                    <strong>Returned by the TPC Chair{{ $lastReturn ? ' in round ' . $lastReturn->round : '' }}:</strong> {{ $lastReturn->body ?? '' }}
+                    <br><small>Revise the decision below and send it again. Every earlier comment stays in the history.</small>
                 </div>
             @endif
             <p class="mb-1">
                 <span class="badge badge-{{ $decisionStyles[$decision->decision] ?? 'light' }} px-2 py-1">{{ $decision->label() }}</span>
                 <small class="text-muted ml-1">
-                    entered by {{ $decision->decidedBy->name ?? '—' }} on {{ optional($decision->decided_at)->format('j M Y') }}
+                    entered by {{ $decision->decidedBy->name ?? '—' }} on {{ optional($decision->decided_at)->format('j M Y') }} &middot; round {{ $decision->round }}
                 </small>
             </p>
             @if($decision->isApproved())
@@ -167,10 +168,6 @@
             @if($decision->note_to_authors)
                 <div class="small text-muted text-uppercase font-weight-bold mt-2">Note to the authors</div>
                 <p class="mb-1" style="white-space: pre-line;">{{ $decision->note_to_authors }}</p>
-            @endif
-            @if($decision->note_to_tpc)
-                <div class="small text-muted text-uppercase font-weight-bold mt-2">Note to the TPC Chair</div>
-                <p class="mb-1" style="white-space: pre-line;">{{ $decision->note_to_tpc }}</p>
             @endif
         @else
             <p class="text-muted mb-0">No decision has been entered yet.</p>
@@ -197,9 +194,9 @@
                         <small class="form-text text-muted">Optional. Sent to the authors together with the reviewers' feedback.</small>
                     </div>
                     <div class="form-group">
-                        <label for="note_to_tpc" class="font-weight-bold">Note to the TPC Chair</label>
-                        <textarea id="note_to_tpc" name="note_to_tpc" class="form-control" rows="3" maxlength="5000">{{ old('note_to_tpc', $decision->note_to_tpc ?? '') }}</textarea>
-                        <small class="form-text text-muted">Optional. Seen only by the TPC Chair when approving; useful when the reviews were split.</small>
+                        <label for="decision_comment" class="font-weight-bold">Your comment as chair</label>
+                        <textarea id="decision_comment" name="comment" class="form-control" rows="3" maxlength="5000">{{ old('comment') }}</textarea>
+                        <small class="form-text text-muted">Optional. Added to the comment history under this round, where the TPC Chair reads it. Earlier comments are kept.</small>
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-paper-plane"></i> {{ $decision ? 'Send the revised decision for approval' : 'Send for TPC approval' }}
@@ -208,6 +205,36 @@
             </form>
         @elseif($cannotDecideReason)
             <p class="small text-muted mt-2 mb-0">{{ $cannotDecideReason }}</p>
+        @endif
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Comments between the chairs and the TPC Chair</span>
+        <span class="badge badge-light border">{{ $paper->decisionComments->count() }}</span>
+    </div>
+    <div class="card-body">
+        @include('admin.decisions.partials.comments', ['comments' => $paper->decisionComments])
+
+        @if($commentForm === 'chair')
+            <form action="{{ route('admin.decisions.comments.store', $paper->id) }}" method="POST" class="mt-3">
+                @csrf
+                <label for="chair_comment" class="font-weight-bold">Add a comment as chair</label>
+                <textarea id="chair_comment" name="comment" class="form-control mb-2" rows="3" maxlength="5000" required></textarea>
+                <button class="btn btn-sm btn-primary"><i class="fas fa-comment"></i> Add comment</button>
+                <small class="form-text text-muted">Seen by the chairs of this paper and the TPC Chair. Never sent to authors or reviewers.</small>
+            </form>
+        @elseif($commentForm === 'tpc')
+            <form action="{{ route('admin.final-approval.comments.store', $decision->id) }}" method="POST" class="mt-3">
+                @csrf
+                <label for="tpc_comment" class="font-weight-bold">Add a comment as TPC Chair</label>
+                <textarea id="tpc_comment" name="comment" class="form-control mb-2" rows="3" maxlength="5000" required></textarea>
+                <button class="btn btn-sm btn-dark"><i class="fas fa-comment"></i> Add comment</button>
+                <small class="form-text text-muted">Seen by the chairs of this paper and the TPC Chair. Never sent to authors or reviewers.</small>
+            </form>
+        @elseif($decision && $decision->isApproved())
+            <p class="small text-muted mt-2 mb-0">The decision has been approved, so no further comments can be added.</p>
         @endif
     </div>
 </div>

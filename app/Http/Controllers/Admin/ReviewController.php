@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PaperEvaluation;
 use App\Models\PaperManuscriptVersion;
 use App\Models\PaperReviewerAssignment;
+use App\Services\ChairScope;
 use App\Services\Discussion;
 use App\Services\ReviewConsolidation;
 use App\Services\SubmissionRules;
@@ -131,6 +132,12 @@ class ReviewController extends Controller
             return back()->with('error', $assignment->evaluation?->isSubmitted()
                 ? 'This evaluation has been submitted and can no longer be changed.'
                 : 'This paper is no longer assigned to you for review.');
+        }
+
+        // Only reviewers score. Someone on the committee deciding this paper cannot, even if
+        // they were assigned to it before becoming a chair.
+        if (ChairScope::for(auth()->user())->canSee($assignment->paper)) {
+            return back()->with('error', 'You are on the committee that decides this paper, so you cannot score it. Only its reviewers can.');
         }
 
         $submitting = $request->input('action') === 'submit';

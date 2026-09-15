@@ -113,6 +113,12 @@ class Paper extends Model
         });
     }
 
+    /** Comments between the chairs and the TPC Chair, across every round. */
+    public function decisionComments()
+    {
+        return $this->hasMany(PaperDecisionComment::class)->orderBy('created_at')->orderBy('id');
+    }
+
     public function decision()
     {
         return $this->hasOne(PaperDecision::class);

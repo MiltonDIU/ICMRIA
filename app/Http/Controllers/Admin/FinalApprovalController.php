@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaperDecision;
+use App\Models\PaperDecisionComment;
 use App\Services\ChairScope;
 use Gate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,7 +37,7 @@ class FinalApprovalController extends Controller
             ? $request->string('tab')->toString()
             : 'pending';
 
-        $decisions = PaperDecision::with(['paper.track', 'paper.subTrack', 'paper.reviewerAssignments.evaluation',
+        $decisions = PaperDecision::with(['paper.track', 'paper.subTrack', 'paper.reviewerAssignments.evaluation', 'paper.decisionComments.user',
                                           'decidedBy', 'approvedBy'])
             ->whereHas('paper')
             ->where('status', self::TABS[$tab])
@@ -107,14 +109,54 @@ class FinalApprovalController extends Controller
         }
 
         $data = $request->validate([
-            'return_note' => 'required|string|max:2000',
+            'comment' => 'required|string|max:2000',
         ], [
-            'return_note.required' => 'Tell the chair what to reconsider.',
+            'comment.required' => 'Tell the chair what to reconsider.',
         ]);
 
-        $decision->update(['status' => 'returned', 'return_note' => $data['return_note']]);
+        DB::transaction(function () use ($decision, $data) {
+            $decision->update(['status' => 'returned']);
+            $this->addComment($decision, $data['comment'], 'returned');
+        });
 
         return back()->with('success', 'Decision on ' . $decision->paper->submission_id . ' returned to the chair.');
+    }
+
+    /** A comment from the TPC Chair on a decision that is not yet approved. */
+    public function comment(Request $request, PaperDecision $decision)
+    {
+        abort_if(Gate::denies('final_approval'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        if ($reason = ChairScope::for(auth()->user())->conflictWith($decision->paper)) {
+            return back()->with('error', $reason);
+        }
+
+        if ($decision->isApproved()) {
+            return back()->with('error', 'The decision has been approved, so no further comments can be added.');
+        }
+
+        $data = $request->validate([
+            'comment' => 'required|string|max:5000',
+        ], [
+            'comment.required' => 'Write a comment before adding it.',
+        ]);
+
+        $this->addComment($decision, $data['comment'], 'comment');
+
+        return back()->with('success', 'Comment added.');
+    }
+
+    private function addComment(PaperDecision $decision, string $body, string $kind): void
+    {
+        PaperDecisionComment::create([
+            'paper_id' => $decision->paper_id,
+            'paper_decision_id' => $decision->id,
+            'user_id' => auth()->id(),
+            'author_role' => 'tpc',
+            'kind' => $kind,
+            'round' => $decision->round,
+            'body' => $body,
+        ]);
     }
 
     /**

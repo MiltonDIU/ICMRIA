@@ -90,8 +90,14 @@
                                     @if($review->hasConflict())
                                         <br><span class="badge badge-danger">reviewers disagreed</span>
                                     @endif
-                                    @if($decision->note_to_tpc)
-                                        <br><small><strong>Chair's note:</strong> {{ $decision->note_to_tpc }}</small>
+                                    @php $comments = $paper->decisionComments; @endphp
+                                    @if($comments->isNotEmpty())
+                                        <details class="mt-1">
+                                            <summary class="small text-primary" style="cursor: pointer;">
+                                                {{ $comments->count() }} comment{{ $comments->count() === 1 ? '' : 's' }} &middot; round {{ $decision->round }}
+                                            </summary>
+                                            <div class="mt-1">@include('admin.decisions.partials.comments', ['comments' => $comments])</div>
+                                        </details>
                                     @endif
                                 </td>
                                 <td><span class="badge badge-{{ $decisionStyles[$decision->decision] ?? 'light' }}">{{ $decision->label() }}</span></td>
@@ -110,13 +116,13 @@
                                             <summary class="btn btn-sm btn-outline-danger">Return</summary>
                                             <form action="{{ route('admin.final-approval.return', $decision->id) }}" method="POST" class="mt-2">
                                                 @csrf
-                                                <textarea name="return_note" class="form-control form-control-sm mb-1" rows="2" maxlength="2000" required
+                                                <textarea name="comment" class="form-control form-control-sm mb-1" rows="2" maxlength="2000" required
                                                           placeholder="What should the chair reconsider?"></textarea>
                                                 <button class="btn btn-sm btn-danger">Return to chair</button>
                                             </form>
                                         </details>
                                     @elseif($tab === 'returned')
-                                        <small>{{ $decision->return_note }}</small>
+                                        <small>{{ optional($paper->decisionComments->where('kind', 'returned')->last())->body }}</small>
                                     @else
                                         <small>
                                             {{ $decision->approvedBy->name ?? '—' }}, {{ optional($decision->approved_at)->format('j M Y') }}

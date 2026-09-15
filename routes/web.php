@@ -341,6 +341,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::get('decisions/{paper}', [\App\Http\Controllers\Admin\DecisionController::class, 'show'])->name('decisions.show');
     Route::post('decisions/{paper}', [\App\Http\Controllers\Admin\DecisionController::class, 'store'])->name('decisions.store');
     Route::post('decisions/{paper}/discussion', [\App\Http\Controllers\Admin\DecisionController::class, 'openDiscussion'])->name('decisions.discussion.open');
+    Route::post('decisions/{paper}/comments', [\App\Http\Controllers\Admin\DecisionController::class, 'comment'])->name('decisions.comments.store');
     Route::post('discussions/{paper}', [\App\Http\Controllers\Admin\DiscussionController::class, 'store'])->name('discussions.store');
 
     // Final approval and author notification (TPC Chair)
@@ -348,6 +349,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::post('final-approval/approve', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'approve'])->name('final-approval.approve');
     Route::post('final-approval/notify', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'notify'])->name('final-approval.notify');
     Route::post('final-approval/{decision}/return', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'returnToChair'])->name('final-approval.return');
+    Route::post('final-approval/{decision}/comments', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'comment'])->name('final-approval.comments.store');
 
     // Payment verification, confirmation for proceedings, programme and export (administrators)
     Route::get('proceedings', [\App\Http\Controllers\Admin\ProceedingsController::class, 'index'])->name('proceedings.index');

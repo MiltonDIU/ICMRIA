@@ -127,6 +127,12 @@ class ReviewerMatcher
      */
     public function reasonToRefuse(Paper $paper, User $reviewer): ?string
     {
+        // Only reviewers score. A chair of the paper's track, the TPC Chair or an
+        // administrator decides on the paper instead, so cannot be handed it to score.
+        if (ChairScope::for($reviewer)->canSee($paper)) {
+            return 'They are on the committee that decides this paper, so they cannot score it.';
+        }
+
         if ($this->authorEmails($paper)->contains(Str::lower($reviewer->email))) {
             return 'They are an author on this paper.';
         }
