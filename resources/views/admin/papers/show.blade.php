@@ -27,6 +27,10 @@
             </div>
         </div>
 
+        @include('admin.papers.partials.decision')
+        @include('admin.papers.partials.camera_ready')
+        @include('admin.papers.partials.payment_proof')
+
         <!-- Abstract Content Card -->
         <div class="card shadow-sm border-0 mb-4 rounded-lg">
             <div class="card-header bg-white border-bottom py-3">

@@ -103,6 +103,49 @@ class ChairScope
         return in_array($subTrackId, $this->subTrackIds(), true);
     }
 
+    /**
+     * The papers this person may act on as a chair: every paper for SuperAdmin, Admin and
+     * the TPC Chair, otherwise those in their tracks and sub-tracks. Rejected abstracts
+     * are left out, since they go no further.
+     */
+    public function papers()
+    {
+        return \App\Models\Paper::query()
+            ->underConsideration()
+            ->whereIn('track_id', $this->trackIds() ?: [0])
+            ->when(!$this->seesEverything(), function ($query) {
+                $query->where(function ($q) {
+                    $q->whereIn('sub_track_id', $this->subTrackIds() ?: [0])
+                      ->orWhereIn('track_id', $this->wholeTrackIds() ?: [0]);
+                });
+            });
+    }
+
+    /**
+     * Why this person has to stay out of decisions on a paper, or null when nothing
+     * stands in the way: they wrote it, or its author declared a conflict with them.
+     * Scope says where someone may act; this says where they must not, whatever their role.
+     */
+    public function conflictWith(\App\Models\Paper $paper): ?string
+    {
+        $email = \Illuminate\Support\Str::lower((string) $this->user->email);
+
+        $authorEmails = $paper->authors->pluck('email')
+            ->push($paper->user?->email)
+            ->filter()
+            ->map(fn ($e) => \Illuminate\Support\Str::lower($e));
+
+        if ($authorEmails->contains($email)) {
+            return 'You are an author on this paper, so another member of the committee has to handle it.';
+        }
+
+        if ($paper->conflicts->pluck('conflicted_user_id')->filter()->contains($this->user->id)) {
+            return 'The author declared a conflict of interest with you, so another member of the committee has to handle it.';
+        }
+
+        return null;
+    }
+
     public function isEmpty(): bool
     {
         return !$this->seesEverything() && $this->chairAssignments()->isEmpty();

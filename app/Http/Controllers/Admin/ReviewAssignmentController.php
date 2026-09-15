@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Paper;
+use App\Models\PaperBid;
 use App\Models\PaperReviewerAssignment;
 use App\Models\User;
 use App\Services\ChairScope;
@@ -37,18 +38,16 @@ class ReviewAssignmentController extends Controller
 
         $scope = ChairScope::for(auth()->user());
 
-        $papers = Paper::with(['track', 'subTrack', 'reviewerAssignments.reviewer'])
-            ->whereIn('track_id', $scope->trackIds() ?: [0])
-            ->when(!$scope->seesEverything(), function ($query) use ($scope) {
-                $query->where(function ($q) use ($scope) {
-                    $q->whereIn('sub_track_id', $scope->subTrackIds() ?: [0])
-                      ->orWhereIn('track_id', $scope->wholeTrackIds() ?: [0]);
-                });
-            })
+        $papers = $this->papersInScope($scope)
+            ->with(['track', 'subTrack', 'reviewerAssignments.reviewer'])
+            ->withCount([
+                'bids as want_bids_count' => fn ($q) => $q->where('preference', PaperBid::WANT),
+                'bids as can_bids_count' => fn ($q) => $q->where('preference', PaperBid::CAN),
+            ])
             ->when($request->filled('state'), function ($query) use ($request) {
                 $wanted = $request->string('state')->toString();
-                $query->when($wanted === 'unassigned', fn ($q) => $q->doesntHave('reviewerAssignments'))
-                      ->when($wanted === 'assigned', fn ($q) => $q->has('reviewerAssignments'));
+                $query->when($wanted === 'unassigned', fn ($q) => $q->whereDoesntHave('reviewerAssignments', fn ($a) => $a->active()))
+                      ->when($wanted === 'assigned', fn ($q) => $q->whereHas('reviewerAssignments', fn ($a) => $a->active()));
             })
             ->orderBy('id')
             ->get();
@@ -69,8 +68,8 @@ class ReviewAssignmentController extends Controller
         abort_if(Gate::denies('review_assign'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $this->authoriseScope($paper);
 
-        $paper->load(['track', 'subTrack', 'authors', 'conflicts.conflictedUser',
-                      'reviewerAssignments.reviewer', 'reviewerAssignments.assignedBy']);
+        $paper->load(['track', 'subTrack', 'authors', 'conflicts.conflictedUser', 'bids',
+                      'reviewerAssignments.reviewer', 'reviewerAssignments.assignedBy', 'reviewerAssignments.evaluation']);
 
         return view('admin.review_assignments.show', [
             'paper' => $paper,
@@ -87,12 +86,19 @@ class ReviewAssignmentController extends Controller
         abort_if(Gate::denies('review_assign'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $this->authoriseScope($paper);
 
+        if ($paper->status === 'rejected') {
+            return back()->with('error', 'The abstract was rejected, so this paper is not sent for review.');
+        }
+
         $data = $request->validate([
             'reviewer_ids' => 'required|array|min:1',
             'reviewer_ids.*' => 'integer|exists:users,id',
         ], [
             'reviewer_ids.required' => 'Choose at least one reviewer.',
         ]);
+
+        // A reviewer brought in because the evaluations disagree is recorded as such.
+        $source = $request->input('source') === 'discussion' ? 'discussion' : 'manual';
 
         $refused = [];
         $assigned = 0;
@@ -106,7 +112,7 @@ class ReviewAssignmentController extends Controller
                 continue;
             }
 
-            $this->assign($paper, $reviewer, 'manual');
+            $this->assign($paper, $reviewer, $source);
             $assigned++;
         }
 
@@ -126,29 +132,77 @@ class ReviewAssignmentController extends Controller
         abort_if(Gate::denies('review_assign'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $this->authoriseScope($paper);
 
-        $paper->load(['authors', 'conflicts', 'reviewerAssignments']);
+        if ($paper->status === 'rejected') {
+            return back()->with('error', 'The abstract was rejected, so this paper is not sent for review.');
+        }
 
-        $shortfall = $this->matcher->reviewersWanted($paper) - $paper->reviewerAssignments->count();
+        $paper->load(['track', 'authors', 'conflicts', 'bids', 'reviewerAssignments']);
+
+        $shortfall = $this->matcher->reviewersWanted($paper) - $paper->reviewerAssignments->where('status', '!=', 'declined')->count();
 
         if ($shortfall <= 0) {
             return back()->with('error', 'This paper already has the number of reviewers the track asks for.');
         }
 
-        $proposed = $this->matcher->propose($paper, $shortfall);
+        $added = $this->topUp($paper, $shortfall);
 
-        if ($proposed->isEmpty()) {
+        if ($added === 0) {
             return back()->with('error',
                 'Nobody in this track\'s pool can take the paper. The reason against each name is listed below.');
         }
 
-        foreach ($proposed as $candidate) {
-            $this->assign($paper, $candidate['reviewer'], 'auto', $candidate['score']);
+        $short = $shortfall - $added;
+
+        return back()->with('success', $added . ' reviewer' . ($added === 1 ? '' : 's')
+            . ' assigned automatically.' . ($short > 0 ? " {$short} place(s) could not be filled." : ''));
+    }
+
+    /**
+     * Automatic assignment across every paper the chair can reach, for the day the
+     * submission window closes and a whole track needs reviewers at once.
+     *
+     * Papers are taken one at a time, and each reviewer's workload is read afresh for
+     * every paper, so the ceiling holds across the whole batch and not just within
+     * one paper.
+     */
+    public function autoAll()
+    {
+        abort_if(Gate::denies('review_assign'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        $papers = $this->papersInScope(ChairScope::for(auth()->user()))
+            ->with(['track', 'authors', 'conflicts', 'bids', 'reviewerAssignments'])
+            ->orderBy('id')
+            ->get();
+
+        $assigned = 0;
+        $papersFilled = 0;
+        $stillShort = [];
+
+        foreach ($papers as $paper) {
+            $shortfall = $this->matcher->reviewersWanted($paper) - $paper->reviewerAssignments->where('status', '!=', 'declined')->count();
+
+            if ($shortfall <= 0) {
+                continue;
+            }
+
+            $added = $this->topUp($paper, $shortfall);
+            $assigned += $added;
+            $papersFilled += $added > 0 ? 1 : 0;
+
+            if ($added < $shortfall) {
+                $stillShort[] = $paper->submission_id;
+            }
         }
 
-        $short = $shortfall - $proposed->count();
+        if ($assigned === 0 && !$stillShort) {
+            return back()->with('success', 'Every paper already has the number of reviewers its track asks for.');
+        }
 
-        return back()->with('success', $proposed->count() . ' reviewer' . ($proposed->count() === 1 ? '' : 's')
-            . ' assigned by subject match.' . ($short > 0 ? " {$short} place(s) could not be filled." : ''));
+        return back()
+            ->with($assigned ? 'success' : 'error', $assigned
+                ? "{$assigned} reviewer" . ($assigned === 1 ? '' : 's') . " assigned across {$papersFilled} paper" . ($papersFilled === 1 ? '' : 's') . '.'
+                : 'Nobody could be assigned.')
+            ->with('short', $stillShort);
     }
 
     public function destroy(Paper $paper, PaperReviewerAssignment $assignment)
@@ -157,9 +211,36 @@ class ReviewAssignmentController extends Controller
         $this->authoriseScope($paper);
         abort_if($assignment->paper_id !== $paper->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
+        // Removing the assignment would take the evaluation with it.
+        if ($assignment->evaluation()->submitted()->exists()) {
+            return back()->with('error', 'This reviewer has already submitted an evaluation, so they stay on the paper as the record of it.');
+        }
+
         $assignment->delete();
 
         return back()->with('success', 'Reviewer removed from this paper.');
+    }
+
+    /**
+     * Assigns up to $howMany of the best candidates and says how many it managed.
+     * A pairing the reviewer asked for is recorded as coming from their bid.
+     */
+    private function topUp(Paper $paper, int $howMany): int
+    {
+        $proposed = $this->matcher->propose($paper, $howMany);
+
+        foreach ($proposed as $candidate) {
+            $source = PaperBid::rank($candidate['bid']) > 0 ? 'bid' : 'auto';
+            $this->assign($paper, $candidate['reviewer'], $source, $candidate['score']);
+        }
+
+        return $proposed->count();
+    }
+
+    /** The papers this chair may assign, with rejected abstracts left out. */
+    private function papersInScope(ChairScope $scope)
+    {
+        return $scope->papers();
     }
 
     private function assign(Paper $paper, User $reviewer, string $source, ?int $score = null): void

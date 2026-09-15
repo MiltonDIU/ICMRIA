@@ -64,6 +64,7 @@ class PermissionRoleTableSeeder extends Seeder
                 'paper_show',
                 'review_access',
                 'review_submit',
+                'review_bid',
             ],
             5 => $chair_permissions, // Track Chair
             6 => $chair_permissions, // Sub-Track Chair

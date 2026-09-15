@@ -31,12 +31,15 @@ class Paper extends Model
         'review_note',
         'reviewed_by',
         'reviewed_at',
+        'discussion_opened_at',
+        'discussion_opened_by',
     ];
 
     protected $casts = [
         'keywords' => 'array',
         'reviewed_at' => 'datetime',
         'manuscript_uploaded_at' => 'datetime',
+        'discussion_opened_at' => 'datetime',
         'user_id' => 'integer',
         'payment_status' => 'integer',
         'has_multiple_authors' => 'boolean',
@@ -85,6 +88,60 @@ class Paper extends Model
     public function reviewerAssignments()
     {
         return $this->hasMany(PaperReviewerAssignment::class);
+    }
+
+    public function cameraReady()
+    {
+        return $this->hasOne(PaperCameraReady::class);
+    }
+
+    public function paymentProofs()
+    {
+        return $this->hasMany(PaperPaymentProof::class)->latest();
+    }
+
+    /**
+     * Papers the authors have been told are accepted: an approved and notified decision of
+     * Accept or Accept with Minor Revisions. Kept in step with ProceedingsRules::isAccepted.
+     */
+    public function scopeAccepted($query)
+    {
+        return $query->whereHas('decision', function ($q) {
+            $q->where('status', 'approved')
+              ->whereNotNull('notified_at')
+              ->where('decision', '!=', 'reject');
+        });
+    }
+
+    public function decision()
+    {
+        return $this->hasOne(PaperDecision::class);
+    }
+
+    public function discussionMessages()
+    {
+        return $this->hasMany(PaperDiscussionMessage::class)->orderBy('created_at')->orderBy('id');
+    }
+
+    public function discussionOpenedBy()
+    {
+        return $this->belongsTo(User::class, 'discussion_opened_by');
+    }
+
+    public function bids()
+    {
+        return $this->hasMany(PaperBid::class);
+    }
+
+    /**
+     * Papers still in the running for review. A rejected abstract goes no further, so
+     * it is neither offered for bidding nor handed to reviewers.
+     */
+    public function scopeUnderConsideration($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('status')->orWhere('status', '!=', 'rejected');
+        });
     }
 
     public function hasManuscript(): bool

@@ -345,6 +345,30 @@
                     </a>
                 </li>
                 @endcan
+                @can('review_submit')
+                <li class="nav-item">
+                    <a href="{{ route("admin.reviews.index") }}" class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-tasks">
+
+                        </i>
+                        <p>
+                            <span>My Reviews</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
+                @can('review_bid')
+                <li class="nav-item">
+                    <a href="{{ route("admin.paper-bids.index") }}" class="nav-link {{ request()->is('admin/paper-bids*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-hand-paper">
+
+                        </i>
+                        <p>
+                            <span>Paper Bidding</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
                 @can('review_assign')
                 <li class="nav-item">
                     <a href="{{ route("admin.review-assignments.index") }}" class="nav-link {{ request()->is('admin/review-assignments*') ? 'active' : '' }}">
@@ -363,6 +387,42 @@
                         </i>
                         <p>
                             <span>Reviewers by Track</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
+                @can('decision_access')
+                <li class="nav-item">
+                    <a href="{{ route("admin.decisions.index") }}" class="nav-link {{ request()->is('admin/decisions*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-gavel">
+
+                        </i>
+                        <p>
+                            <span>Decisions</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
+                @can('final_approval')
+                <li class="nav-item">
+                    <a href="{{ route("admin.final-approval.index") }}" class="nav-link {{ request()->is('admin/final-approval*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-stamp">
+
+                        </i>
+                        <p>
+                            <span>Final Approval</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
+                @can('camera_ready_access')
+                <li class="nav-item">
+                    <a href="{{ route("admin.proceedings.index") }}" class="nav-link {{ request()->is('admin/proceedings*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-book">
+
+                        </i>
+                        <p>
+                            <span>Proceedings</span>
                         </p>
                     </a>
                 </li>

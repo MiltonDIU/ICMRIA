@@ -3,6 +3,12 @@
 
 @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
+@if(session('short'))
+    <div class="alert alert-warning">
+        <strong>Still short of reviewers:</strong> {{ implode(', ', session('short')) }}.
+        Open each one to see why nobody else in the pool could take it.
+    </div>
+@endif
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -16,11 +22,20 @@
                class="btn btn-{{ $state === 'assigned' ? 'primary' : 'outline-secondary' }}">Has reviewers</a>
         </div>
     </div>
-    <div class="card-body">
-        <p class="text-muted mb-0">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center">
+        <p class="text-muted mb-2 mr-3">
             The conference asks for at least {{ $minimum }} independent reviewers per paper.
-            A paper below that is marked in red.
+            A paper below that is marked in red. Papers whose abstract was rejected are not listed.
         </p>
+        @unless($hasNoScope)
+            <form action="{{ route('admin.review-assignments.auto-all') }}" method="POST" class="mb-2"
+                  onsubmit="return confirm('Assign reviewers automatically to every paper in your tracks that still needs them? Each reviewer assigned is emailed.');">
+                @csrf
+                <button class="btn btn-sm btn-success">
+                    <i class="fas fa-magic"></i> Auto-assign every paper that needs reviewers
+                </button>
+            </form>
+        @endunless
     </div>
 </div>
 
@@ -40,13 +55,14 @@
                         <th>Title</th>
                         <th>Sub-track</th>
                         <th class="text-center" style="width: 7rem;">Manuscript</th>
+                        <th class="text-center" style="width: 8rem;">Bids</th>
                         <th style="width: 18rem;">Reviewers</th>
                         <th class="text-right" style="width: 6rem;">&nbsp;</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($papers as $paper)
-                        @php $count = $paper->reviewerAssignments->count(); @endphp
+                        @php $count = $paper->reviewerAssignments->where('status', '!=', 'declined')->count(); @endphp
                         <tr>
                             <td><small class="text-muted">{{ $paper->submission_id }}</small></td>
                             <td>{{ Str::limit($paper->title, 68) }}</td>
@@ -58,6 +74,14 @@
                                     <span class="badge badge-light border text-muted">not yet</span>
                                 @endif
                             </td>
+                            <td class="text-center">
+                                @if($paper->want_bids_count || $paper->can_bids_count)
+                                    @if($paper->want_bids_count)<span class="badge badge-success">{{ $paper->want_bids_count }} want</span>@endif
+                                    @if($paper->can_bids_count)<span class="badge badge-info">{{ $paper->can_bids_count }} can</span>@endif
+                                @else
+                                    <span class="badge badge-light border text-muted">none</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($count === 0)
                                     <span class="badge badge-danger">none assigned</span>
@@ -66,7 +90,11 @@
                                         {{ $count }} of {{ $minimum }} minimum
                                     </span>
                                     @foreach($paper->reviewerAssignments as $assignment)
-                                        <small class="d-block text-muted">{{ $assignment->reviewer->name ?? '—' }}</small>
+                                        <small class="d-block text-muted">
+                                            {{ $assignment->reviewer->name ?? '—' }}
+                                            @if($assignment->status === 'declined') <span class="text-danger">(declined)</span>@endif
+                                            @if($assignment->status === 'completed') <span class="text-success">(evaluated)</span>@endif
+                                        </small>
                                     @endforeach
                                 @endif
                             </td>
@@ -77,7 +105,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted">No papers in your tracks yet.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted">No papers in your tracks yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

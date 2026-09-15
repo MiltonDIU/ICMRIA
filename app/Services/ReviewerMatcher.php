@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Paper;
+use App\Models\PaperBid;
 use App\Models\PaperReviewerAssignment;
 use App\Models\Setting;
 use App\Models\TrackAssignment;
@@ -17,6 +18,10 @@ use Illuminate\Support\Str;
  * keywords, reviewer expertise, workload limits and conflict detection. The first
  * two become the score; the last two are hard filters, because a conflicted or
  * overloaded reviewer must not be offered at all rather than merely ranked lower.
+ *
+ * Bids from the optional bidding step sit on top. A Conflict bid refuses the reviewer
+ * just as a declared conflict does, and someone who asked for the paper ranks above
+ * someone who did not before keyword match is compared.
  */
 class ReviewerMatcher
 {
@@ -32,7 +37,7 @@ class ReviewerMatcher
      *
      * @return Collection<int, array{
      *     reviewer: User, score: int, load: int, capacity: int,
-     *     expertise: array<int, string>, eligible: bool, reason: string|null,
+     *     expertise: array<int, string>, eligible: bool, reason: string|null, bid: string|null,
      *     institution_warning: bool
      * }>
      */
@@ -48,10 +53,11 @@ class ReviewerMatcher
         $loads = $this->openLoads($pool->pluck('user_id')->all());
         $institutions = $this->conflictedInstitutions($paper);
         $alreadyAssigned = $paper->reviewerAssignments->pluck('reviewer_id');
+        $bids = $paper->bids->pluck('preference', 'reviewer_id');
 
         return $pool
             ->reject(fn ($row) => $alreadyAssigned->contains($row->user_id))
-            ->map(function ($row) use ($paper, $loads, $capacity, $institutions) {
+            ->map(function ($row) use ($paper, $loads, $capacity, $institutions, $bids) {
                 $reason = $this->reasonToRefuse($paper, $row->user);
 
                 return [
@@ -62,14 +68,15 @@ class ReviewerMatcher
                     'expertise' => SubmissionRules::splitKeywords($row->expertise),
                     'eligible' => $reason === null,
                     'reason' => $reason,
+                    'bid' => $bids->get($row->user_id),
                     // Reviewers carry no institution of their own, so a conflict named
                     // against an institution cannot be matched automatically. The chair
                     // is told to weigh it instead of it being silently ignored.
                     'institution_warning' => $institutions->isNotEmpty(),
                 ];
             })
-            // Eligible first, then by how well they match.
-            ->sortByDesc(fn ($row) => [$row['eligible'] ? 1 : 0, $row['score']])
+            // Eligible first, then those who asked for the paper, then by how well they match.
+            ->sortByDesc(fn ($row) => [$row['eligible'] ? 1 : 0, PaperBid::rank($row['bid']), $row['score']])
             ->values();
     }
 
@@ -126,6 +133,10 @@ class ReviewerMatcher
 
         if ($paper->conflicts->pluck('conflicted_user_id')->filter()->contains($reviewer->id)) {
             return 'The author declared a conflict of interest with them.';
+        }
+
+        if ($paper->bids->where('reviewer_id', $reviewer->id)->where('preference', PaperBid::CONFLICT)->isNotEmpty()) {
+            return 'They marked a conflict with this paper when bidding.';
         }
 
         if (!$this->pool($paper)->pluck('user_id')->contains($reviewer->id)) {

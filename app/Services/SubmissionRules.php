@@ -85,6 +85,15 @@ class SubmissionRules
         return self::blindReviewMode() === 'double';
     }
 
+    /**
+     * Whether reviewers may bid on papers. Bidding is optional in the document, so the
+     * organisers can switch it off; a missing setting leaves it on.
+     */
+    public static function biddingIsOpen(): bool
+    {
+        return Setting::where('key', 'bidding_enabled')->value('value') !== 'false';
+    }
+
     private static function parseSetting(string $key): ?Carbon
     {
         $value = Setting::where('key', $key)->value('value');

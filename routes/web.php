@@ -313,6 +313,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
 
     // Handing papers to reviewers
     Route::get('review-assignments', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'index'])->name('review-assignments.index');
+    // Registered before review-assignments/{paper}, which would otherwise take "auto-all" as a paper.
+    Route::post('review-assignments/auto-all', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'autoAll'])->name('review-assignments.auto-all');
     Route::get('review-assignments/{paper}', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'show'])->name('review-assignments.show');
     Route::post('review-assignments/{paper}', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'store'])->name('review-assignments.store');
     Route::post('review-assignments/{paper}/auto', [\App\Http\Controllers\Admin\ReviewAssignmentController::class, 'auto'])->name('review-assignments.auto');
@@ -322,6 +324,39 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::get('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'index'])->name('track-reviewers.index');
     Route::post('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'store'])->name('track-reviewers.store');
     Route::delete('track-reviewers/{trackAssignment}', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'destroy'])->name('track-reviewers.destroy');
+
+    // Paper bidding by reviewers
+    Route::get('paper-bids', [\App\Http\Controllers\Admin\PaperBidController::class, 'index'])->name('paper-bids.index');
+    Route::post('paper-bids', [\App\Http\Controllers\Admin\PaperBidController::class, 'store'])->name('paper-bids.store');
+
+    // A reviewer's own assignments and evaluations
+    Route::get('reviews', [\App\Http\Controllers\Admin\ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('reviews/{assignment}', [\App\Http\Controllers\Admin\ReviewController::class, 'show'])->name('reviews.show');
+    Route::post('reviews/{assignment}', [\App\Http\Controllers\Admin\ReviewController::class, 'save'])->name('reviews.save');
+    Route::post('reviews/{assignment}/accept', [\App\Http\Controllers\Admin\ReviewController::class, 'accept'])->name('reviews.accept');
+    Route::post('reviews/{assignment}/decline', [\App\Http\Controllers\Admin\ReviewController::class, 'decline'])->name('reviews.decline');
+
+    // Consolidating evaluations, discussion and decisions (chairs)
+    Route::get('decisions', [\App\Http\Controllers\Admin\DecisionController::class, 'index'])->name('decisions.index');
+    Route::get('decisions/{paper}', [\App\Http\Controllers\Admin\DecisionController::class, 'show'])->name('decisions.show');
+    Route::post('decisions/{paper}', [\App\Http\Controllers\Admin\DecisionController::class, 'store'])->name('decisions.store');
+    Route::post('decisions/{paper}/discussion', [\App\Http\Controllers\Admin\DecisionController::class, 'openDiscussion'])->name('decisions.discussion.open');
+    Route::post('discussions/{paper}', [\App\Http\Controllers\Admin\DiscussionController::class, 'store'])->name('discussions.store');
+
+    // Final approval and author notification (TPC Chair)
+    Route::get('final-approval', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'index'])->name('final-approval.index');
+    Route::post('final-approval/approve', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'approve'])->name('final-approval.approve');
+    Route::post('final-approval/notify', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'notify'])->name('final-approval.notify');
+    Route::post('final-approval/{decision}/return', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'returnToChair'])->name('final-approval.return');
+
+    // Payment verification, confirmation for proceedings, programme and export (administrators)
+    Route::get('proceedings', [\App\Http\Controllers\Admin\ProceedingsController::class, 'index'])->name('proceedings.index');
+    Route::get('proceedings/export/{format}', [\App\Http\Controllers\Admin\ProceedingsController::class, 'export'])->where('format', 'json|xml|abstracts|program|files')->name('proceedings.export');
+    Route::post('proceedings/payments/{proof}/verify', [\App\Http\Controllers\Admin\ProceedingsController::class, 'verifyPayment'])->name('proceedings.payments.verify');
+    Route::post('proceedings/payments/{proof}/reject', [\App\Http\Controllers\Admin\ProceedingsController::class, 'rejectPayment'])->name('proceedings.payments.reject');
+    Route::post('proceedings/{paper}/confirm', [\App\Http\Controllers\Admin\ProceedingsController::class, 'confirm'])->name('proceedings.confirm');
+    Route::post('proceedings/{paper}/changes', [\App\Http\Controllers\Admin\ProceedingsController::class, 'requestChanges'])->name('proceedings.changes');
+    Route::post('proceedings/{paper}/schedule', [\App\Http\Controllers\Admin\ProceedingsController::class, 'schedule'])->name('proceedings.schedule');
 
     // Committee Types
     Route::delete('committee-types/destroy', [CommitteeTypeController::class, 'massDestroy'])->name('committee-types.massDestroy');
@@ -382,6 +417,12 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('papers/{paper}/manuscript/v{version}', [App\Http\Controllers\Admin\PaperController::class, 'downloadManuscript'])->name('papers.manuscript.version');
     Route::post('papers/{paper}/conflicts', [App\Http\Controllers\Admin\PaperController::class, 'declareConflict'])->name('papers.conflicts.store');
     Route::delete('papers/{paper}/conflicts/{conflict}', [App\Http\Controllers\Admin\PaperController::class, 'removeConflict'])->name('papers.conflicts.destroy');
+
+    // Camera-ready files, copyright form and fees paid by transfer (accepted papers)
+    Route::post('papers/{paper}/camera-ready', [App\Http\Controllers\Admin\CameraReadyController::class, 'upload'])->name('papers.camera-ready.upload');
+    Route::get('papers/{paper}/camera-ready/{file}', [App\Http\Controllers\Admin\CameraReadyController::class, 'download'])->where('file', 'camera-ready|copyright')->name('papers.camera-ready.download');
+    Route::post('papers/{paper}/payment-proof', [App\Http\Controllers\Admin\CameraReadyController::class, 'storePaymentProof'])->name('papers.payment-proof.store');
+    Route::get('payment-proofs/{proof}', [App\Http\Controllers\Admin\CameraReadyController::class, 'downloadPaymentProof'])->name('papers.payment-proof.download');
 
     // Payments
     Route::get('set/payment/{data}', [PaymentController::class, 'setPayment'])->name('setPayment');

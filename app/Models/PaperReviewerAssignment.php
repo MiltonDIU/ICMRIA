@@ -18,6 +18,7 @@ class PaperReviewerAssignment extends Model
         'match_score',
         'assigned_at',
         'responded_at',
+        'decline_reason',
     ];
 
     protected $casts = [
@@ -40,9 +41,23 @@ class PaperReviewerAssignment extends Model
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
+    public function evaluation()
+    {
+        return $this->hasOne(PaperEvaluation::class, 'assignment_id');
+    }
+
     /** Assignments that still count against a reviewer's workload. */
     public function scopeOpen($query)
     {
         return $query->whereIn('status', ['invited', 'accepted', 'in_progress']);
+    }
+
+    /**
+     * Assignments that count towards a paper's reviewers. A declined one does not, so
+     * the chair is prompted to put someone in its place.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', '!=', 'declined');
     }
 }

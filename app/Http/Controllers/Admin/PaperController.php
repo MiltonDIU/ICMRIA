@@ -400,7 +400,8 @@ class PaperController extends Controller
         }
 
         $paper->load('authors', 'user', 'reviewHistory.reviewer', 'conflicts.conflictedUser',
-            'manuscriptVersions.uploadedBy');
+            'manuscriptVersions.uploadedBy', 'decision', 'reviewerAssignments.evaluation',
+            'cameraReady.schedule', 'paymentProofs');
 
         return view('admin.papers.show', [
             'paper' => $paper,
@@ -492,23 +493,42 @@ class PaperController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->roles->contains('id', 3)) {
-            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
-        } else {
-            abort_if(Gate::denies('paper_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        }
+        // Decided by the person's relation to this paper, not by role. A permission alone
+        // let every reviewer read every manuscript, and one person can be an author, a
+        // chair and a reviewer at once, each reaching different papers.
+        $isOwner = $paper->user_id === $user->id;
+        $chairsIt = $paper->track_id
+            && \App\Services\ChairScope::for($user)->canManage($paper->track_id, $paper->sub_track_id);
+        $reviewsIt = $paper->reviewerAssignments()
+            ->where('reviewer_id', $user->id)
+            ->where('status', '!=', 'declined')
+            ->exists();
+
+        abort_unless($isOwner || $chairsIt || $reviewsIt, Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        // Under double-blind review a reviewer gets the file under the paper ID. The name
+        // the author uploaded it with often carries their own name.
+        $downloadName = function (?string $original) use ($paper, $isOwner, $chairsIt) {
+            if ($isOwner || $chairsIt || !\App\Services\SubmissionRules::isDoubleBlind()) {
+                return $original;
+            }
+
+            $extension = pathinfo((string) $original, PATHINFO_EXTENSION);
+
+            return $paper->submission_id . ($extension ? '.' . $extension : '');
+        };
 
         if ($version !== null) {
             $record = $paper->manuscriptVersions()->where('version', $version)->first();
             abort_if(!$record || !Storage::exists($record->path), Response::HTTP_NOT_FOUND, 'That version is not on file.');
 
-            return Storage::download($record->path, $record->original_name);
+            return Storage::download($record->path, $downloadName($record->original_name));
         }
 
         abort_if(!$paper->manuscript_path || !Storage::exists($paper->manuscript_path),
             Response::HTTP_NOT_FOUND, 'No manuscript on file.');
 
-        return Storage::download($paper->manuscript_path, $paper->manuscript_original_name);
+        return Storage::download($paper->manuscript_path, $downloadName($paper->manuscript_original_name));
     }
 
     /**

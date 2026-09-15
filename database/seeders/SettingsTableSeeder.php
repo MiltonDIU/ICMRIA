@@ -97,6 +97,8 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'early_registration_last_date',  'value' => '2026-12-10 23:59:00'], // ASSUMED
             ['key' => 'registration_close_date',       'value' => '2026-12-26 23:59:00'],
             ['key' => 'payment_last_date',             'value' => '2026-12-26 23:59:00'],
+            // Camera-ready manuscript and copyright form (document, Phase 6).
+            ['key' => 'camera_ready_deadline',         'value' => '2026-12-26 23:59:00'],
             ['key' => 'event_date',                    'value' => '2027-01-09'],
             ['key' => 'event_end_date',                'value' => '2027-01-10'],
 
@@ -127,6 +129,9 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'reviewers_per_paper',           'value' => '3'],
             ['key' => 'min_reviewers_per_paper',       'value' => '2'],
             ['key' => 'max_papers_per_reviewer',       'value' => '10'],
+
+            // Paper bidding is optional in the document (Phase 3); 'false' switches it off.
+            ['key' => 'bidding_enabled',               'value' => 'true'],
 
             // ---------------------------------------------------------------
             // Registration fees

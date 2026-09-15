@@ -557,6 +557,9 @@ class PermissionsTableSeeder extends Seeder
                 'title' => 'review_assign',
             ],
             [
+                'title' => 'review_bid',
+            ],
+            [
                 'title' => 'decision_access',
             ],
             [
