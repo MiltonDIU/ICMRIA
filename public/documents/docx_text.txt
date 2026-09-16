@@ -1,0 +1,1043 @@
+Conference website contents….
+
+1. Website Navigation Architecture
+
+Navbar & Sub-Navbar Content Structure
+
+Home: Main Landing Page with hero sections, banners, key highlights, and background.
+
+Committee:
+
+Chief Patron & Patron
+
+International Advisory Committee
+
+National Advisory Committee
+
+Conference Chairs & Co-Chairs
+
+Organizing Committee
+
+Technical Program Committee (TPC)
+
+Track Chairs & Track Co-Chairs
+
+Others Committee
+
+Messages:
+
+Messages from Chief Guest (Opening & Closing)
+
+Messages from Chief Patron & Patrons
+
+Messages from General Chair, Organizing Chair, and TPC Chair
+
+Speakers:
+
+Keynote Speakers (track-wise)
+
+Invited Speakers (track-wise)
+
+Authors:
+
+Paper Submission & Guidelines
+
+Conference Flyer / Call for Papers (CFP)
+
+Tracks
+
+Sub-Tracks
+
+Important Dates
+
+Program Schedule
+
+Registration Info & Costs
+
+Camera Ready Guidelines & Presentation Guidelines
+
+Conference Template
+
+Accommodation & Transportation Info
+
+Events:
+
+Workshop
+
+Add your events
+
+Local Attraction
+
+Contact
+
+CTA Button: Submit Paper
+
+2. Homepage Overview & Themes
+
+International Conference on Multidisciplinary Research, Innovation, and Applications 2027 (ICMRIA 2027)
+
+“Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future”
+
+The International Conference on Multidisciplinary Research and Innovation 2027 (ICMRI 2027) is an international forum, sponsored by Daffodil International University (DIU), Bangladesh, that provides a platform for the international academic community, researchers, industry practitioners, policymakers and students from all over the world. The conference provides a common forum for exchanging ideas, original research, and networking with colleagues from other disciplines to inform a sustainable and intelligent future.
+
+Given ICMRI 2027's focus on bringing together the best minds to address today's most pressing challenges, the conference welcomes contributions that connect knowledge, innovation, and society across technology, environment, business, health, humanities, and governance.
+
+Conference at a Glance
+
+Conference Title
+
+International Conference on Multidisciplinary Research, Innovation, and Applications 2027 (ICMRIA 2027)
+
+Theme
+
+Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future
+
+Dates
+
+9–10 January 2027
+
+Venue
+
+Daffodil International University,Daffodil Smart City, Birulia, Savar, Dhaka-1216.
+
+Mode
+
+Blended (Onsite + Online)
+
+Organized by
+
+Daffodil International University (DIU)
+
+Selected papers will be considered for publication in Scopus-indexed Q2 journals.
+
+Important Dates
+
+Milestone Event
+
+Deadline / Date
+
+Abstract Submission Deadline
+
+30 October 2026
+
+Full manuscript submission window
+
+15 November 2026 - 30 November 2026
+
+Registration Deadline
+
+26 December 2026
+
+Conference Dates
+
+9-10 January 2027
+
+Conference Themes:
+
+Connecting Knowledge, Innovation and Society for a Sustainable and Intelligent Future
+
+This theme aligns with the conference's focus on creating a space for discussion on the interaction of academic knowledge, technological innovation and the needs of society and is intended to stimulate research that will make a positive contribution to sustainable development and intelligent, future-oriented solutions for communities around the world.
+
+4. Conference Tracks & Call for Papers (CFP)
+
+ICMRI 2027 invites original, unpublished research papers, case studies, and reviews under (but not limited to) the following tracks:
+
+Track
+
+Focus Area
+
+Track 1
+
+Artificial Intelligence, Data Science & Emerging Technologies
+
+Track 2
+
+Sustainable Development, Environment & Climate Action
+
+Track 3
+
+Business, Economics, Management & Innovation
+
+Track 4
+
+Engineering, Computing & Smart Systems
+
+Proposed: Core Engineering, Infrastructure & Smart Systems
+
+Track 5
+
+Social Sciences, Humanities, Law & Public Policy
+
+Track 6
+
+Health Sciences, Biotechnology & Public Health
+
+Track 7
+
+Education, Language, Literature & Communication Studies
+
+Track 8
+
+Agriculture, Food Security & Rural Development
+
+Proposed sub-tracks:
+
+Track 1: Artificial Intelligence, Data Science & Emerging Technologies
+
+Machine Learning, Deep Learning & Generative AI
+
+Big Data Analytics, Data Mining & Information Retrieval
+
+Computer Vision, Natural Language Processing & Pattern Recognition
+
+Cloud, Edge Computing, Internet of Things (IoT) & Cybersecurity
+
+Track 2: Sustainable Development, Environment & Climate Action
+
+Climate Change Mitigation, Adaptation & Environmental Dynamics
+
+Renewable Energy Systems, Green Tech & Energy Policy
+
+Environmental Risk Assessment, Water Resources & Waste Management
+
+Sustainable Urbanization, Smart Cities & Biodiversity Conservation
+
+Track 3: Business, Economics, Management & Innovation
+
+Digital Transformation, E-Commerce & Entrepreneurship
+
+Sustainable Finance, Banking, Accounting & Fintech Innovations
+
+Supply Chain, Logistics, Operations & Strategic Management
+
+Marketing Analytics, Consumer Behavior & Real Estate Management
+
+Track 4: Core Engineering, Infrastructure & Smart Systems
+
+Electrical & Electronic Engineering (EEE): Smart Grids, Power Systems, Semiconductor Devices, VLSI, Robotics & Automation
+
+Textile Engineering: Advanced Textile Materials, Smart Fabrics, Sustainable Apparel & Textile Chemical Processing
+
+Civil Engineering: Structural, Geotechnical, Transportation, Construction Management & Infrastructure Resilience
+
+Architecture & Urban Planning: Sustainable Building Design, Architectural Heritage, Urban Dynamics & Spatial Planning
+
+Information & Communication Engineering (ICE): Wireless Tech, Telecommunications, Optical Communications & Signal Processing
+
+Track 5: Social Sciences, Humanities, Law & Public Policy
+
+Legal Frameworks, Human Rights, Ethics & Governance
+
+Digital Humanities, Culture, Identity & Societal Transformation
+
+Public Policy, International Relations, Peace & Conflict Resolution
+
+Social Welfare, Community Development & Public Administration
+
+Track 6: Health Sciences, Biotechnology & Public Health
+
+Pharmaceutical Sciences, Drug Discovery & Advanced Therapeutics
+
+Biotechnology, Genomics, Bioinformatics & Molecular Biology
+
+Public Health Interventions, Epidemiology & Healthcare Systems
+
+Health Technology, Telemedicine, Medical Devices & Clinical Innovations
+
+Track 7: Education, Language, Literature & Communication Studies
+
+Smart Pedagogy, EdTech, E-Learning & Outcome-Based Education (OBE)
+
+Applied Linguistics, Language Teaching (ELT) & Translation Studies
+
+Modern & Comparative Literature, Cultural Studies
+
+Mass Media, Digital Journalism, PR & Strategic Communication
+
+Track 8: Agriculture, Food Security & Rural Development
+
+Smart Agriculture, Precision Farming, Agribusiness & IoT in Farming
+
+Food Safety, Processing, Quality Assurance & Food Security
+
+Agro-Ecology, Crop Protection, Soil Health & Plant Genetics
+
+Rural Economics, Sustainable Food Supply Chains & Community Upliftment
+
+5. Author Guidelines, Registration & Costs
+
+Author Guidelines
+
+Authors are invited to submit original and unpublished research abstracts related to the conference theme and tracks. All submissions will undergo peer review. Submission guidelines:
+
+Abstracts should be 200–250 words, clearly stating the objective, methodology, findings, and relevance to the conference theme.
+
+Include paper title, author name(s), affiliation(s), country, corresponding author's email, selected track, and 4–6 keywords.
+
+Abstracts may be submitted in DOCX or PDF format through the conference submission portal/email.
+
+Full manuscripts must follow the conference's prescribed template and formatting guidelines (to be published on the website).
+
+All submissions must be original, unpublished, and not under review elsewhere.
+
+Each accepted abstract must be presented (onsite or online) by at least one registered author.
+
+Submission Portal: All papers must be submitted electronically through the conference submission system.
+
+Formatting & Template: Papers must adhere strictly to standard IEEE conference paper formatting guidelines.
+
+Camera-Ready Requirements: Authors of accepted papers must incorporate reviewers' comments and submit the final camera-ready version along with the completed copyright transfer form.
+
+Registration Info & Cost Structure
+
+Registration details apply to regular authors, student authors, key participants, and international delegates.
+
+At least one author of each accepted paper must register at the full rate to ensure inclusion in the conference program and proceedings.
+
+Category
+
+Early Registration
+
+Late Registration
+
+International Presenter/Participant
+
+US$ 150
+
+US$ 175
+
+SAARC Presenter/Participant
+
+US$ 100
+
+US$ 75
+
+Student Presenter/Participant
+
+BDT 4,000
+
+BDT 5,000
+
+Industry/R&D Presenter/Participant
+
+BDT 6,500
+
+BDT 7,500
+
+Academic Presenter/Participant
+
+BDT 6,000
+
+BDT 7,000
+
+6. Committee & Organization Architecture
+
+1. Advisory Council
+
+Role
+
+Name
+
+Affiliation
+
+2. Organizing Committee
+
+Position
+
+Name
+
+Affiliation
+
+Convener
+
+Professor Mohammad Masum Iqbal, PhD.
+
+Pro-Vice-Chancellor, DIU
+
+Co-convener
+
+Professor. Dr. Imran Mahmud
+
+Professor & Head, Department of Software Engineering (SWE), DIU
+
+Co-convener
+
+Dr. Md. Sarowar Hossain
+
+Director, Division of Research & Associate Professor, Department of Pharmacy, DIU
+
+Co-convener
+
+Dr. Md Mamun Mia
+
+Assistant Professor, Department of Marketing, DIU
+
+3. Steering Committee
+
+Designation
+
+Name
+
+Department
+
+Publication Committee[Will be added]
+
+4. Track Chairs & Track Co-Chairs
+
+Track / Scope
+
+Sub-Track Title & Focus
+
+Assigned Chair
+
+Academic Designation & Affiliation
+
+Track 1: Artificial Intelligence, Data Science & Emerging Technologies Overall Track Chair: Prof. Dr. Md. Fokhray Hossain (Dean, Faculty of Science & Information Technology (FSIT), DIU)
+
+Sub-Track 1
+
+Machine Learning, Deep Learning & Generative AI
+
+Prof. Dr. Sheak Rashed Haider Noori
+
+Head, Department of Computer Science and Engineering (CSE), DIU
+
+Sub-Track 2
+
+Big Data Analytics, Data Mining & Information Retrieval
+
+Dr. S. M. Aminul Haque
+
+Professor & Associate Head, Dept. of CSE, DIU
+
+Sub-Track 3
+
+Computer Vision, Natural Language Processing & Pattern Recognition
+
+Dr. Imran Mahmud
+
+Professor & Head, Department of Software Engineering (SWE), DIU
+
+Sub-Track 4
+
+Cloud, Edge Computing, Internet of Things (IoT) & Cybersecurity
+
+Mr. Md. Sarwar Hossain Mollah
+
+Associate Professor & Head, Department of Computing & Information System (CIS), DIU
+
+Track 2: Sustainable Development, Environment & Climate Action Overall Track Chair: Prof. Dr. Bimal Chandra Das (Associate Dean, Faculty of Science & Information Technology (FSIT), DIU)
+
+Sub-Track 1
+
+Climate Change Mitigation, Adaptation & Environmental Dynamics
+
+Dr. A. B. M. Kamal Pasha
+
+Associate Professor & Head, Dept. of Environmental Science & Disaster Management (ESDM), DIU
+
+Sub-Track 2
+
+Renewable Energy Systems, Green Tech & Energy Policy
+
+Prof. Dr. Md. Saidur Rahman
+
+Professor, Department of ESDM, DIU
+
+Sub-Track 3
+
+Environmental Risk Assessment, Water Resources & Waste Management
+
+Dr. Kazi A. S. M. Nurul Huda
+
+Associate Professor & Head, Department of Civil Engineering (CE), DIU
+
+Sub-Track 4
+
+Sustainable Urbanization, Smart Cities & Biodiversity Conservation
+
+Mr. Sheikh Muhammad Rezwan
+
+Assistant Professor & Head, Department of Architecture, DIU
+
+Track 3: Business, Economics, Management & Innovation Overall Track Chair: Prof. Dr. Mohammad Rokibul Kabir (Dean, Faculty of Business & Entrepreneurship (FBE), DIU)
+
+Sub-Track 1
+
+Digital Transformation, E-Commerce & Entrepreneurship
+
+Dr. Md. Azizur Rahman
+
+Associate Professor & Head, Department of Business Administration, DIU
+
+Sub-Track 2
+
+Sustainable Finance, Banking, Accounting & Fintech Innovations
+
+Professor Dr. Md. Abdur Rouf
+
+Professor, Department of Accounting, DIU
+
+Sub-Track 3
+
+Supply Chain, Logistics, Operations & Strategic Management
+
+Mr. Siddiqur Rahman
+
+Assistant Professor, Department of Business Administration, DIU
+
+Sub-Track 4
+
+Marketing Analytics, Consumer Behavior & Real Estate Management
+
+Dr. Dewan Golam Yazdani Showrav
+
+Associate Professor & Head, Department of Marketing, DIU
+
+Track 4: Core Engineering, Infrastructure & Smart Systems Overall Track Chair: Prof. Dr. M. Shamsul Alam (Dean, Faculty of Engineering (FE), DIU)
+
+Sub-Track 1
+
+Electrical & Electronic Engineering (EEE): Smart Grids, Power Systems, Semiconductor Devices, VLSI, Robotics & Automation
+
+Dr. Dara Abdus Satter
+
+Associate Professor & Head, Department of Electrical & Electronic Engineering (EEE), DIU
+
+Sub-Track 2
+
+Textile Engineering: Advanced Textile Materials, Smart Fabrics, Sustainable Apparel & Textile Chemical Processing
+
+Prof. Dr. Md. Mahbubul Haque
+
+Head, Department of Textile Engineering, DIU
+
+Sub-Track 3
+
+Civil Engineering: Structural, Geotechnical, Transportation, Construction Management & Infrastructure Resilience
+
+Dr. Kazi A. S. M. Nurul Huda
+
+Associate Professor & Head, Department of Civil Engineering (CE), DIU
+
+Sub-Track 4
+
+Architecture & Urban Planning: Sustainable Building Design, Architectural Heritage, Urban Dynamics & Spatial Planning
+
+Mr. Sheikh Muhammad Rezwan
+
+Assistant Professor & Head, Department of Architecture, DIU
+
+Sub-Track 5
+
+Information & Communication Engineering (ICE): Wireless Tech, Telecommunications, Optical Communications & Signal Processing
+
+Dr. Nusrat Jahan
+
+Associate Professor & Head, Dept. of Information Technology & Management (ITM), DIU
+
+Track 5: Social Sciences, Humanities, Law & Public Policy Overall Track Chair: Prof. Dr. Liza Sharmin (Dean, Faculty of Humanities & Social Sciences (FHSS), DIU)
+
+Sub-Track 1
+
+Legal Frameworks, Human Rights, Ethics & Governance
+
+Prof. Dr. Kudrat-E-Khuda Babu
+
+Professor & Head, Department of Law, DIU
+
+Sub-Track 2
+
+Digital Humanities, Culture, Identity & Societal Transformation
+
+Dr. Ehatasham Ul Hoque Eiten
+
+Assistant Professor & Head, Department of English, DIU
+
+Sub-Track 3
+
+Public Policy, International Relations, Peace & Conflict Resolution
+
+Dr. Md. Fouad Hossain Sarker
+
+Associate Professor & Head, Department of Development Studies, DIU
+
+Sub-Track 4
+
+Social Welfare, Community Development & Public Administration
+
+Ms. Bilkis Khanam
+
+Assistant Professor & Head, Department of General Educational Development (GED), DIU
+
+Track 6: Health Sciences, Biotechnology & Public Health Overall Track Chair: Prof. Dr. Bellal Hossain (Dean, Faculty of Health & Life Sciences (FHLS), DIU)
+
+hri
+
+Sub-Track 1
+
+Pharmaceutical Sciences, Drug Discovery & Advanced Therapeutics
+
+Prof. Dr. Muniruddin Ahmed
+
+Head, Department of Pharmacy, DIU
+
+Sub-Track 2
+
+Biotechnology, Genomics, Bioinformatics & Molecular Biology
+
+Prof. Dr. Md. Bellal Hossain
+
+Professor & Head, Dept. of Nutrition & Food Engineering (NFE), DIU
+
+Sub-Track 3
+
+Public Health Interventions, Epidemiology & Healthcare Systems
+
+Dr. A. B. M. Alauddin Chowdhury
+
+Associate Professor & Head, Department of Public Health, DIU
+
+Sub-Track 4
+
+Health Technology, Telemedicine, Medical Devices & Clinical Innovations
+
+Dr. Md. Shahjahan
+
+Professor, Faculty of Health & Life Sciences, DIU
+
+Track 7: Education, Language, Literature & Communication Studies Overall Track Chair: Prof. Dr. Liza Sharmin (Dean, Faculty of Humanities & Social Sciences (FHSS), DIU)
+
+Sub-Track 1
+
+Smart Pedagogy, EdTech, E-Learning & Outcome-Based Education (OBE)
+
+Prof. Dr. Md. Mostafa Kamal
+
+Dean (Academic Affairs) & Professor, DIU
+
+Sub-Track 2
+
+Applied Linguistics, Language Teaching (ELT) & Translation Studies
+
+Dr. Ehatasham Ul Hoque Eiten
+
+Assistant Professor & Head, Department of English, DIU
+
+Sub-Track 3
+
+Modern & Comparative Literature, Cultural Studies
+
+Prof. A. M. M. Hamidur Rahman
+
+Professor, Department of English, DIU
+
+Sub-Track 4
+
+Mass Media, Digital Journalism, PR & Strategic Communication
+
+Mr. Aftab Hossain
+
+Assistant Professor & Head, Dept. of Journalism, Media & Communication (JMC), DIU
+
+Track 8: Agriculture, Food Security & Rural Development Overall Track Chair: Prof. Dr. Bellal Hossain (Dean, Faculty of Health & Life Sciences (FHLS), DIU)
+
+Sub-Track 1
+
+Smart Agriculture, Precision Farming, Agribusiness & IoT in Farming
+
+Prof. Dr. M. A. Rahim
+
+Head, Department of Agricultural Science, DIU
+
+Sub-Track 2
+
+Food Safety, Processing, Quality Assurance & Food Security
+
+Prof. Dr. Md. Bellal Hossain
+
+Head, Department of Nutrition & Food Engineering (NFE), DIU
+
+Sub-Track 3
+
+Agro-Ecology, Crop Protection, Soil Health & Plant Genetics
+
+Dr. Md. Ahad Ali
+
+Associate Professor, Department of Agricultural Science, DIU
+
+Sub-Track 4
+
+Rural Economics, Sustainable Food Supply Chains & Community Upliftment
+
+Dr. Md. Rashedul Islam
+
+Associate Professor, Dept. of Agricultural Science, DIU
+
+5. National Advisory Committee
+
+Name
+
+Designation / Role
+
+Institution
+
+Prof. Dr. Mostafa Kamal
+
+Dean (Academic Affairs)
+
+Daffodil International University (DIU)
+
+Prof. Dr. Mohammad Kaykobad
+
+Distinguished Professor
+
+BRAC University (Ex-BUET)
+
+Prof. Dr. M. Sohel Rahman
+
+Professor, Dept. of CSE
+
+Bangladesh University of Engineering and Technology (BUET)
+
+Prof. Dr. Md. Saidur Rahman
+
+Professor, Dept. of CSE
+
+Bangladesh University of Engineering and Technology (BUET)
+
+6. International Advisory Committee
+
+Name
+
+Designation / Role
+
+Institution / Country
+
+Prof. Dr. Hrishikesh Chakraborty
+
+International Advisor, Division of Research, DIU
+
+Duke University,  Durham, North Carolina, United States
+
+Prof. Dr. Hironori Washizaki
+
+Professor
+
+Waseda University, Japan
+
+Prof. Dr. Vincenzo Piuri
+
+Professor
+
+University of Milan, Italy
+
+Prof. T. Ramayah
+
+Visiting Professor
+
+Universiti Sains Malaysia (USM), Malaysia
+
+Dr. Neil Perez Balba
+
+Visiting Professor & Scholar
+
+Philippines
+
+Dr. Bibhuti Roy
+
+Visiting Professor
+
+University of Bremen, Germany
+
+Dr. Ismail Rakip Karas
+
+Associate Professor / Researcher
+
+Karabuk University, Turkey
+
+Dr. Tan Cheng Ling
+
+Visiting Professor
+
+Universiti Sains Malaysia (USM) / DIU
+
+Prof. Dr. Mohammad Ali Moni
+
+Associate Professor / AI & Health Lead
+
+University of Queensland, Australia
+
+7. Speakers & Co-located Events
+
+Keynote Speakers
+
+Keynote Designation
+
+Track / Focus Area
+
+Proposed Speaker
+
+Affiliation & Country
+
+Keynote Speaker 1
+
+Health Sciences, Biostatistics & Bioinformatics
+
+Prof. Dr. Hrishikesh Chakraborty
+
+Duke University,  Durham, North Carolina, United States
+
+Keynote Speaker 2
+
+AI, Data Science & Smart Systems
+
+Prof. Dr. Hironori Washizaki
+
+Waseda University, Japan
+
+Keynote Speaker 3
+
+Health Sciences, Biotech & Digital Health
+
+Prof. Dr. Mohammad Ali Moni
+
+University of Queensland, Australia
+
+Keynote Speaker 4
+
+Sustainable Development & Intelligent Computing
+
+Prof. Dr. Vincenzo Piuri
+
+University of Milan, Italy
+
+Invited Talks & Technical Sessions
+
+Session Category
+
+Session Title & Focus
+
+Proposed Speaker / Chair
+
+Affiliation & Details
+
+Invited Plenary Talk
+
+Industry 4.0, Tech Transfer & Future Work
+
+Senior Industry Executive / Tech Leader
+
+Leading Multinational Tech Enterprise / R&D Director
+
+Invited Technical Talk 1
+
+Machine Learning, IoT & Edge Computing
+
+Prof. T. Ramayah
+
+Universiti Sains Malaysia (USM), Malaysia
+
+Invited Technical Talk 2
+
+Green Tech & Renewable Energy Systems
+
+Dr. Bibhuti Roy
+
+University of Bremen, Germany
+
+Hands-On Workshop
+
+Applied Deep Learning & Generative AI Tutorials
+
+Domain Experts & Industry Practitioners
+
+DIU Research Labs & Industry Partners
+
+Co-Located Events & Special Programs
+
+Program Category
+
+Proposed Event Title
+
+Details & Focus
+
+Program Chair / Organizer
+
+Special Event
+
+Poster & Project Exhibition
+
+Exhibition for undergrad, graduate, and early-career researchers to showcase working prototypes and innovations.
+
+Organizing Committee
+
+Special Event
+
+Student Innovation Challenge
+
+Multidisciplinary hackathon focused on solving real-world societal and environmental sustainability challenges.
+
+Innovation & Entrepreneurship Lab
+
+Co-located Program
+
+Doctoral Consortium
+
+Dedicated mentoring session for Ph.D. scholars to present ongoing research and receive feedback from international experts.
+
+International Advisory Committee
+
+Co-located Program
+
+Industry & Startup Forum
+
+Panel discussions bridging academia and industry on technology commercialization, venture incubation, and patents.
+
+DIU Innovation Lab & Industry Liaisons
+
+Co-located Program
+
+Women in Engineering & STEM (WIE)
+
+Special networking and panel session celebrating women leadership, empowerment, and career progression in STEM fields.
+
+WIE Affinity Group Leadership
+
+8. Footer & Contact Details
+
+Organized By: Daffodil International University (DIU)
+
+Location: Daffodil Smart City, Birulia, Savar, Dhaka, Bangladesh
+
+Key Contacts:
+
+Name and Designation/Role
+
+Email and Phone
+
+© International Conference on Multidisciplinary Research and Innovation 2027 (ICMRI 2027). All rights reserved.
+
+Submission Portal Management Instruction for DIU Web Team
+
+System Architecture & Workflow Overview
+
+[Author] ──(Submits Abstract/Paper)──► [System Portal]
+
+│
+
+[Admin / TPC Chair] ──(Assigns Papers)──────┼──► [Reviewer / TPC Member]
+
+│           │
+
+[Author] ◄──(Receives Acceptance/Feedback)──┴──(Submits Evaluation)
+
+Phase 1: Pre-Submission & Account Setup
+
+User Registration & Profile Creation
+
+Users create an account using their primary email address, full name, affiliation (e.g., Daffodil International University), country, and ORCID ID.
+
+System assigns roles dynamically (Author, Reviewer, Track Chair, TPC Chair, Admin). A single user can have multiple roles.
+
+Conference & Track Configuration (Admin Side)
+
+Track Setup: Admin creates conference tracks and sub-tracks (e.g., Track 1: AI & Data Science).
+
+Submission Rules: Define paper limits, submission deadlines, file formats (.pdf, .docx), and blind review settings (Single-Blind or Double-Blind).
+
+Custom Forms: Add required fields like Paper Title, Abstract (200–250 words), Keywords, and Topic Categories.
+
+Phase 2: Paper Submission Process (Author Side)
+
+New Submission Initialization
+
+The author logs in and clicks "Create New Submission".
+
+Selects the target Track and Sub-Track.
+
+Metadata Entry
+
+Enter the Paper Title, Abstract, and 4–6 Keywords.
+
+Adds all Co-Authors with their names, emails, and affiliations, and selects the Corresponding Author.
+
+Conflict of Interest (CoI) Declaration
+
+Authors check off any potential Conflicts of Interest with institutional reviewers/chairs to ensure unbiased review assignments.
+
+File Upload & Confirmation
+
+Author uploads the anonymized manuscript file following the conference template (e.g., IEEE format).
+
+The system generates a unique Paper ID (e.g., ICMRI2027-104) and sends an automated confirmation email to all co-authors.
+
+Authors can edit or replace the submitted draft anytime before the submission deadline.
+
+Phase 3: Review Assignment & Bidding (Chair & Reviewer Side)
+
+Paper Bidding (Optional)
+
+System presents reviewers with paper titles and abstracts. Reviewers mark their preference: Want to Review, Can Review, Neutral, or Conflict.
+
+Reviewer Assignment
+
+Automatic Assignment: System matches reviewers to papers based on subject keywords, reviewer expertise, workload limits, and conflict detection.
+
+Manual Assignment: Track Chairs manually assign at least 2 to 3 independent reviewers per paper.
+
+Phase 4: Reviewing & Evaluation Process (Reviewer Side)
+
+Reviewer Dashboard
+
+Reviewer accesses assigned manuscripts via their reviewer panel and downloads anonymized PDF/DOCX files.
+
+Evaluation Form Submission
+
+Reviewers fill out a standardized evaluation form including:
+
+Originality & Novelty (Score: 1 to 5)
+
+Technical Soundness & Methodology (Score: 1 to 5)
+
+Relevance to Conference Theme (Score: 1 to 5)
+
+Overall Score / Recommendation: Strong Accept, Accept, Borderline, Reject, or Strong Reject.
+
+Feedback for Authors: Constructive comments detailing required improvements.
+
+Confidential Comments for Track Chairs: Internal notes visible only to committee leaders.
+
+Phase 5: Decision Making & Notification (Track & TPC Chair Side)
+
+Review Consolidation & Discussion
+
+Track Chairs review evaluation reports for each paper. If scores conflict (e.g., one Accept and one Reject), a third reviewer is assigned or an internal discussion is opened.
+
+Final Decision Entry
+
+Track Chair submits a formal decision recommendation: Accept, Accept with Minor Revisions, or Reject.
+
+TPC Chair grants final approval for all track decisions.
+
+Automated Notification Email
+
+System sends bulk decision notifications to corresponding authors containing reviewer feedback (without revealing reviewer identity).
+
+Phase 6: Camera-Ready Submission & Registration
+
+Camera-Ready Upload
+
+Authors of accepted papers update their manuscript according to reviewer comments, add author names/affiliations, and upload the final camera-ready version.
+
+Authors upload the signed Copyright Transfer Form.
+
+Registration & Fee Verification
+
+Author inputs transaction details or uploads payment proof for conference registration.
+
+Admin verifies payment and marks the paper as "Confirmed for Proceedings".
+
+Program Scheduling & Export
+
+System exports accepted paper data, author details, and session schedules into XML/JSON or PDF format to auto-generate the conference schedule, book of abstracts, and proceedings.
