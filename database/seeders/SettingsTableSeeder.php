@@ -99,6 +99,14 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'payment_last_date',             'value' => '2026-12-26 23:59:00'],
             // Camera-ready manuscript and copyright form (document, Phase 6).
             ['key' => 'camera_ready_deadline',         'value' => '2026-12-26 23:59:00'],
+            // Revised manuscript for papers accepted with minor revisions (document, Phase 5).
+            ['key' => 'revision_deadline',             'value' => '2026-12-10 23:59:00'],
+            // Full manuscript length, IEEE conference format (Author Guidelines).
+            ['key' => 'manuscript_min_pages',          'value' => '6'],
+            ['key' => 'manuscript_max_pages',          'value' => '8'],
+            // Research keywords a reviewer gives about themselves.
+            ['key' => 'reviewer_keywords_min',         'value' => '3'],
+            ['key' => 'reviewer_keywords_max',         'value' => '5'],
             ['key' => 'event_date',                    'value' => '2027-01-09'],
             ['key' => 'event_end_date',                'value' => '2027-01-10'],
 
@@ -134,43 +142,14 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'bidding_enabled',               'value' => 'true'],
 
             // ---------------------------------------------------------------
-            // Registration fees
-            //   NOTE: the current PricingService keys fees by country->currency
-            //   prefix (bdt/usd/inr/eur) + stage (earlybird/regular). The doc
-            //   instead defines 5 CATEGORIES (International / SAARC / Student /
-            //   Industry-R&D / Academic). A pricing-model rework is still
-            //   needed; values below are the closest fit to the doc's table.
-            //     International : early US$150 / late US$175
-            //     SAARC        : early US$100 / late US$75
-            //     Student      : early BDT 4,000 / late BDT 5,000
-            //     Industry/R&D : early BDT 6,500 / late BDT 7,500
-            //     Academic     : early BDT 6,000 / late BDT 7,000
+            // Registration fees live in the prices table, one row per delegate category
+            // carrying both the early-bird and the regular amount, and PricingService
+            // reads them from there. The per-currency keys that used to sit here were
+            // read by nothing, so they were removed rather than left to be edited in
+            // Settings by someone expecting the site to charge them.
+            //
+            // What stays below is the domain discount, which PricingService does read.
             // ---------------------------------------------------------------
-            ['key' => 'usd_earlybird_price',    'value' => '150'],
-            ['key' => 'usd_regular_price',      'value' => '175'],
-            ['key' => 'usd_participant_price',  'value' => '150'],
-
-            ['key' => 'eur_earlybird_price',    'value' => '150'],
-            ['key' => 'eur_regular_price',      'value' => '175'],
-            ['key' => 'eur_participant_price',  'value' => '150'],
-
-            ['key' => 'inr_earlybird_price',    'value' => '75'], // SAARC (USD-equivalent)
-            ['key' => 'inr_regular_price',      'value' => '175'],
-            ['key' => 'inr_participant_price',  'value' => '75'],
-
-            ['key' => 'saarc_earlybird_price',  'value' => '75'],
-            ['key' => 'saarc_regular_price',    'value' => '175'],
-
-            ['key' => 'bdt_earlybird_price',    'value' => '6000'], // Academic (default local)
-            ['key' => 'bdt_regular_price',      'value' => '7000'],
-            ['key' => 'bdt_participant_price',  'value' => '6000'],
-
-            ['key' => 'bdt_student_earlybird_price', 'value' => '4000'],
-            ['key' => 'bdt_student_regular_price',   'value' => '5000'],
-
-            // Legacy keys kept for backward compatibility
-            ['key' => 'event_price',                  'value' => '7000'],
-            ['key' => 'early_registration_event_price', 'value' => '6000'],
             ['key' => 'selected_domain_discount',     'value' => '6000'],
             ['key' => 'special_discount_is_true',     'value' => 'false'],
         ];
