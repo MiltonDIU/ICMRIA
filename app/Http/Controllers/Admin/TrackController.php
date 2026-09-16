@@ -118,13 +118,17 @@ class TrackController extends Controller
      */
     private function syncChairs(int $trackId, ?int $subTrackId, array $userIds): void
     {
-        $userIds = array_unique(array_filter($userIds));
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+        // An overall chair holds the Track Chair role (5), a sub-track chair the Sub-Track Chair role (6).
+        $roleId = $subTrackId === null ? 5 : 6;
 
-        TrackAssignment::where('track_id', $trackId)
+        $leaving = TrackAssignment::where('track_id', $trackId)
             ->where('sub_track_id', $subTrackId)
             ->where('role', 'chair')
-            ->whereNotIn('user_id', $userIds ?: [0])
-            ->delete();
+            ->whereNotIn('user_id', $userIds ?: [0]);
+
+        $removedUserIds = (clone $leaving)->pluck('user_id')->all();
+        $leaving->delete();
 
         foreach ($userIds as $userId) {
             TrackAssignment::firstOrCreate([
@@ -133,15 +137,35 @@ class TrackController extends Controller
                 'sub_track_id' => $subTrackId,
                 'role' => 'chair',
             ]);
+
+            // Placing someone is enough; the role that lets them act comes with it.
+            User::find($userId)?->roles()->syncWithoutDetaching([$roleId]);
+        }
+
+        // Someone who no longer chairs anything of this kind loses the role that came with it.
+        foreach ($removedUserIds as $userId) {
+            $stillChairs = TrackAssignment::where('user_id', $userId)
+                ->where('role', 'chair')
+                ->when($subTrackId === null,
+                    fn ($q) => $q->whereNull('sub_track_id'),
+                    fn ($q) => $q->whereNotNull('sub_track_id'))
+                ->exists();
+
+            if (!$stillChairs) {
+                User::find($userId)?->roles()->detach($roleId);
+            }
         }
     }
 
-    /** Users who hold a chair role. Shown with their address, since a chair has no profile. */
+    /**
+     * Staff who could chair: anyone holding a role other than Author, so a teacher already
+     * in the system, as a reviewer for instance, can be placed directly without first
+     * being given a chair role under Users. Shown with their address, since a chair has
+     * no profile.
+     */
     private function chairCandidates()
     {
-        return User::whereHas('roles', function ($query) {
-                $query->whereIn('roles.id', self::CHAIR_ROLE_IDS);
-            })
+        return User::whereHas('roles', fn ($query) => $query->where('roles.id', '!=', 3))
             ->orderBy('name')
             ->get();
     }

@@ -44,12 +44,11 @@
             <hr>
 
             <h5 class="mb-1"><strong>Overall Track Chair</strong></h5>
-            <p class="text-muted small">Sees and decides on every paper in every sub-track below.</p>
+            <p class="text-muted small">Sees and decides on every paper in every sub-track below. Anyone chosen here receives the Track Chair role automatically.</p>
 
             @if($chairCandidates->isEmpty())
                 <div class="alert alert-warning">
-                    No users hold a chair role yet. Give someone the <strong>Track Chair</strong> or
-                    <strong>Sub-Track Chair</strong> role under
+                    There are no staff accounts yet. Add the teacher under
                     <a href="{{ route('admin.users.index') }}">Users</a> first, then come back here to place them.
                 </div>
             @else
@@ -66,7 +65,7 @@
                 <hr>
 
                 <h5 class="mb-1"><strong>Sub-Track Chairs</strong></h5>
-                <p class="text-muted small">Each one sees and decides only on papers in their own sub-track.</p>
+                <p class="text-muted small">Each one sees and decides only on papers in their own sub-track. Anyone chosen here receives the Sub-Track Chair role automatically.</p>
 
                 @forelse($track->subTracks as $subTrack)
                     @php $selected = old("sub_track_chairs.{$subTrack->id}", $subTrack->chairs->pluck('user_id')->all()); @endphp

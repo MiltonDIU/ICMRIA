@@ -109,17 +109,6 @@ class PaperBidController extends Controller
      */
     private function biddablePapers(User $user)
     {
-        $pool = TrackAssignment::where('user_id', $user->id)->where('role', 'reviewer')->get();
-        $wholeTrackIds = $pool->whereNull('sub_track_id')->pluck('track_id')->unique()->values()->all();
-        $subTrackIds = $pool->whereNotNull('sub_track_id')->pluck('sub_track_id')->unique()->values()->all();
-
-        return Paper::query()
-            ->underConsideration()
-            ->where(function ($q) use ($wholeTrackIds, $subTrackIds) {
-                $q->whereIn('track_id', $wholeTrackIds ?: [0])
-                  ->orWhereIn('sub_track_id', $subTrackIds ?: [0]);
-            })
-            ->where('user_id', '!=', $user->id)
-            ->whereDoesntHave('authors', fn ($q) => $q->whereRaw('LOWER(email) = ?', [Str::lower($user->email)]));
+        return \App\Services\BiddablePapers::query($user);
     }
 }

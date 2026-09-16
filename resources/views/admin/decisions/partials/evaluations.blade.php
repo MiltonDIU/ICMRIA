@@ -29,7 +29,7 @@
                     {{ \App\Models\PaperEvaluation::RECOMMENDATIONS[$evaluation->recommendation] ?? $evaluation->recommendation }}
                 </span>
                 @foreach(\App\Models\PaperEvaluation::CRITERIA as $field => $label)
-                    <span class="badge badge-light border mr-1">{{ $label }}: {{ $evaluation->$field }}/5</span>
+                    <span class="badge badge-light border mr-1">{{ $label }}: {{ $evaluation->$field }}/5 ({{ \App\Models\PaperEvaluation::SCALE[$evaluation->$field] ?? '' }})</span>
                 @endforeach
                 <span class="badge badge-light border">Average {{ $evaluation->averageScore() }}</span>
             </div>

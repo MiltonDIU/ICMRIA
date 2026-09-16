@@ -26,7 +26,7 @@
                     <strong>Reviewer {{ $loop->iteration }}</strong>
                     <div class="my-2">
                         @foreach(\App\Models\PaperEvaluation::CRITERIA as $field => $label)
-                            <span class="badge badge-light border mr-1">{{ $label }}: {{ $evaluation->$field }}/5</span>
+                            <span class="badge badge-light border mr-1">{{ $label }}: {{ $evaluation->$field }}/5 ({{ \App\Models\PaperEvaluation::SCALE[$evaluation->$field] ?? '' }})</span>
                         @endforeach
                     </div>
                     <p class="mb-0" style="white-space: pre-line;">{{ $evaluation->feedback_for_authors }}</p>

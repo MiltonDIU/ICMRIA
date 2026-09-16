@@ -45,6 +45,21 @@
     </div>
 @endif
 
+@if($recentDeclines->isNotEmpty())
+    <div class="alert alert-warning">
+        <strong>Reviewers who declined in the last 14 days</strong> &mdash; these papers need someone in their place:
+        <ul class="mb-0 mt-1">
+            @foreach($recentDeclines as $declined)
+                <li>
+                    <a href="{{ route('admin.review-assignments.show', $declined->paper_id) }}">{{ $declined->paper->submission_id }}</a>
+                    &mdash; {{ $declined->reviewer->name ?? 'A reviewer' }}, {{ optional($declined->responded_at)->format('j M') }}
+                    @if($declined->decline_reason) &middot; <em>{{ $declined->decline_reason }}</em> @endif
+                </li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">

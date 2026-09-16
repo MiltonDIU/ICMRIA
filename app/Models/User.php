@@ -41,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'deleted_at',
         'remember_token',
         'email_verified_at',
+        'research_keywords',
     ];
 
     public function getEmailVerifiedAtAttribute($value)
@@ -85,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'research_keywords' => 'array',
     ];
     public function getIsAdminAttribute()
     {

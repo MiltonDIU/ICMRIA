@@ -59,6 +59,13 @@ class ReviewAssignmentController extends Controller
             'minimum' => $minimum,
             'hasNoScope' => $scope->isEmpty(),
             'state' => $request->string('state')->toString(),
+            // Reviewers who stepped back recently, so their places are not forgotten.
+            'recentDeclines' => PaperReviewerAssignment::with(['paper', 'reviewer'])
+                ->where('status', 'declined')
+                ->where('responded_at', '>=', now()->subDays(14))
+                ->whereIn('paper_id', $this->papersInScope($scope)->pluck('papers.id'))
+                ->latest('responded_at')
+                ->get(),
         ]);
     }
 

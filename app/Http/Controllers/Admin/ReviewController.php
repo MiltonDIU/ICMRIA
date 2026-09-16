@@ -13,6 +13,8 @@ use App\Services\SubmissionRules;
 use Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -114,6 +116,8 @@ class ReviewController extends Controller
             ]);
         });
 
+        $this->notifyChairsOfDecline($assignment);
+
         return redirect()->route('admin.reviews.index')
             ->with('success', 'You have declined ' . $assignment->paper->submission_id . '. The track chair will assign it to someone else.');
     }
@@ -189,6 +193,46 @@ class ReviewController extends Controller
         return redirect()->route('admin.reviews.show', $assignment->id)->with('success', $submitting
             ? 'Evaluation submitted. Thank you for your review.'
             : 'Draft saved. Nobody else sees it until you submit.');
+    }
+
+    /** A reviewer's own research keywords, matched against paper keywords alongside what chairs record. */
+    public function updateExpertise(Request $request)
+    {
+        abort_if(Gate::denies('review_submit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        $data = $request->validate([
+            'research_keywords' => SubmissionRules::reviewerKeywordRules(),
+        ]);
+
+        auth()->user()->update(['research_keywords' => SubmissionRules::splitKeywords($data['research_keywords'])]);
+
+        return back()->with('success', 'Your research keywords have been saved.');
+    }
+
+    /**
+     * Tells the chairs of the paper's sub-track, and of its whole track, that a reviewer
+     * has stepped back, so the place is filled quickly.
+     */
+    private function notifyChairsOfDecline(PaperReviewerAssignment $assignment): void
+    {
+        $paper = $assignment->paper;
+
+        $chairs = \App\Models\TrackAssignment::with('user')
+            ->where('role', 'chair')
+            ->where('track_id', $paper->track_id)
+            ->where(fn ($q) => $q->whereNull('sub_track_id')->orWhere('sub_track_id', $paper->sub_track_id))
+            ->get()
+            ->pluck('user')
+            ->filter()
+            ->unique('id');
+
+        foreach ($chairs as $chair) {
+            try {
+                Mail::to($chair->email)->queue(new \App\Mail\ReviewerDeclined($assignment->fresh(), $chair));
+            } catch (\Exception $e) {
+                Log::error('Decline notification failed', ['assignment' => $assignment->id, 'chair' => $chair->id, 'error' => $e->getMessage()]);
+            }
+        }
     }
 
     private function isEditable(PaperReviewerAssignment $assignment): bool

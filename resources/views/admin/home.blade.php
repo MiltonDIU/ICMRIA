@@ -7,6 +7,7 @@ Dashboard
 
 <div class="card-body">
 <div class="content">
+@include('partials.bidding-banner')
 @can('admin_report')
 <div class="row mb-4">
     <div class="col-xl col-lg-4 col-md-6 col-sm-6 mb-3 mb-xl-0">

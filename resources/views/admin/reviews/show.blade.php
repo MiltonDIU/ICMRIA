@@ -114,10 +114,10 @@
                                 <input type="radio" class="custom-control-input" id="{{ $field }}-{{ $i }}"
                                        name="{{ $field }}" value="{{ $i }}"
                                        {{ (string) old($field, $evaluation->$field) === (string) $i ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="{{ $field }}-{{ $i }}">{{ $i }}</label>
+                                <label class="custom-control-label" for="{{ $field }}-{{ $i }}">{{ $i }} &middot; {{ \App\Models\PaperEvaluation::SCALE[$i] }}</label>
                             </div>
                         @endfor
-                        <small class="form-text text-muted">1 is poor, 5 is excellent.</small>
+                        <small class="form-text text-muted">1 Poor &middot; 2 Fair &middot; 3 Good &middot; 4 Very Good &middot; 5 Excellent</small>
                     </div>
                 @endforeach
 

@@ -331,6 +331,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
 
     // A reviewer's own assignments and evaluations
     Route::get('reviews', [\App\Http\Controllers\Admin\ReviewController::class, 'index'])->name('reviews.index');
+    // Registered before reviews/{assignment}, which would otherwise take "expertise" as an assignment.
+    Route::post('reviews/expertise', [\App\Http\Controllers\Admin\ReviewController::class, 'updateExpertise'])->name('reviews.expertise');
     Route::get('reviews/{assignment}', [\App\Http\Controllers\Admin\ReviewController::class, 'show'])->name('reviews.show');
     Route::post('reviews/{assignment}', [\App\Http\Controllers\Admin\ReviewController::class, 'save'])->name('reviews.save');
     Route::post('reviews/{assignment}/accept', [\App\Http\Controllers\Admin\ReviewController::class, 'accept'])->name('reviews.accept');
@@ -353,6 +355,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
 
     // Payment verification, confirmation for proceedings, programme and export (administrators)
     Route::get('proceedings', [\App\Http\Controllers\Admin\ProceedingsController::class, 'index'])->name('proceedings.index');
+    Route::post('proceedings/copyright-form', [\App\Http\Controllers\Admin\CopyrightFormController::class, 'upload'])->name('proceedings.copyright-form.upload');
+    Route::delete('proceedings/copyright-form', [\App\Http\Controllers\Admin\CopyrightFormController::class, 'remove'])->name('proceedings.copyright-form.remove');
     Route::get('proceedings/export/{format}', [\App\Http\Controllers\Admin\ProceedingsController::class, 'export'])->where('format', 'json|xml|abstracts|program|files')->name('proceedings.export');
     Route::post('proceedings/payments/{proof}/verify', [\App\Http\Controllers\Admin\ProceedingsController::class, 'verifyPayment'])->name('proceedings.payments.verify');
     Route::post('proceedings/payments/{proof}/reject', [\App\Http\Controllers\Admin\ProceedingsController::class, 'rejectPayment'])->name('proceedings.payments.reject');
@@ -422,9 +426,11 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
 
     // Camera-ready files, copyright form and fees paid by transfer (accepted papers)
     Route::post('papers/{paper}/camera-ready', [App\Http\Controllers\Admin\CameraReadyController::class, 'upload'])->name('papers.camera-ready.upload');
-    Route::get('papers/{paper}/camera-ready/{file}', [App\Http\Controllers\Admin\CameraReadyController::class, 'download'])->where('file', 'camera-ready|copyright')->name('papers.camera-ready.download');
+    Route::post('papers/{paper}/revision', [App\Http\Controllers\Admin\CameraReadyController::class, 'uploadRevision'])->name('papers.revision.upload');
+    Route::get('papers/{paper}/camera-ready/{file}', [App\Http\Controllers\Admin\CameraReadyController::class, 'download'])->where('file', 'camera-ready|copyright|revised')->name('papers.camera-ready.download');
     Route::post('papers/{paper}/payment-proof', [App\Http\Controllers\Admin\CameraReadyController::class, 'storePaymentProof'])->name('papers.payment-proof.store');
     Route::get('payment-proofs/{proof}', [App\Http\Controllers\Admin\CameraReadyController::class, 'downloadPaymentProof'])->name('papers.payment-proof.download');
+    Route::get('copyright-form', [App\Http\Controllers\Admin\CopyrightFormController::class, 'download'])->name('copyright-form.download');
 
     // Payments
     Route::get('set/payment/{data}', [PaymentController::class, 'setPayment'])->name('setPayment');

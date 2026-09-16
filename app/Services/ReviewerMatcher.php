@@ -60,12 +60,18 @@ class ReviewerMatcher
             ->map(function ($row) use ($paper, $loads, $capacity, $institutions, $bids) {
                 $reason = $this->reasonToRefuse($paper, $row->user);
 
+                // What the chairs recorded for this track, plus the reviewer's own research keywords.
+                $expertise = SubmissionRules::splitKeywords(array_merge(
+                    SubmissionRules::splitKeywords($row->expertise),
+                    SubmissionRules::splitKeywords($row->user->research_keywords)
+                ));
+
                 return [
                     'reviewer' => $row->user,
-                    'score' => SubmissionRules::keywordOverlap($paper->keywords, $row->expertise),
+                    'score' => SubmissionRules::keywordOverlap($paper->keywords, $expertise),
                     'load' => $loads[$row->user_id] ?? 0,
                     'capacity' => $capacity,
-                    'expertise' => SubmissionRules::splitKeywords($row->expertise),
+                    'expertise' => $expertise,
                     'eligible' => $reason === null,
                     'reason' => $reason,
                     'bid' => $bids->get($row->user_id),

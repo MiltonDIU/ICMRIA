@@ -29,6 +29,15 @@ class PaperEvaluation extends Model
         'strong_reject' => 'Strong Reject',
     ];
 
+    /** What each score means, so every reviewer marks against the same scale. */
+    public const SCALE = [
+        1 => 'Poor',
+        2 => 'Fair',
+        3 => 'Good',
+        4 => 'Very Good',
+        5 => 'Excellent',
+    ];
+
     protected $fillable = [
         'assignment_id',
         'paper_id',

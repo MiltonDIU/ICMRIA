@@ -4,6 +4,8 @@
 @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 
+@include('partials.bidding-banner')
+
 @php
     $statusLabels = [
         'invited' => ['Awaiting your answer', 'warning'],
@@ -32,6 +34,37 @@
                 <span class="badge badge-secondary">{{ $counts['declined'] }} declined</span>
             @endif
         </div>
+    </div>
+</div>
+
+@php
+    $myKeywords = \App\Services\SubmissionRules::splitKeywords(auth()->user()->research_keywords);
+    $keywordsMin = \App\Services\SubmissionRules::reviewerKeywordsMin();
+    $keywordsMax = \App\Services\SubmissionRules::reviewerKeywordsMax();
+@endphp
+<div class="card mb-3">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+        <span>My research areas</span>
+        @if(count($myKeywords) < $keywordsMin)
+            <span class="badge badge-warning">please add {{ $keywordsMin }}&ndash;{{ $keywordsMax }} keywords</span>
+        @endif
+    </div>
+    <div class="card-body">
+        <p class="small text-muted mb-2">
+            {{ $keywordsMin }} to {{ $keywordsMax }} keywords describing your research, separated by commas. Papers whose keywords
+            match yours are more likely to be offered to you. Track chairs may also record topics for you in each track.
+        </p>
+        <form action="{{ route('admin.reviews.expertise') }}" method="POST" class="form-row align-items-center">
+            @csrf
+            <div class="col-md-9 mb-2">
+                <input type="text" name="research_keywords" class="form-control" maxlength="500"
+                       value="{{ old('research_keywords', implode(', ', $myKeywords)) }}"
+                       placeholder="e.g. machine learning, computer vision, medical imaging">
+            </div>
+            <div class="col-md-3 mb-2">
+                <button class="btn btn-primary btn-block">Save keywords</button>
+            </div>
+        </form>
     </div>
 </div>
 
