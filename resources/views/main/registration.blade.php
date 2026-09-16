@@ -1,6 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
+@php $abstractOpen = \App\Services\SubmissionRules::abstractWindowIsOpen(); @endphp
     <main id="main" class="main-page">
         <section class="wow fadeIn">
             <div class="title-section" style="background: linear-gradient(135deg, #001f3f 0%, #003366 55%, #004d80 100%); padding: 75px 0 45px;">
@@ -378,7 +379,7 @@
                                                     <span class="intent-text">
                 <span class="intent-title">Submit an Abstract</span>
                 <span class="intent-sub">
-                    @if(($settings['is_abstract_submission_open'] ?? 'true') == 'true')
+                    @if($abstractOpen)
                         Payment required after abstract confirmation
                     @else
                         Register as paper author — submit abstract after email verification
@@ -398,6 +399,8 @@
                                         <!-- Abstract Section -->
                                         <div id="abstract_section" style="display: none;">
                                             <h4 class="mb-4 text-primary"><strong>Abstract Submission Details</strong></h4>
+
+                                            @include('partials.submission-guidance')
 
                                             <div class="mb-3">
                                                 <label for="paper_title"><strong>Paper Title*</strong></label>
@@ -435,6 +438,8 @@
                                                     @error('sub_track_id') <span class="text-danger small"><strong>{{ $message }}</strong></span> @enderror
                                                 </div>
                                             </div>
+
+                                            @include('partials.conflict-fields')
 
                                             <div class="mb-4">
                                                 <label class="custom-check-card" for="is_corresponding_author">
@@ -707,7 +712,7 @@
 
         function toggleAbstractSection() {
             const isAuthor = document.getElementById('submit_abstract').checked;
-            const isSubmissionOpen = {{ ($settings['is_abstract_submission_open'] ?? 'true') == 'true' ? 'true' : 'false' }};
+            const isSubmissionOpen = {{ $abstractOpen ? 'true' : 'false' }};
             const showForm = isAuthor && isSubmissionOpen;
 
             const abstractSection = document.getElementById('abstract_section');
@@ -734,7 +739,7 @@
             if (participantButtons) participantButtons.style.display = showForm ? 'none' : 'block';
 
             // If it's Author but submission is closed, show a "Register" button instead of "Submit Abstract"
-            @if(($settings['is_abstract_submission_open'] ?? 'true') == 'false')
+            @if(!$abstractOpen)
             if (participantButtons) {
                 const btn = participantButtons.querySelector('button');
                 if (isAuthor) {

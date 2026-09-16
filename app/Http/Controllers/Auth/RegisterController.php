@@ -110,7 +110,7 @@ class RegisterController extends Controller
 
         if (isset($data['is_author']) && $data['is_author'] == "1") {
             $settings = Setting::pluck('value', 'key');
-            $isSubmissionOpen = ($settings['is_abstract_submission_open'] ?? 'true') == 'true';
+            $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
 
             if ($isSubmissionOpen) {
                 $rules['paper_title'] = ['required', 'string', 'max:500', $noPhpTags];
@@ -126,6 +126,9 @@ class RegisterController extends Controller
                 $rules['consent_review'] = ['accepted'];
                 $rules['consent_acceptance'] = ['accepted'];
                 $rules['consent_no_late_addition'] = ['accepted'];
+
+                // Conflicts of interest declared with the abstract, all optional.
+                $rules = array_merge($rules, \App\Services\ConflictCandidates::rules());
 
                 // Co-authors if any
                 if (isset($data['co_authors']) && is_array($data['co_authors'])) {
@@ -199,7 +202,7 @@ class RegisterController extends Controller
             $profile = Profile::create($profileData);
 
             // 2. Handle Paper Submission if Author
-            if ($profile->is_author && ($settings['is_abstract_submission_open'] ?? 'true') == 'true') {
+            if ($profile->is_author && \App\Services\SubmissionRules::abstractWindowIsOpen()) {
                 $hasCoAuthors = isset($data['co_authors']) && is_array($data['co_authors']) && count($data['co_authors']) > 0;
                 $presentingAuthorIndex = $data['presenting_author_index'] ?? 'submitter';
                 $submitterIsPresenting = $presentingAuthorIndex === 'submitter';
@@ -251,6 +254,8 @@ class RegisterController extends Controller
                         ]);
                     }
                 }
+
+                \App\Services\ConflictCandidates::record($paper, $user->id, $data);
             }
 
             if (Cookie::get('referral_visitors') != null) {

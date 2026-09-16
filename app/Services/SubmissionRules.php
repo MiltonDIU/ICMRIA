@@ -94,6 +94,59 @@ class SubmissionRules
         return Setting::where('key', 'bidding_enabled')->value('value') !== 'false';
     }
 
+    /**
+     * Whether new abstracts are accepted right now, by either route: the registration
+     * form or Papers > Submit. The organisers' switch has to be on, and today has to fall
+     * between the opening date and the abstract deadline, so a forgotten switch cannot
+     * keep submissions open past the deadline on one route but not the other.
+     */
+    public static function abstractWindowIsOpen(): bool
+    {
+        if (Setting::where('key', 'is_abstract_submission_open')->value('value') === 'false') {
+            return false;
+        }
+
+        $opens = self::parseSetting('registration_start_date');
+        $closes = self::parseSetting('abstract_submission_deadline') ?? self::parseSetting('registration_close_date');
+        $now = Carbon::now();
+
+        return (!$opens || $now->gte($opens)) && (!$closes || $now->lte($closes));
+    }
+
+    /** @return array{0: int, 1: int} the page range a full manuscript must fall within */
+    public static function pageLimits(): array
+    {
+        return [
+            (int) (Setting::where('key', 'manuscript_min_pages')->value('value') ?: 6),
+            (int) (Setting::where('key', 'manuscript_max_pages')->value('value') ?: 8),
+        ];
+    }
+
+    /** How many research keywords a reviewer gives about themselves. */
+    public static function reviewerKeywordsMin(): int
+    {
+        return (int) (Setting::where('key', 'reviewer_keywords_min')->value('value') ?: 3);
+    }
+
+    public static function reviewerKeywordsMax(): int
+    {
+        return (int) (Setting::where('key', 'reviewer_keywords_max')->value('value') ?: 5);
+    }
+
+    /** @return array<int, mixed> */
+    public static function reviewerKeywordRules(): array
+    {
+        $min = self::reviewerKeywordsMin();
+        $max = self::reviewerKeywordsMax();
+
+        return ['required', 'string', 'max:500', function ($attribute, $value, $fail) use ($min, $max) {
+            $count = count(self::splitKeywords($value));
+            if ($count < $min || $count > $max) {
+                $fail("Please give between {$min} and {$max} research keywords, separated by commas. (Current count: {$count})");
+            }
+        }];
+    }
+
     private static function parseSetting(string $key): ?Carbon
     {
         $value = Setting::where('key', $key)->value('value');

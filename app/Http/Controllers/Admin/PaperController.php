@@ -458,11 +458,13 @@ class PaperController extends Controller
             ],
             // The system cannot strip names from inside a PDF, so under double-blind
             // review the author has to state that they have done it.
+            'format_confirmed' => ['accepted'],
             'anonymity_confirmed' => \App\Services\SubmissionRules::isDoubleBlind() ? ['accepted'] : ['nullable'],
         ], [
             'manuscript.mimes' => 'The manuscript must be a PDF or Word document.',
             'manuscript.max' => 'The manuscript may not be larger than 20 MB.',
             'anonymity_confirmed.accepted' => 'Please confirm the file carries no author names or affiliations.',
+            'format_confirmed.accepted' => 'Please confirm the manuscript follows the IEEE conference template and the page limit.',
         ]);
 
         $file = $request->file('manuscript');
@@ -644,7 +646,7 @@ class PaperController extends Controller
         $abstractDeadline = Carbon::parse($settings['abstract_submission_deadline'] ?? $settings['registration_close_date'] ?? now());
         $currentDate = Carbon::now();
 
-        if (($settings['is_abstract_submission_open'] ?? 'true') == 'false' || $currentDate < $eventStartDate || $currentDate > $abstractDeadline) {
+        if (!\App\Services\SubmissionRules::abstractWindowIsOpen()) {
             return redirect()->route('show-profile')->with('error', 'Abstract submission is currently closed.');
         }
 
@@ -682,7 +684,7 @@ class PaperController extends Controller
         $abstractDeadline = Carbon::parse($settings['abstract_submission_deadline'] ?? $settings['registration_close_date'] ?? now());
         $currentDate = Carbon::now();
 
-        if (($settings['is_abstract_submission_open'] ?? 'true') == 'false' || $currentDate < $eventStartDate || $currentDate > $abstractDeadline) {
+        if (!\App\Services\SubmissionRules::abstractWindowIsOpen()) {
             return redirect()->route('show-profile')->with('error', 'Abstract submission is currently closed.');
         }
 
@@ -720,6 +722,9 @@ class PaperController extends Controller
             $rules["co_authors.$index.price_id"] = ['required', 'exists:prices,id',
                 new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
         }
+
+        // Conflicts of interest declared with the abstract, all optional.
+        $rules = array_merge($rules, \App\Services\ConflictCandidates::rules());
 
         $request->validate($rules, [
             'regex' => 'The :attribute contains forbidden characters (PHP tags are not allowed).',
@@ -777,6 +782,8 @@ class PaperController extends Controller
                     'is_presenting_author' => 1,
                 ]);
             }
+
+            \App\Services\ConflictCandidates::record($paper, $user->id, $request->all());
 
             DB::commit();
 

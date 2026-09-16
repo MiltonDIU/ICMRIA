@@ -11,6 +11,8 @@
 
             <h4 class="mb-4 text-primary"><strong>Abstract Submission Details</strong></h4>
 
+            @include('partials.submission-guidance')
+
             <div class="form-group">
                 <label class="required" for="paper_title">Paper Title*</label>
                 <input class="form-control {{ $errors->has('paper_title') ? 'is-invalid' : '' }}" type="text" name="paper_title" id="paper_title" value="{{ old('paper_title', '') }}" required>
@@ -81,6 +83,8 @@
                     </div>
                 @endif
             </div>
+
+            @include('partials.conflict-fields')
 
             <hr>
             <h5 class="mb-3"><strong>Co-Authors (If any)</strong></h5>

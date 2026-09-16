@@ -46,6 +46,8 @@
         @if($canUpload)
             <form action="{{ route('papers.manuscript.upload', $paper->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
+                @include('partials.submission-guidance', ['compact' => true])
+
                 <div class="form-row align-items-end">
                     <div class="col-md-8 mb-2">
                         <label class="small font-weight-bold mb-1">
@@ -60,6 +62,16 @@
                             <i class="fas fa-upload"></i> {{ $paper->hasManuscript() ? 'Replace' : 'Upload' }}
                         </button>
                     </div>
+                </div>
+
+                @php [$minPages, $maxPages] = \App\Services\SubmissionRules::pageLimits(); @endphp
+                <div class="custom-control custom-checkbox mt-2 mb-2">
+                    <input type="checkbox" class="custom-control-input @error('format_confirmed') is-invalid @enderror"
+                           id="format_confirmed" name="format_confirmed" value="1" required>
+                    <label class="custom-control-label" for="format_confirmed">
+                        I confirm the manuscript follows the IEEE conference template and is {{ $minPages }}&ndash;{{ $maxPages }} pages long
+                    </label>
+                    @error('format_confirmed') <span class="text-danger small d-block">{{ $message }}</span> @enderror
                 </div>
 
                 @if(\App\Services\SubmissionRules::isDoubleBlind())
