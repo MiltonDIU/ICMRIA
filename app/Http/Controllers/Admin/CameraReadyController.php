@@ -49,14 +49,12 @@ class CameraReadyController extends Controller
         }
 
         $hasCameraReady = $request->hasFile('camera_ready');
-        // Minor revisions are accepted on condition; the chairs need to see how they were met.
-        $needsSummary = $hasCameraReady && $paper->decision->decision === 'minor_revisions' && blank($final?->revision_summary);
 
         $request->validate([
             'camera_ready' => ['nullable', 'file', 'mimes:' . implode(',', self::CAMERA_READY_MIMES), 'max:20480', 'required_without:copyright_form'],
             'copyright_form' => ['nullable', 'file', 'mimes:' . implode(',', self::DOCUMENT_MIMES), 'max:5120'],
             'names_confirmed' => $hasCameraReady ? ['accepted'] : ['nullable'],
-            'revision_summary' => [$needsSummary ? 'required' : 'nullable', 'string', 'max:5000'],
+            'revision_summary' => ['nullable', 'string', 'max:5000'],
         ], [
             'camera_ready.required_without' => 'Choose the camera-ready manuscript or the copyright form to upload.',
             'camera_ready.mimes' => 'The camera-ready manuscript must be a PDF or Word document.',
@@ -97,15 +95,68 @@ class CameraReadyController extends Controller
         return back()->with('success', 'Uploaded. The conference team will confirm your paper once every item on the checklist is complete.');
     }
 
-    /** $file is "camera-ready" or "copyright". */
+    /**
+     * The revised manuscript for a paper accepted with minor revisions, with a summary of
+     * how the reviewers' comments were addressed, due by the revision deadline. The
+     * camera-ready version follows it.
+     */
+    public function uploadRevision(Request $request, Paper $paper)
+    {
+        abort_unless($paper->user_id === Auth::id(), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $paper->load(['decision', 'cameraReady']);
+
+        if (!ProceedingsRules::needsRevision($paper)) {
+            return back()->with('error', 'A revised manuscript is only asked for when a paper is accepted with minor revisions.');
+        }
+
+        if ($paper->cameraReady?->isConfirmed()) {
+            return back()->with('error', 'Your paper is already confirmed for the proceedings, so its files can no longer be replaced.');
+        }
+
+        if (!ProceedingsRules::revisionWindowIsOpen()) {
+            return back()->with('error', 'The deadline for the revised manuscript has passed.');
+        }
+
+        $request->validate([
+            'revised_manuscript' => ['required', 'file', 'mimes:' . implode(',', self::CAMERA_READY_MIMES), 'max:20480'],
+            'revision_summary' => ['required', 'string', 'max:5000'],
+        ], [
+            'revised_manuscript.required' => 'Choose the revised manuscript to upload.',
+            'revised_manuscript.mimes' => 'The revised manuscript must be a PDF or Word document.',
+            'revision_summary.required' => 'Please summarise how you addressed each of the reviewer comments.',
+        ]);
+
+        $file = $request->file('revised_manuscript');
+        $final = $paper->cameraReady ?? new PaperCameraReady(['paper_id' => $paper->id, 'status' => 'submitted']);
+
+        $final->fill([
+            'revised_path' => $file->store('revisions/' . $paper->id),
+            'revised_name' => $file->getClientOriginalName(),
+            'revised_uploaded_at' => now(),
+            'revision_summary' => $request->input('revision_summary'),
+        ]);
+
+        // A new revision answers a request for changes.
+        if ($final->status === 'changes_requested') {
+            $final->status = 'submitted';
+        }
+
+        $final->save();
+
+        return back()->with('success', 'Revised manuscript received. Next, upload the camera-ready version and the copyright form.');
+    }
+
+    /** $file is "camera-ready", "copyright" or "revised". */
     public function download(Paper $paper, string $file)
     {
         $this->authoriseReading($paper);
 
         $final = $paper->cameraReady;
-        [$path, $name] = $file === 'copyright'
-            ? [$final?->copyright_path, $final?->copyright_name]
-            : [$final?->camera_ready_path, $final?->camera_ready_name];
+        [$path, $name] = match ($file) {
+            'copyright' => [$final?->copyright_path, $final?->copyright_name],
+            'revised' => [$final?->revised_path, $final?->revised_name],
+            default => [$final?->camera_ready_path, $final?->camera_ready_name],
+        };
 
         abort_if(!$path || !Storage::exists($path), Response::HTTP_NOT_FOUND, 'That file is not on record.');
 

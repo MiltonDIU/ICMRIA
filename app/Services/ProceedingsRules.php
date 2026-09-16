@@ -76,12 +76,39 @@ class ProceedingsRules
     {
         $final = $paper->cameraReady;
 
-        return [
+        $items = [
             'accepted' => ['label' => 'Paper accepted and authors notified', 'done' => self::isAccepted($paper)],
+        ];
+
+        // Accepted on condition: the revised manuscript comes before the camera-ready one.
+        if (self::needsRevision($paper)) {
+            $items['revision'] = ['label' => 'Revised manuscript uploaded (minor revisions)', 'done' => (bool) $final?->revised_path];
+        }
+
+        return $items + [
             'camera_ready' => ['label' => 'Camera-ready manuscript uploaded', 'done' => (bool) $final?->camera_ready_path],
             'copyright' => ['label' => 'Signed copyright transfer form uploaded', 'done' => (bool) $final?->copyright_path],
             'payment' => ['label' => 'Registration fee verified', 'done' => self::isPaid($paper)],
         ];
+    }
+
+    /** Accepted with minor revisions, so a revised manuscript is owed first. */
+    public static function needsRevision(Paper $paper): bool
+    {
+        return self::isAccepted($paper) && $paper->decision->decision === 'minor_revisions';
+    }
+
+    /** The revised manuscript is due by revision_deadline, or the camera-ready deadline when unset. */
+    public static function revisionDeadline(): ?Carbon
+    {
+        return self::dateSetting('revision_deadline') ?? self::cameraReadyDeadline();
+    }
+
+    public static function revisionWindowIsOpen(): bool
+    {
+        $deadline = self::revisionDeadline();
+
+        return !$deadline || Carbon::now()->lte($deadline);
     }
 
     /** @return array<int, string> the checklist items still outstanding */

@@ -32,6 +32,11 @@
                 <i class="fas fa-download"></i> Read the manuscript
             </a>
         @endif
+        @if($paper->cameraReady?->revised_path)
+            <a href="{{ route('papers.camera-ready.download', [$paper->id, 'revised']) }}" class="btn btn-sm btn-outline-info">
+                <i class="fas fa-redo"></i> Revised manuscript
+            </a>
+        @endif
         @can('review_assign')
             <a href="{{ route('admin.review-assignments.show', $paper->id) }}" class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-users"></i> Manage reviewers

@@ -111,7 +111,21 @@ class ProceedingsController extends Controller
             Log::error('Registration confirmation after manual payment failed', ['proof' => $proof->id, 'error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Payment for ' . $paper->submission_id . ' verified.');
+        // With every other item already in, the fee was the last thing outstanding, so
+        // verifying it confirms the paper for the proceedings straight away. Files the
+        // administrator has sent back for changes are left alone.
+        $paper->load(['decision', 'cameraReady']);
+        $autoConfirmed = $paper->cameraReady
+            && $paper->cameraReady->status === 'submitted'
+            && !ProceedingsRules::missing($paper);
+
+        if ($autoConfirmed) {
+            $paper->cameraReady->update(['status' => 'confirmed', 'confirmed_by' => auth()->id(), 'confirmed_at' => now()]);
+            $this->tellAuthor($paper, 'confirmed');
+        }
+
+        return back()->with('success', 'Payment for ' . $paper->submission_id . ' verified.'
+            . ($autoConfirmed ? ' Everything else was already in, so the paper is now Confirmed for Proceedings.' : ''));
     }
 
     public function rejectPayment(Request $request, PaperPaymentProof $proof)

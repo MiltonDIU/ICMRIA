@@ -79,9 +79,11 @@
                                 Congratulations. Please prepare your camera-ready manuscript following the Camera-Ready
                                 Guidelines, taking the reviewers' comments into account, and complete your registration.
                             @elseif($decision->decision === 'minor_revisions')
+                                @php $revisionDeadline = \App\Services\ProceedingsRules::revisionDeadline(); @endphp
                                 Congratulations. Your paper is accepted on the condition that the revisions the reviewers
-                                ask for are made. Please address each comment in your camera-ready manuscript and complete
-                                your registration.
+                                ask for are made. From your paper page, please upload a revised manuscript that addresses each
+                                comment{{ $revisionDeadline ? ' by ' . $revisionDeadline->format('j F Y') : '' }}, then the
+                                camera-ready version, and complete your registration.
                             @else
                                 We are sorry that we cannot include your paper in the programme this year. We hope the
                                 reviewers' comments are useful to you, and that we will see your work at a future edition.

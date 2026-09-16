@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Paper;
 use App\Models\PaperDecision;
 use App\Models\Schedule;
+use App\Models\Setting;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -76,6 +78,9 @@ class ProceedingsExport
             'conference' => [
                 'name' => 'International Conference on Multidisciplinary Research, Innovation and Applications 2027',
                 'short_name' => 'ICMRIA 2027',
+                'dates' => $this->conferenceDates(),
+                'day_dates' => $this->dayDates(),
+                'venue' => 'Daffodil International University, Daffodil Smart City, Birulia, Savar, Dhaka, Bangladesh',
                 'generated_at' => now()->toIso8601String(),
                 'scope' => $this->confirmedOnly ? 'confirmed_for_proceedings' : 'all_accepted',
             ],
@@ -154,6 +159,44 @@ class ProceedingsExport
         }
 
         return $doc->saveXML();
+    }
+
+    /** "9–10 January 2027", from the event dates in the settings. */
+    private function conferenceDates(): string
+    {
+        $start = Setting::where('key', 'event_date')->value('value');
+        $end = Setting::where('key', 'event_end_date')->value('value');
+
+        if (!$start) {
+            return '';
+        }
+
+        $start = Carbon::parse($start);
+        $end = $end ? Carbon::parse($end) : $start;
+
+        if ($start->isSameDay($end)) {
+            return $start->format('j F Y');
+        }
+
+        return $start->isSameMonth($end)
+            ? $start->format('j') . '–' . $end->format('j F Y')
+            : $start->format('j F') . ' – ' . $end->format('j F Y');
+    }
+
+    /** @return array<int, string> programme day number => its calendar date */
+    private function dayDates(): array
+    {
+        $start = Setting::where('key', 'event_date')->value('value');
+
+        if (!$start) {
+            return [];
+        }
+
+        $start = Carbon::parse($start);
+
+        return Schedule::where('is_active', '1')->distinct()->pluck('day_number')
+            ->mapWithKeys(fn ($day) => [(int) $day => $start->copy()->addDays((int) $day - 1)->format('l, j F Y')])
+            ->all();
     }
 
     private function paperData(Paper $paper): array

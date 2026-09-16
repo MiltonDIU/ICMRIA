@@ -23,6 +23,9 @@ class PaperCameraReady extends Model
         'camera_ready_path',
         'camera_ready_name',
         'camera_ready_uploaded_at',
+        'revised_path',
+        'revised_name',
+        'revised_uploaded_at',
         'revision_summary',
         'copyright_path',
         'copyright_name',
@@ -37,6 +40,7 @@ class PaperCameraReady extends Model
 
     protected $casts = [
         'camera_ready_uploaded_at' => 'datetime',
+        'revised_uploaded_at' => 'datetime',
         'copyright_uploaded_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'presentation_order' => 'integer',

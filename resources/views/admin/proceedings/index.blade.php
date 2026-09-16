@@ -40,6 +40,31 @@
                 Every accepted paper (JSON)
             </a>
         </div>
+
+        @can('camera_ready_review')
+            @php $hasCopyrightForm = \App\Http\Controllers\Admin\CopyrightFormController::available(); @endphp
+            <hr>
+            <div class="d-flex flex-wrap align-items-center">
+                <span class="small text-muted mr-2">Blank Copyright Transfer Form for authors:</span>
+                @if($hasCopyrightForm)
+                    <a href="{{ route('copyright-form.download') }}" class="btn btn-sm btn-outline-secondary mr-2 mb-1">
+                        <i class="fas fa-file-download"></i> Current form
+                    </a>
+                    <form action="{{ route('admin.proceedings.copyright-form.remove') }}" method="POST" class="mr-3 mb-1"
+                          onsubmit="return confirm('Remove the blank form? Authors will no longer be able to download it.');">
+                        @csrf @method('DELETE')
+                        <button class="btn btn-sm btn-link text-danger p-0">Remove</button>
+                    </form>
+                @else
+                    <span class="badge badge-warning mr-3 mb-1">not uploaded yet</span>
+                @endif
+                <form action="{{ route('admin.proceedings.copyright-form.upload') }}" method="POST" enctype="multipart/form-data" class="form-inline mb-1">
+                    @csrf
+                    <input type="file" name="copyright_form" class="form-control-file mr-2" accept=".pdf,.doc,.docx" required style="max-width: 16rem;">
+                    <button class="btn btn-sm btn-primary">{{ $hasCopyrightForm ? 'Replace' : 'Upload' }}</button>
+                </form>
+            </div>
+        @endcan
     </div>
 </div>
 
@@ -78,6 +103,11 @@
                                         <br><small class="text-muted">{{ optional($final->camera_ready_uploaded_at)->format('j M') }}</small>
                                     @else
                                         <span class="badge badge-light border text-muted">missing</span>
+                                    @endif
+                                    @if($final?->revised_path)
+                                        <br><a href="{{ route('papers.camera-ready.download', [$paper->id, 'revised']) }}" class="small">revised version</a>
+                                    @elseif(\App\Services\ProceedingsRules::needsRevision($paper))
+                                        <br><span class="small text-warning">revision not yet in</span>
                                     @endif
                                 </td>
                                 <td class="text-center">

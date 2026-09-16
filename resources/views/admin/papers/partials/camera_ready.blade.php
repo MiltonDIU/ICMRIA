@@ -47,6 +47,56 @@
                 @endforeach
             </ul>
 
+            @if(\App\Services\ProceedingsRules::needsRevision($paper))
+                @php
+                    $revisionDeadline = \App\Services\ProceedingsRules::revisionDeadline();
+                    $revisionOpen = \App\Services\ProceedingsRules::revisionWindowIsOpen();
+                @endphp
+                <div class="border rounded p-3 mb-3 {{ $final?->revised_path ? 'bg-light' : 'border-warning' }}">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                        <strong><i class="fas fa-redo mr-1"></i> Step 1: Revised manuscript</strong>
+                        @if($revisionDeadline)
+                            <small class="text-muted">Deadline: {{ $revisionDeadline->format('j M Y, g:i a') }}</small>
+                        @endif
+                    </div>
+                    <p class="small text-muted mb-2">
+                        Your paper was accepted with minor revisions. Upload the revised manuscript that addresses the reviewers'
+                        comments and summarise what you changed. The camera-ready version and copyright form come next.
+                    </p>
+                    @if($final?->revised_path)
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>Revised:</strong> {{ $final->revised_name }}
+                                <br><small class="text-muted">Uploaded {{ optional($final->revised_uploaded_at)->format('j M Y, g:i a') }}</small>
+                            </div>
+                            <a href="{{ route('papers.camera-ready.download', [$paper->id, 'revised']) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    @endif
+                    @if($isOwner && !$locked)
+                        @if($revisionOpen)
+                            <form action="{{ route('papers.revision.upload', $paper->id) }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                <div class="form-group mb-2">
+                                    <label for="revised_manuscript" class="small font-weight-bold">
+                                        {{ $final?->revised_path ? 'Replace the revised manuscript' : 'Revised manuscript' }} *
+                                    </label>
+                                    <input type="file" id="revised_manuscript" name="revised_manuscript" class="form-control-file" accept=".pdf,.doc,.docx" required>
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label for="revision_summary" class="small font-weight-bold">How you addressed the reviewers' comments *</label>
+                                    <textarea id="revision_summary" name="revision_summary" class="form-control" rows="4" maxlength="5000" required>{{ old('revision_summary', $final->revision_summary ?? '') }}</textarea>
+                                </div>
+                                <button class="btn btn-sm btn-primary"><i class="fas fa-upload"></i> Upload revised manuscript</button>
+                            </form>
+                        @else
+                            <div class="alert alert-warning small mb-0">The deadline for the revised manuscript has passed. Please contact the conference team.</div>
+                        @endif
+                    @endif
+                </div>
+            @endif
+
             @if($final && ($final->camera_ready_path || $final->copyright_path))
                 <div class="border rounded p-3 mb-3 bg-light">
                     @if($final->camera_ready_path)
@@ -96,17 +146,17 @@
                                 The camera-ready manuscript carries every author name and affiliation and follows the conference template.
                             </label>
                         </div>
-                        @if($paper->decision->decision === 'minor_revisions')
-                            <div class="form-group">
-                                <label for="revision_summary" class="font-weight-bold">How you addressed the reviewers' comments{{ blank($final?->revision_summary) ? ' *' : '' }}</label>
-                                <textarea id="revision_summary" name="revision_summary" class="form-control" rows="4" maxlength="5000">{{ old('revision_summary', $final->revision_summary ?? '') }}</textarea>
-                                <small class="form-text text-muted">Your paper was accepted with minor revisions, so please list the changes you made.</small>
-                            </div>
-                        @endif
                         <div class="form-group">
                             <label for="copyright_form" class="font-weight-bold">Signed copyright transfer form</label>
                             <input type="file" id="copyright_form" name="copyright_form" class="form-control-file" accept=".pdf,.jpg,.jpeg,.png">
-                            <small class="form-text text-muted">PDF or a clear scan (JPG or PNG), up to 5 MB.</small>
+                            <small class="form-text text-muted">
+                                PDF or a clear scan (JPG or PNG), up to 5 MB.
+                                @if(\App\Http\Controllers\Admin\CopyrightFormController::available())
+                                    <a href="{{ route('copyright-form.download') }}"><i class="fas fa-file-download"></i> Download the blank Copyright Transfer Form</a>, sign it, and upload it here.
+                                @else
+                                    The blank Copyright Transfer Form will be available to download here shortly.
+                                @endif
+                            </small>
                         </div>
                         <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload</button>
                         @if($deadline)
