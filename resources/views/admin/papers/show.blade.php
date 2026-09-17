@@ -21,7 +21,7 @@
                 @endcan
                 @php
                     $isAuthor = auth()->user()->roles->contains('id', 3);
-                    $canEditThisPaper = ($isAuthor && $paper->user_id === auth()->id() && \App\Services\SubmissionRules::abstractWindowIsOpen())
+                    $canEditThisPaper = ($isAuthor && $paper->user_id === auth()->id() && $paper->status === 'pending' && \App\Services\SubmissionRules::abstractWindowIsOpen())
                         || \Illuminate\Support\Facades\Gate::allows('paper_edit');
                 @endphp
                 @if($canEditThisPaper)

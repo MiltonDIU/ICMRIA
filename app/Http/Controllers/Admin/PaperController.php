@@ -159,9 +159,9 @@ class PaperController extends Controller
                     $viewRoute = route('papers.show', $row->id);
                     $editRoute = route('papers.edit', $row->id);
 
-                    // Show Edit button for authors if abstract submission is open and paper belongs to author
+                    // Show Edit button for authors only if paper is pending and abstract submission is open
                     $editBtn = '';
-                    if (Auth::user()->roles->contains('id', 3) && $row->user_id === Auth::id() && $isSubmissionOpen) {
+                    if (Auth::user()->roles->contains('id', 3) && $row->user_id === Auth::id() && $row->status === 'pending' && $isSubmissionOpen) {
                         $editBtn = ' <a href="'.$editRoute.'" class="btn btn-sm btn-white border text-info" title="Edit Paper">
                                         <i class="fas fa-edit"></i>
                                     </a>';
@@ -839,9 +839,15 @@ class PaperController extends Controller
 
         $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
 
-        // Authorization check: Authors can edit their own paper while abstract submission is open
+        // Authorization check: Authors can only edit their own pending paper while abstract submission is open
         if ($user->roles->contains('id', 3) && !$user->roles->contains('id', 1)) {
-            if ($paper->user_id !== $user->id || !$isSubmissionOpen) {
+            if ($paper->user_id !== $user->id) {
+                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - You can only edit your own paper.');
+            }
+            if ($paper->status === 'approved') {
+                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Approved paper cannot be edited.');
+            }
+            if ($paper->status !== 'pending' || !$isSubmissionOpen) {
                 abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Paper is not editable.');
             }
         } else {
@@ -865,9 +871,15 @@ class PaperController extends Controller
 
         $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
 
-        // Authorization check: Authors can edit their own paper while abstract submission is open
+        // Authorization check: Authors can only edit their own pending paper while abstract submission is open
         if ($user->roles->contains('id', 3) && !$user->roles->contains('id', 1)) {
-            if ($paper->user_id !== $user->id || !$isSubmissionOpen) {
+            if ($paper->user_id !== $user->id) {
+                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - You can only edit your own paper.');
+            }
+            if ($paper->status === 'approved') {
+                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Approved paper cannot be edited.');
+            }
+            if ($paper->status !== 'pending' || !$isSubmissionOpen) {
                 abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Paper is not editable.');
             }
         } else {
