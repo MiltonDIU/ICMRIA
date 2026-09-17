@@ -32,10 +32,7 @@ class PaperController extends Controller
         $eventStartDate = Carbon::parse($settings['registration_start_date'] ?? now());
         $abstractDeadline = Carbon::parse($settings['abstract_submission_deadline'] ?? $settings['registration_close_date'] ?? now());
         $paymentLastDate = isset($settings['payment_last_date']) ? Carbon::parse($settings['payment_last_date']) : null;
-        $currentDate = Carbon::now();
-        $isSubmissionOpen = (($settings['is_abstract_submission_open'] ?? 'true') == 'true')
-            && ($currentDate >= $eventStartDate)
-            && ($currentDate <= $abstractDeadline);
+        $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
         $isPaymentOpen = \App\Services\ProceedingsRules::paymentWindowIsOpen();
 
         if ($request->ajax()) {
@@ -162,9 +159,9 @@ class PaperController extends Controller
                     $viewRoute = route('papers.show', $row->id);
                     $editRoute = route('papers.edit', $row->id);
 
-                    // Show Edit button for authors only if paper is pending and abstract submission is open
+                    // Show Edit button for authors if abstract submission is open and paper belongs to author
                     $editBtn = '';
-                    if (Auth::user()->roles->contains('id', 3) && $row->status === 'pending' && $row->user_id === Auth::id() && $isSubmissionOpen) {
+                    if (Auth::user()->roles->contains('id', 3) && $row->user_id === Auth::id() && $isSubmissionOpen) {
                         $editBtn = ' <a href="'.$editRoute.'" class="btn btn-sm btn-white border text-info" title="Edit Paper">
                                         <i class="fas fa-edit"></i>
                                     </a>';
@@ -840,17 +837,11 @@ class PaperController extends Controller
     {
         $user = Auth::user();
 
-        $settings = Setting::pluck('value', 'key');
-        $eventStartDate = Carbon::parse($settings['registration_start_date'] ?? now());
-        $abstractDeadline = Carbon::parse($settings['abstract_submission_deadline'] ?? $settings['registration_close_date'] ?? now());
-        $currentDate = Carbon::now();
-        $isSubmissionOpen = (($settings['is_abstract_submission_open'] ?? 'true') == 'true')
-            && ($currentDate >= $eventStartDate)
-            && ($currentDate <= $abstractDeadline);
+        $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
 
-        // Authorization check
-        if ($user->roles->contains('id', 3)) {
-            if ($paper->user_id !== $user->id || $paper->status !== 'pending' || !$isSubmissionOpen) {
+        // Authorization check: Authors can edit their own paper while abstract submission is open
+        if ($user->roles->contains('id', 3) && !$user->roles->contains('id', 1)) {
+            if ($paper->user_id !== $user->id || !$isSubmissionOpen) {
                 abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Paper is not editable.');
             }
         } else {
@@ -872,17 +863,11 @@ class PaperController extends Controller
     {
         $user = Auth::user();
 
-        $settings = Setting::pluck('value', 'key');
-        $eventStartDate = Carbon::parse($settings['registration_start_date'] ?? now());
-        $abstractDeadline = Carbon::parse($settings['abstract_submission_deadline'] ?? $settings['registration_close_date'] ?? now());
-        $currentDate = Carbon::now();
-        $isSubmissionOpen = (($settings['is_abstract_submission_open'] ?? 'true') == 'true')
-            && ($currentDate >= $eventStartDate)
-            && ($currentDate <= $abstractDeadline);
+        $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
 
-        // Authorization check
-        if ($user->roles->contains('id', 3)) {
-            if ($paper->user_id !== $user->id || $paper->status !== 'pending' || !$isSubmissionOpen) {
+        // Authorization check: Authors can edit their own paper while abstract submission is open
+        if ($user->roles->contains('id', 3) && !$user->roles->contains('id', 1)) {
+            if ($paper->user_id !== $user->id || !$isSubmissionOpen) {
                 abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Paper is not editable.');
             }
         } else {

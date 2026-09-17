@@ -19,11 +19,16 @@
                         @endif
                     </button>
                 @endcan
-{{--                @can('paper_edit')--}}
-{{--                <a href="#" class="btn btn-outline-info btn-sm px-3">--}}
-{{--                    <i class="fas fa-edit mr-1"></i> Edit--}}
-{{--                </a>--}}
-{{--                @endcan--}}
+                @php
+                    $isAuthor = auth()->user()->roles->contains('id', 3);
+                    $canEditThisPaper = ($isAuthor && $paper->user_id === auth()->id() && \App\Services\SubmissionRules::abstractWindowIsOpen())
+                        || \Illuminate\Support\Facades\Gate::allows('paper_edit');
+                @endphp
+                @if($canEditThisPaper)
+                    <a href="{{ route('papers.edit', $paper->id) }}" class="btn btn-outline-info btn-sm px-3 ml-1">
+                        <i class="fas fa-edit mr-1"></i> Edit Paper
+                    </a>
+                @endif
             </div>
         </div>
 
