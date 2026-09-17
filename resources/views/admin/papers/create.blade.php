@@ -1,3 +1,32 @@
+@push('style')
+<style>
+    .corresponding-author-card {
+        cursor: pointer;
+        border-color: #E2E8F0 !important;
+    }
+    .corresponding-author-card:hover {
+        background-color: #F1F5F9 !important;
+        border-color: #007bff !important;
+    }
+    .custom-checkbox-lg {
+        padding-left: 2.5rem !important;
+    }
+    .custom-checkbox-lg .custom-control-label::before,
+    .custom-checkbox-lg .custom-control-label::after {
+        top: 0.15rem;
+        left: -2.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 0.35rem;
+    }
+    .custom-checkbox-lg .custom-control-input:checked ~ .custom-control-label::before {
+        background-color: #007bff;
+        border-color: #007bff;
+        box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+@endpush
+
 @extends('layouts.admin')
 @section('content')
 <div class="card">
@@ -35,12 +64,12 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
                         @include('partials.keyword-tags', ['labelClass' => 'required'])
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label class="required" for="track_id">Conference Track*</label>
                         <select class="form-control {{ $errors->has('track_id') ? 'is-invalid' : '' }}" name="track_id" id="track_id" required onchange="updateSubTracks()">
@@ -56,7 +85,7 @@
                         @endif
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label class="required" for="sub_track_id">Sub-Track*</label>
                         <select class="form-control {{ $errors->has('sub_track_id') ? 'is-invalid' : '' }}" name="sub_track_id" id="sub_track_id" required>
@@ -71,14 +100,21 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <div class="form-check {{ $errors->has('is_corresponding_author') ? 'is-invalid' : '' }}">
-                    <input type="hidden" name="is_corresponding_author" value="0">
-                    <input class="form-check-input" type="checkbox" name="is_corresponding_author" id="is_corresponding_author" value="1" {{ old('is_corresponding_author', 0) == 1 ? 'checked' : '' }}>
-                    <label class="form-check-label" for="is_corresponding_author">I am the corresponding author</label>
+            <div class="form-group mb-4">
+                <div class="corresponding-author-card p-3 rounded border {{ $errors->has('is_corresponding_author') ? 'border-danger' : '' }}" style="background: #F8FAFC; transition: all 0.2s ease;">
+                    <div class="custom-control custom-checkbox custom-checkbox-lg">
+                        <input type="hidden" name="is_corresponding_author" value="0">
+                        <input class="custom-control-input" type="checkbox" name="is_corresponding_author" id="is_corresponding_author" value="1" {{ old('is_corresponding_author', 0) == 1 ? 'checked' : '' }}>
+                        <label class="custom-control-label font-weight-bold text-dark d-block pl-2" for="is_corresponding_author" style="cursor: pointer; font-size: 1.05rem;">
+                            I am the corresponding author
+                            <span class="d-block text-muted font-weight-normal small mt-1">
+                                The conference committee will send all submission decisions, updates, and official communications to your registered email.
+                            </span>
+                        </label>
+                    </div>
                 </div>
                 @if($errors->has('is_corresponding_author'))
-                    <div class="invalid-feedback">
+                    <div class="invalid-feedback d-block mt-1">
                         {{ $errors->first('is_corresponding_author') }}
                     </div>
                 @endif
