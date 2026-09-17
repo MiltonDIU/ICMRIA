@@ -698,6 +698,8 @@ class PaperController extends Controller
             'track_id' => ['required', 'exists:tracks,id'],
             'sub_track_id' => ['required', 'exists:sub_tracks,id'],
             'is_corresponding_author' => ['required', 'boolean'],
+            'corresponding_author_index' => ['nullable', 'integer'],
+            'presenting_author_index' => ['nullable', 'integer'],
             'consent_original' => ['accepted'],
             'consent_review' => ['accepted'],
             'consent_acceptance' => ['accepted'],
@@ -729,6 +731,15 @@ class PaperController extends Controller
             // Generate Submission ID
             $submissionId = \App\Services\IdGeneratorService::generateSubmissionId();
             $hasCoAuthors = $request->has('co_authors') && count($request->co_authors) > 1;
+
+            $isCorrespondingAuthor = $request->boolean('is_corresponding_author');
+            $correspondingAuthorIndex = $request->input('corresponding_author_index');
+            if ($correspondingAuthorIndex !== null) {
+                $isCorrespondingAuthor = ((int)$correspondingAuthorIndex === 0);
+            } else {
+                $correspondingAuthorIndex = $isCorrespondingAuthor ? 0 : 0;
+            }
+
             $paper = Paper::create([
                 'user_id' => $user->id,
                 'submission_id' => $submissionId,
@@ -738,7 +749,7 @@ class PaperController extends Controller
                 'track_id' => $request->track_id,
                 'sub_track_id' => $request->sub_track_id,
                 'mode_of_participation' => $profile->participation_mode ?? 'onsite',
-                'is_corresponding_author' => $request->is_corresponding_author,
+                'is_corresponding_author' => $isCorrespondingAuthor ? 1 : 0,
                 'has_multiple_authors' => $hasCoAuthors,
             ]);
 
@@ -758,6 +769,7 @@ class PaperController extends Controller
                         'is_student' => ($authorData['is_student'] ?? '0') == '1',
                         'author_order' => $index + 1,
                         'is_presenting_author' => ($index == $presentingAuthorIndex) ? 1 : 0,
+                        'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$index) ? 1 : 0,
                     ]);
                 }
             } else {
@@ -773,7 +785,12 @@ class PaperController extends Controller
                     'email' => $user->email,
                     'author_order' => 1,
                     'is_presenting_author' => 1,
+                    'is_corresponding_author' => 1,
                 ]);
+            }
+
+            if ($paper->authors()->where('is_corresponding_author', 1)->count() === 0) {
+                $paper->authors()->first()?->update(['is_corresponding_author' => 1]);
             }
 
             \App\Services\ConflictCandidates::record($paper, $user->id, $request->all());
@@ -904,6 +921,7 @@ class PaperController extends Controller
             'track_id' => 'required|exists:tracks,id',
             'sub_track_id' => 'required|exists:sub_tracks,id',
             'is_corresponding_author' => 'required|boolean',
+            'corresponding_author_index' => 'nullable|integer',
             'presenting_author_index' => 'nullable|integer',
             'co_authors' => 'nullable|array',
             'co_authors.*.id' => 'nullable|integer|exists:paper_authors,id',
@@ -934,26 +952,45 @@ class PaperController extends Controller
 
             $hasCoAuthors = !empty($request->co_authors) && count($request->co_authors) > 1;
 
-            $paper->update([
-                'title' => $request->paper_title,
-                'abstract' => $request->abstract_text,
-                'keywords' => \App\Services\SubmissionRules::splitKeywords($request->keywords),
-                'track_id' => $request->track_id,
-                'sub_track_id' => $request->sub_track_id,
-                'is_corresponding_author' => $request->is_corresponding_author,
-                'has_multiple_authors' => $hasCoAuthors,
-            ]);
-
             $primaryEmail = $paper->user->email;
             $profile = $paper->user->profile;
             $incomingIds = [];
             $orderOffset = 1;
 
             $presentingAuthorIndex = $request->presenting_author_index ?? 0;
+            $correspondingAuthorIndex = $request->input('corresponding_author_index');
+
+            // Find primary author index in form
+            $primaryAuthorIndexInForm = 0;
+            $primaryAuthorFromForm = null;
+            if (!empty($request->co_authors)) {
+                foreach ($request->co_authors as $idx => $authorRow) {
+                    if (($authorRow['email'] ?? '') === $primaryEmail) {
+                        $primaryAuthorIndexInForm = $idx;
+                        $primaryAuthorFromForm = $authorRow;
+                        break;
+                    }
+                }
+            }
+
+            $isCorrespondingAuthor = $request->boolean('is_corresponding_author');
+            if ($correspondingAuthorIndex !== null) {
+                $isCorrespondingAuthor = ((int)$correspondingAuthorIndex === (int)$primaryAuthorIndexInForm);
+            } else {
+                $correspondingAuthorIndex = $isCorrespondingAuthor ? $primaryAuthorIndexInForm : null;
+            }
+
+            $paper->update([
+                'title' => $request->paper_title,
+                'abstract' => $request->abstract_text,
+                'keywords' => \App\Services\SubmissionRules::splitKeywords($request->keywords),
+                'track_id' => $request->track_id,
+                'sub_track_id' => $request->sub_track_id,
+                'is_corresponding_author' => $isCorrespondingAuthor ? 1 : 0,
+                'has_multiple_authors' => $hasCoAuthors,
+            ]);
 
             // 1. Maintain primary author robustly (update if available, create if missing somehow)
-            $primaryAuthorFromForm = collect($request->co_authors ?? [])->firstWhere('email', $primaryEmail);
-            $primaryAuthorIndexInForm = $primaryAuthorFromForm ? array_search((object)$primaryAuthorFromForm, json_decode(json_encode($request->co_authors), true)) : 0;
             $primaryAuthorModel = $paper->authors()->where('email', $primaryEmail)->first();
 
             $primaryData = [
@@ -966,6 +1003,7 @@ class PaperController extends Controller
                 'email' => $primaryEmail,
                 'author_order' => $orderOffset++,
                 'is_presenting_author' => ($presentingAuthorIndex == $primaryAuthorIndexInForm) ? 1 : 0,
+                'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$primaryAuthorIndexInForm) ? 1 : 0,
                 'is_student' => isset($primaryAuthorFromForm['is_student']) && $primaryAuthorFromForm['is_student'] !== '' ? (bool)$primaryAuthorFromForm['is_student'] : ($primaryAuthorModel?->is_student ?? null),
             ];
 
@@ -1000,6 +1038,7 @@ class PaperController extends Controller
                         'price_id' => $authorData['price_id'] ?? ($existingAuthor?->price_id),
                         'author_order' => $orderOffset++,
                         'is_presenting_author' => ($presentingAuthorIndex == $index) ? 1 : 0,
+                        'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$index) ? 1 : 0,
                         'is_student' => isset($authorData['is_student']) && $authorData['is_student'] !== '' ? (bool)$authorData['is_student'] : ($existingAuthor?->is_student ?? null),
                     ];
 
@@ -1017,6 +1056,11 @@ class PaperController extends Controller
 
             // 3. Delete any strictly removed authors from the database (cleanup orphans)
             $paper->authors()->whereNotIn('id', $incomingIds)->delete();
+
+            // Ensure at least one author is marked corresponding
+            if ($paper->authors()->where('is_corresponding_author', 1)->count() === 0) {
+                $paper->authors()->first()?->update(['is_corresponding_author' => 1]);
+            }
 
             // 4. Sync conflicts of interest
             $paper->conflicts()->where('declared_by_user_id', $user->id)->delete();

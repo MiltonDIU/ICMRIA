@@ -18,6 +18,7 @@ class PaperAuthor extends Model
         'country_id',
         'email',
         'is_presenting_author',
+        'is_corresponding_author',
         'author_order',
         'is_student',
         'price_id',
@@ -25,6 +26,7 @@ class PaperAuthor extends Model
 
     protected $casts = [
         'is_presenting_author' => 'boolean',
+        'is_corresponding_author' => 'boolean',
         'is_student' => 'boolean',
     ];
 

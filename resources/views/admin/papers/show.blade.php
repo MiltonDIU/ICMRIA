@@ -145,9 +145,12 @@
                                     <div class="text-muted small"><i class="fas fa-university mr-1 text-muted"></i> {{ $author->institution }} ({{ $author->country?->name ?? 'N/A' }})</div>
                                 </td>
                                 <td class="py-3 text-center">
+                                    @if($author->is_corresponding_author)
+                                        <span class="badge badge-primary px-2 py-1 small rounded shadow-none mr-1"><i class="far fa-envelope mr-1"></i> Corresponding</span>
+                                    @endif
                                     @if($author->is_presenting_author)
                                         <span class="badge badge-success px-2 py-1 small rounded shadow-none">Presenting</span>
-                                    @else
+                                    @elseif(!$author->is_corresponding_author)
                                         <span class="badge badge-light border px-2 py-1 small rounded text-muted">Co-Author</span>
                                     @endif
                                 </td>

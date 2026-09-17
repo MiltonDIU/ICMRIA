@@ -107,7 +107,7 @@
                         <input class="custom-control-input" type="checkbox" name="is_corresponding_author" id="is_corresponding_author" value="1" {{ old('is_corresponding_author', 0) == 1 ? 'checked' : '' }}>
                         <label class="custom-control-label font-weight-bold text-dark d-block pl-2" for="is_corresponding_author" style="cursor: pointer; font-size: 1.05rem;">
                             I am the corresponding author
-                            <span class="d-block text-muted font-weight-normal small mt-1">
+                            <span class="d-block text-muted font-weight-normal small mt-1" id="corresponding_author_hint">
                                 The conference committee will send all submission decisions, updates, and official communications to your registered email.
                             </span>
                         </label>
@@ -168,8 +168,14 @@
         <div class="d-flex justify-content-between align-items-center mb-3 pr-5">
             <h6 class="mb-0 font-weight-bold text-secondary text-uppercase" style="font-size: 0.8rem;">Co-Author Entry</h6>
             <div class="d-flex align-items-center">
-                <input type="radio" id="presenting_{index}" name="presenting_author_index" value="{index}" class="mr-2" style="cursor: pointer; transform: scale(1.2);" required>
-                <label for="presenting_{index}" class="mb-0 text-secondary font-weight-bold" style="font-size: 0.85rem; cursor: pointer;">Presenting Author</label>
+                <div class="d-flex align-items-center mr-4">
+                    <input type="radio" id="corresponding_{index}" name="corresponding_author_index" value="{index}" class="mr-2 corresponding-author-radio" style="cursor: pointer; transform: scale(1.2);" required>
+                    <label for="corresponding_{index}" class="mb-0 text-primary font-weight-bold" style="font-size: 0.85rem; cursor: pointer;"><i class="far fa-envelope mr-1"></i> Corresponding Author</label>
+                </div>
+                <div class="d-flex align-items-center">
+                    <input type="radio" id="presenting_{index}" name="presenting_author_index" value="{index}" class="mr-2" style="cursor: pointer; transform: scale(1.2);" required>
+                    <label for="presenting_{index}" class="mb-0 text-secondary font-weight-bold" style="font-size: 0.85rem; cursor: pointer;">Presenting Author</label>
+                </div>
             </div>
         </div>
         <div class="row">
@@ -340,6 +346,21 @@
         if (coAuthorIndex === 0) {
             const radioBtn = div.querySelector(`input[name="presenting_author_index"]`);
             if (radioBtn) radioBtn.checked = true;
+
+            const corrRadio = div.querySelector(`input[name="corresponding_author_index"]`);
+            const topCorrCheckbox = document.getElementById('is_corresponding_author');
+            if (corrRadio) {
+                corrRadio.checked = (!topCorrCheckbox || topCorrCheckbox.checked);
+            }
+        } else {
+            const topCorrCheckbox = document.getElementById('is_corresponding_author');
+            if (topCorrCheckbox && !topCorrCheckbox.checked) {
+                const anyCorrChecked = document.querySelector('input[name="corresponding_author_index"]:checked');
+                if (!anyCorrChecked) {
+                    const corrRadio = div.querySelector(`input[name="corresponding_author_index"]`);
+                    if (corrRadio) corrRadio.checked = true;
+                }
+            }
         }
 
         if (data && data.name) {
@@ -369,8 +390,74 @@
         coAuthorIndex++;
     }
 
+    const topCorrCheckbox = document.getElementById('is_corresponding_author');
+
+    function updateCorrHint(isSelf) {
+        const corrHint = document.getElementById('corresponding_author_hint');
+        if (!corrHint) return;
+        if (isSelf) {
+            corrHint.innerHTML = 'The conference committee will send all submission decisions, updates, and official communications to your registered email.';
+            corrHint.className = 'd-block text-muted font-weight-normal small mt-1';
+        } else {
+            corrHint.innerHTML = '<span class="text-primary font-weight-bold"><i class="fas fa-info-circle mr-1"></i> Co-author designated:</span> All conference decisions and official communications will be sent to the selected co-author below.';
+            corrHint.className = 'd-block font-weight-normal small mt-1';
+        }
+    }
+
+    if (topCorrCheckbox) {
+        topCorrCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                const primaryCorrRadio = document.querySelector('input[name="corresponding_author_index"][value="0"]');
+                if (primaryCorrRadio) primaryCorrRadio.checked = true;
+                updateCorrHint(true);
+            } else {
+                const primaryCorrRadio = document.querySelector('input[name="corresponding_author_index"][value="0"]');
+                if (primaryCorrRadio && primaryCorrRadio.checked) {
+                    primaryCorrRadio.checked = false;
+                }
+                const firstCoAuthorRadio = document.querySelector('input[name="corresponding_author_index"]:not([value="0"])');
+                if (firstCoAuthorRadio) {
+                    firstCoAuthorRadio.checked = true;
+                }
+                updateCorrHint(false);
+            }
+        });
+    }
+
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.name === 'corresponding_author_index') {
+            const isPrimary = (e.target.value === '0');
+            if (topCorrCheckbox) {
+                topCorrCheckbox.checked = isPrimary;
+            }
+            updateCorrHint(isPrimary);
+        }
+    });
+
     function removeCoAuthor(btn) {
-        btn.closest('.co-author-entry').remove();
+        const row = btn.closest('.co-author-entry');
+        const wasCorrChecked = row.querySelector('input[name="corresponding_author_index"]')?.checked;
+        const wasPresentingChecked = row.querySelector('input[name="presenting_author_index"]')?.checked;
+
+        row.remove();
+
+        if (wasCorrChecked) {
+            const remainingCoAuthor = document.querySelector('input[name="corresponding_author_index"]:not([value="0"])');
+            if (remainingCoAuthor && topCorrCheckbox && !topCorrCheckbox.checked) {
+                remainingCoAuthor.checked = true;
+                updateCorrHint(false);
+            } else {
+                const primaryRadio = document.querySelector('input[name="corresponding_author_index"][value="0"]');
+                if (primaryRadio) primaryRadio.checked = true;
+                if (topCorrCheckbox) topCorrCheckbox.checked = true;
+                updateCorrHint(true);
+            }
+        }
+
+        if (wasPresentingChecked) {
+            const primaryPresenting = document.querySelector('input[name="presenting_author_index"][value="0"]');
+            if (primaryPresenting) primaryPresenting.checked = true;
+        }
     }
 </script>
 @endpush
