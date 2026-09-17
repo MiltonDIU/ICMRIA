@@ -402,6 +402,8 @@ Route::resource('papers', PaperController::class);
 Route::group(['middleware' => ['auth', 'verified']], function () {
     // Profile
     Route::get('show/profile', [ProfileController::class, 'index'])->name('show-profile');
+    // A delegate's own profile. show/profile is the staff register and redirects here for them.
+    Route::get('my-profile', [ProfileController::class, 'myProfile'])->name('my-profile');
     Route::post('save/profile', [ProfileController::class, 'store'])->name('save-profile');
     Route::get('edit/profile/{id}', [ProfileController::class, 'edit'])->name('edit-profile');
     Route::post('update/profile', [ProfileController::class, 'update'])->name('update-profile');

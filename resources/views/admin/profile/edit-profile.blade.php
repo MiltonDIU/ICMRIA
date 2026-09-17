@@ -2,8 +2,13 @@
 @section('content')
 
     <div class="card">
-        <div class="card-header">
-
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="font-weight-bold">
+                {{ ($canEditAdminFields ?? true) ? 'Edit profile — ' . $user->name : 'Edit your details' }}
+            </span>
+            <a href="{{ ($canEditAdminFields ?? true) ? route('show-profile') : route('my-profile') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
         </div>
         <div class="card-body">
             <form action="{{ route("update-profile") }}" method="POST" enctype="multipart/form-data">
@@ -85,14 +90,29 @@
                 <!-- Section 3: Registration & Payment -->
                 <h5 class="text-primary mt-4 mb-3 border-bottom pb-2"><i class="fas fa-file-invoice-dollar mr-2"></i> Registration & Payment</h5>
                 <div class="row">
-
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="registration_id">Registration ID</label>
-                            <input type="text" id="registration_id" name="registration_id" class="form-control" value="{{ old('registration_id', $profile->registration_id) }}">
-                            <small class="text-muted">Usually generated automatically upon payment.</small>
+                    @if($canEditAdminFields ?? true)
+                        {{-- The registration form asks for this and the fee is derived from it, so
+                             correcting somebody's country without it would leave them on the wrong
+                             tier. The options follow the country above, exactly as on registration. --}}
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="price_id">Delegate Category *</label>
+                                <select name="price_id" id="price_id" class="form-control @error('price_id') is-invalid @enderror" required>
+                                    <option value="">--- Select Category ---</option>
+                                    @foreach($prices as $priceOption)
+                                        <option value="{{ $priceOption->id }}" data-category="{{ $priceOption->category }}"
+                                                {{ old('price_id', $profile->price_id) == $priceOption->id ? 'selected' : '' }}>
+                                            {{ $priceOption->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="form-text text-muted">
+                                    Drives the registration fee. Only the categories the chosen country qualifies for are offered.
+                                </small>
+                                @error('price_id') <span class="invalid-feedback d-block"><strong>{{ $message }}</strong></span> @enderror
+                            </div>
                         </div>
-                    </div>
+                    @endif
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="participation_mode">Participation Mode *</label>
@@ -102,6 +122,47 @@
                             </select>
                         </div>
                     </div>
+                </div>
+
+                {{-- The fee, the payment status and the registration ID are the organising
+                     committee's to set. A delegate is shown them, so they can check the figures
+                     and query anything wrong, but the inputs are not rendered at all: the
+                     controller refuses these fields from a delegate either way. --}}
+                @unless($canEditAdminFields ?? true)
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="p-3 mb-3 rounded border" style="background: #F4F7FA;">
+                                <div class="row">
+                                    <div class="col-md-3 mb-2 mb-md-0">
+                                        <small class="text-muted d-block">Registration ID</small>
+                                        <strong>{{ $profile->registration_id ?: 'Issued once payment clears' }}</strong>
+                                    </div>
+                                    <div class="col-md-3 mb-2 mb-md-0">
+                                        <small class="text-muted d-block">Registration type</small>
+                                        <strong>{{ $profile->is_author ? 'Author' : 'Participant' }}</strong>
+                                    </div>
+                                    <div class="col-md-2 mb-2 mb-md-0">
+                                        <small class="text-muted d-block">Delegate category</small>
+                                        <strong>{{ $profile->price->name ?? '—' }}</strong>
+                                    </div>
+                                    <div class="col-md-2 mb-2 mb-md-0">
+                                        <small class="text-muted d-block">Amount</small>
+                                        <strong>{{ $profile->currency ?? 'BDT' }} {{ number_format($profile->pay_amount ?? 0, 2) }}</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted d-block">Payment</small>
+                                        <strong>{{ $profile->payment_status == '1' ? 'Paid' : 'Unpaid' }}</strong>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted mt-2 mb-0">
+                                    <i class="fas fa-lock mr-1"></i>
+                                    Set by the organising committee. Write to us if any of it looks wrong.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                <div class="row">
                     <div class="col-md-3">
                         <div class="form-group py-4">
                             <div class="custom-control custom-switch">
@@ -109,6 +170,7 @@
                                 <input type="checkbox" class="custom-control-input" id="is_author" name="is_author" value="1" {{ $profile->is_author ? 'checked' : '' }}>
                                 <label class="custom-control-label font-weight-bold" for="is_author">Registered as Author?</label>
                             </div>
+                            <small class="form-text text-muted">An author is billed per abstract; a participant pays one registration fee.</small>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -118,27 +180,7 @@
                                 <input type="checkbox" class="custom-control-input" id="author_list_confirmed" name="author_list_confirmed" value="1" {{ $profile->author_list_confirmed ? 'checked' : '' }}>
                                 <label class="custom-control-label font-weight-bold" for="author_list_confirmed">Author List Confirmed?</label>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="pay_amount">Pay Amount *</label>
-                            <div class="input-group">
-                                <input type="number" step="0.01" id="pay_amount" name="pay_amount" class="form-control" value="{{ old('pay_amount', $profile->pay_amount) }}" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="currency">Currency</label>
-                            <input type="text" id="currency" name="currency" class="form-control" value="{{ old('currency', $profile->currency) }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="coupon_code">Coupon Code</label>
-                            <input type="text" id="coupon_code" name="coupon_code" class="form-control" value="{{ old('coupon_code', $profile->coupon_code) }}">
+                            <small class="form-text text-muted">Clearing this lets the author set student status again.</small>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -148,9 +190,51 @@
                                 <option value="0" {{ $profile->payment_status == '0' ? 'selected' : '' }}>Not Complete</option>
                                 <option value="1" {{ $profile->payment_status == '1' ? 'selected' : '' }}>Complete</option>
                             </select>
+                            <small class="form-text text-muted">
+                                Setting this to Complete issues the Registration ID and freezes the amount.
+                            </small>
                         </div>
                     </div>
                 </div>
+
+                {{-- Derived, not typed. The registration ID comes from IdGeneratorService the
+                     moment a payment clears, and the amount and currency from PricingService,
+                     which reads the delegate category, the country and the papers on file.
+                     A hand-typed figure here would survive only until the next recalculation
+                     anywhere else in the portal, so the form shows the result instead of
+                     inviting one. Saving re-derives both. --}}
+                <div class="p-3 mb-3 rounded border" style="background: #F4F7FA;">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 mb-2 mb-md-0">
+                            <small class="text-muted d-block">Registration ID</small>
+                            <strong>{{ $profile->registration_id ?: 'Issued when the payment clears' }}</strong>
+                        </div>
+                        <div class="col-md-4 mb-2 mb-md-0">
+                            <small class="text-muted d-block">Amount due</small>
+                            <strong>{{ $profile->currency ?? 'BDT' }} {{ number_format($profile->pay_amount ?? 0, 2) }}</strong>
+                            <small class="text-muted d-block">
+                                {{ ucwords(str_replace('_', ' ', \App\Services\PricingService::currentStage())) }} rate
+                                @if($profile->payment_status == '1')
+                                    &middot; frozen, this profile is paid
+                                @endif
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-md-right">
+                            @if($profile->payment_status != '1')
+                                {{-- Outside the main form: nested forms are not allowed. --}}
+                                <button type="submit" form="recalculate-fee-form" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-sync-alt mr-1"></i> Recalculate now
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                    <small class="form-text text-muted mt-2 mb-0">
+                        <i class="fas fa-calculator mr-1"></i>
+                        Both are worked out from the delegate category, country and abstracts &mdash; change those above and save,
+                        and the amount follows. To correct a figure that still looks wrong, fix what it is derived from.
+                    </small>
+                </div>
+                @endunless
 
                 <!-- Section 4: Workshops -->
                 <h5 class="text-primary mt-4 mb-3 border-bottom pb-2"><i class="fas fa-laptop-code mr-2"></i> Workshops / Selected Sessions</h5>
@@ -178,70 +262,72 @@
                     <button class="btn btn-primary px-5 shadow-sm" type="submit">
                         <i class="fas fa-save mr-1"></i> {{ trans('global.save') }}
                     </button>
-                    <a href="{{ route('show-profile') }}" class="btn btn-light border ml-2">Cancel</a>
+                    <a href="{{ ($canEditAdminFields ?? true) ? route('show-profile') : route('my-profile') }}" class="btn btn-light border ml-2">Cancel</a>
                 </div>
             </form>
-            </form>
+
+            @if(($canEditAdminFields ?? true) && $profile->payment_status != '1')
+                {{-- Sibling of the edit form, not a child: the Recalculate button above
+                     reaches it through its form attribute. --}}
+                <form action="{{ route('profile.recalculate-fee') }}" method="POST" id="recalculate-fee-form" class="d-none">
+                    @csrf
+                    <input type="hidden" name="profile_id" value="{{ $profile->id }}">
+                </form>
+            @endif
         </div>
     </div>
 @endsection
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@if($canEditAdminFields ?? true)
+@push('script')
 <script>
-    $(document).ready(function(){
-        $('[data-toggle="tooltip"]').tooltip();
-    });
-    /*-----------discunt calculation -------------*/
-    $(document).ready(function() {
-        $('#coupon_code').on('blur', function() {
-            var couponCode = $(this).val();
-            var email = $('#email').val();
-            var validCoupon = document.getElementById('validCoupon');
-            var csrfToken = $('meta[name="csrf-token"]').attr('content');
-            console.log(email);
-            $.ajax({
-                type: 'POST',
-                url: "{{ 'validate-coupon' }}",
-                data: {
-                    coupon_code: couponCode,
-                    email: email,
-                    _token: csrfToken
-                },
-                success: function(response) {
-                    if (response.valid) {
-                        $('#coupon_validation_message').text('Coupon code is valid.');
-                        validCoupon.remove();
-                    } else {
-                        $('#coupon_validation_message').text('Invalid coupon code or email.');
-                        if ($('#validCoupon').length === 0) {
-                            var couponElement = document.getElementById('coupon');
-                            var savePayButton = document.createElement('button');
-                            savePayButton.id = 'validCoupon';
-                            savePayButton.type = 'submit';
-                            savePayButton.className = 'btn btn-primary btn-sm';
-                            savePayButton.name = 'action';
-                            savePayButton.value = 'save-pay';
-                            savePayButton.innerHTML = '<i class="fa fa-dot-circle-o"></i> Save & Pay';
-                            couponElement.appendChild(savePayButton);
-                        }
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.log('AJAX error:', error);
+    // Delegate category depends on country: Bangladesh gets the BDT tiers, the other
+    // SAARC states get the SAARC rate, everyone else is international. Countries absent
+    // from this map are international. The server enforces the same rule via
+    // App\Rules\DelegateCategoryMatchesCountry, so this only saves the admin from
+    // submitting a combination that would come back as a validation error.
+    $(function () {
+        const allowedCategoriesByCountry = @json($countryCategories);
+        const defaultAllowedCategories = ['international'];
+
+        const $country = $('#country_id');
+        const $category = $('#price_id');
+        if (!$country.length || !$category.length) {
+            return;
+        }
+
+        function syncCategoryOptions() {
+            const allowed = allowedCategoriesByCountry[$country.val()] || defaultAllowedCategories;
+            let selectedStillAllowed = false;
+
+            $category.find('option').each(function () {
+                if (!this.value) return;
+                const permitted = allowed.indexOf(this.dataset.category) !== -1;
+                this.hidden = !permitted;
+                this.disabled = !permitted;
+                if (permitted && this.value === $category.val()) {
+                    selectedStillAllowed = true;
                 }
             });
-        });
-    });
-    function toggleTextField() {
-        var textFieldContainer = document.getElementById("textFieldContainer");
-        var radioYes = document.getElementById("radioYes");
 
-        if (radioYes.checked) {
-            textFieldContainer.style.display = "block";
-        } else {
-            textFieldContainer.style.display = "none";
+            // Changing the country can strand the current category. Blanking it makes the
+            // admin choose again rather than saving a tier the country cannot use.
+            if (!selectedStillAllowed) {
+                $category.val('');
+            }
         }
-    }
+
+        $country.on('change', syncCategoryOptions);
+        syncCategoryOptions();
+    });
 </script>
+@endpush
+@endif
+{{-- Removed: a second jQuery, a coupon-validation handler for a field that no longer
+     exists (profiles has no coupon_code column, and PricingService never reads one), and
+     a toggleTextField() for #radioYes / #textFieldContainer, neither of which is on this
+     page. All of it sat outside @section, so Blade emitted it ahead of the layout and it
+     never ran. --}}
 <style>
     .bg-color {
         background: #fbf8f8;

@@ -53,16 +53,14 @@
 
                                 </td>
                                 <td>
-                                    @php
-                                        $number =$user->profile->identity_no;
-                                        $serial = str_pad($number, 4, '0', STR_PAD_LEFT);
-                                    @endphp
-                                    @if($user->profile->payment_status==1 && $user->profile->identity_no==null)
-                                        <a href="{{ route('generateIds',[$profile->id]) }}">
-                                            {{ 'Generate Ids' }}
-                                        </a>
+                                    {{-- $profile does not exist in this view; the link has to
+                                         name the row's own profile. The zero-padding that used
+                                         to wrap this came from the old numeric identity_no and
+                                         means nothing to a "REG-…" registration ID. --}}
+                                    @if($user->profile->registration_id)
+                                        {{ $user->profile->registration_id }}
                                     @else
-                                        {{ $serial }}
+                                        <a href="{{ route('generateIds', [$user->profile->id]) }}">Generate ID</a>
                                     @endif
 
                                 </td>

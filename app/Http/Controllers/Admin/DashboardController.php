@@ -3,15 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Amenity;
-use App\Models\Domain;
-use App\Models\EventActivity;
-use App\Models\Post;
 use App\Models\Paper;
 use App\Models\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Schedule;
 use App\Models\Setting;
-use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,8 +22,14 @@ class DashboardController extends Controller
         abort_if(Gate::denies('admin_dashboard'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $user = Auth::user();
-        $allowedDomain = Domain::where('status', 1)->pluck('domain_name')->toArray();
-        $settings = Setting::pluck('value', 'key');
+
+        // An author or participant gets their own dashboard. Everything below this line
+        // is organiser analytics &mdash; country breakdowns, daily trends, currency totals
+        // across the whole conference. None of it is theirs to see, and running those
+        // aggregates to render a page that hides them is waste on every login.
+        if ($user->roles->contains('id', 3)) {
+            return $this->authorDashboard($user);
+        }
 
         // General Registration Stats
         $total = Profile::count();
@@ -58,11 +60,6 @@ class DashboardController extends Controller
             ->groupBy('currency')
             ->get();
 
-        $totalPayAmount = $currencyStats->sum('paid_amount'); // Still useful for general overview
-        $totalTaka = $currencyStats->map(function($stat) {
-            return ['country' => $stat->currency . ' (Paid)', 'litres' => intval($stat->paid_amount)];
-        })->toArray();
-
         // Top Submission Tracks with Status Breakdown
         $topTracks = DB::table('tracks')
             ->leftJoin('papers', 'tracks.id', '=', 'papers.track_id')
@@ -76,26 +73,6 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Workshop Schedules
-        $schedules = Schedule::with('speaker')
-            ->where('is_workshop', '1')
-            ->where('is_active', '1')
-            ->orderBy('day_number', 'asc')
-            ->orderBy('start_time', 'asc')
-            ->get()
-            ->groupBy('day_number');
-
-        $allSchedules = Schedule::with('speaker')
-            ->where('is_active', '1')
-            ->orderBy('day_number', 'asc')
-            ->orderBy('start_time', 'asc')
-            ->get()
-            ->groupBy('day_number');
-
-        $blogs = Post::where('is_active', '1')->orderBy('views', 'desc')->get();
-        $aminities = Amenity::orderBy('id', 'desc')->get();
-        $eventActivities = EventActivity::all();
-
         // Abstract Statistics
         $totalPapers = Paper::count();
         $pendingPapers = Paper::where('status', 'pending')->count();
@@ -108,9 +85,8 @@ class DashboardController extends Controller
             ['category' => 'Rejected', 'litres' => $rejectedPapers],
         ];
 
-        $paidPapers = Paper::where('payment_status', '1')->count();
-        $unpaidPaperCount = Paper::where('status', 'approved')->where('payment_status', '0')->count();
-
+        // These two were computed twice over, running both queries a second time on every
+        // organiser page load.
         $paidPapers = Paper::where('payment_status', '1')->count();
         $unpaidPaperCount = Paper::where('status', 'approved')->where('payment_status', '0')->count();
 
@@ -119,23 +95,9 @@ class DashboardController extends Controller
             ['category' => 'Unpaid', 'litres' => $unpaidPaperCount],
         ];
 
-        // User-Specific Logic (Unpaid Papers & Identity Generation)
-        $unpaidPapers = collect();
-        if ($user->roles->contains('id', 3)) {
-            $unpaidPapers = Paper::where('user_id', $user->id)
-                ->where('status', 'approved')
-                ->where(function($q) {
-                    $q->whereNull('payment_status')
-                      ->orWhere('payment_status', '!=', '1');
-                })->get();
-
-            if ($user->profile && $user->profile->payment_status == 1 && $user->profile->registration_id == null) {
-                $profile = Profile::find($user->profile->id);
-                $profile->registration_id = \App\Services\IdGeneratorService::generateRegistrationId();
-                $profile->save();
-                $user = $user->fresh();
-            }
-        }
+        // The delegates-only branch that stood here (their unpaid papers, and issuing a
+        // registration ID once a payment cleared) moved to authorDashboard(), which now
+        // returns before this point for role 3.
 
         // 1. Country-wise Registration & Submission Analytics
         $countryStats = DB::table('countries')
@@ -195,14 +157,149 @@ class DashboardController extends Controller
             ];
         }
 
+        // Only what admin/home.blade.php actually reads. It used to be handed eleven more
+        // variables, every one of them consumed solely by the delegates-only block that
+        // has moved out, or by markup that has been commented out for years.
         return view('admin.home', compact(
-            'settings', 'profiles', 'total', 'totalParticipants', 'totalAuthors', 'totalSubmitters', 'totalActualAuthors', 'paidParticipants', 'schedules', 'allSchedules', 'blogs',
-            'eventActivities', 'aminities', 'topTracks', 'totalTaka',
-            'totalPayAmount', 'allowedDomain', 'currencyStats',
-            'totalPapers', 'pendingPapers', 'approvedPapers', 'rejectedPapers',
+            'profiles', 'total', 'totalParticipants', 'totalSubmitters', 'totalActualAuthors',
+            'paidParticipants', 'topTracks', 'currencyStats',
+            'totalPapers', 'pendingPapers',
             'paperStats', 'paidPapers', 'paperPaymentStats',
-            'unpaidPapers', 'countryStats', 'dailyTrends'
+            'countryStats', 'dailyTrends'
         ));
+    }
+
+    /**
+     * What an author or participant needs the moment they log in.
+     *
+     * The requirement document puts the same three things in front of authors on the
+     * public site &mdash; important dates, the fee table, and the author guidelines. A
+     * delegate who has logged in should not have to go back out to the marketing pages to
+     * find them, and once they have logged in we can say which of it applies to *them*:
+     * which deadline is next, which fee tier they are on, what is still outstanding.
+     *
+     * Every figure here is read from settings and the prices table through the same
+     * services the forms and validators use, so the dashboard cannot advertise a rule the
+     * portal does not enforce.
+     */
+    private function authorDashboard($user)
+    {
+        $settings = Setting::pluck('value', 'key');
+        $profile = $user->profile;
+
+        // A cleared payment earns a registration ID. Kept from the old dashboard: this is
+        // the screen delegates land on after paying, so it is where the ID appears.
+        if ($profile && $profile->payment_status == 1 && $profile->registration_id == null) {
+            $profile->registration_id = \App\Services\IdGeneratorService::generateRegistrationId();
+            $profile->save();
+            $user = $user->fresh();
+            $profile = $user->profile;
+        }
+
+        $papers = Paper::where('user_id', $user->id)
+            ->with(['track', 'subTrack', 'authors'])
+            ->orderByDesc('id')
+            ->get();
+
+        $unpaidPapers = $papers
+            ->filter(fn (Paper $paper) => $paper->status === 'approved' && $paper->payment_status != 1)
+            ->values();
+
+        $paymentLastDate = $this->asDate($settings['payment_last_date'] ?? null);
+        $isPaymentOpen = !$paymentLastDate || Carbon::now()->lte($paymentLastDate);
+
+        return view('admin.author_dashboard', [
+            'user' => $user,
+            'profile' => $profile,
+            'settings' => $settings,
+            'papers' => $papers,
+            'unpaidPapers' => $unpaidPapers,
+            'isPaymentOpen' => $isPaymentOpen,
+            'todo' => \App\Services\DelegateChecklist::for($profile, $unpaidPapers, $isPaymentOpen),
+            'milestones' => $this->milestones($settings),
+            'prices' => \App\Models\Price::orderBy('id')->get(),
+            'currentStage' => \App\Services\PricingService::currentStage(),
+            'earlyBirdEndsAt' => $this->asDate($settings['early_registration_last_date'] ?? null),
+            'paymentBlockReason' => \App\Services\ProceedingsRules::paymentBlockReason(),
+            'abstractWindowOpen' => \App\Services\SubmissionRules::abstractWindowIsOpen(),
+            'submissionsLeft' => max(
+                // The misspelled key is the legacy one; papers/index.blade.php falls back the same way.
+                (int) ($settings['maximum_abstract_submission'] ?? $settings['maximum_abastract_submission'] ?? 1) - $papers->count(),
+                0
+            ),
+            // Carried over from the old shared dashboard, where both cards sat inside the
+            // delegates-only block. They are conference information a delegate wants, so
+            // they move here rather than being dropped with the rest of that block.
+            'amenities' => Amenity::orderBy('id', 'desc')->get(),
+            'allSchedules' => Schedule::with('speaker')
+                ->where('is_active', '1')
+                ->orderBy('day_number', 'asc')
+                ->orderBy('start_time', 'asc')
+                ->get()
+                ->groupBy('day_number'),
+        ]);
+    }
+
+    /**
+     * The conference timeline as a delegate experiences it: what each date is, whether it
+     * has passed, and how long is left. Dates missing from settings are dropped rather
+     * than shown as blanks &mdash; a milestone nobody has scheduled yet is not news.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function milestones($settings): array
+    {
+        $now = Carbon::now();
+
+        $rows = [
+            ['label' => 'Abstract submission deadline', 'icon' => 'fa-file-alt',
+             'to' => $this->asDate($settings['abstract_submission_deadline'] ?? null)],
+            ['label' => 'Full manuscript window', 'icon' => 'fa-file-upload',
+             'from' => $this->asDate($settings['manuscript_submission_start'] ?? null),
+             'to' => $this->asDate($settings['manuscript_submission_end'] ?? null)],
+            ['label' => 'Early bird registration ends', 'icon' => 'fa-tags',
+             'to' => $this->asDate($settings['early_registration_last_date'] ?? null)],
+            ['label' => 'Camera-ready & copyright form', 'icon' => 'fa-stamp',
+             'to' => $this->asDate($settings['camera_ready_deadline'] ?? null)],
+            ['label' => 'Registration deadline', 'icon' => 'fa-credit-card',
+             'to' => $this->asDate($settings['registration_close_date'] ?? ($settings['payment_last_date'] ?? null))],
+            ['label' => 'Conference', 'icon' => 'fa-calendar-check',
+             'from' => $this->asDate($settings['event_date'] ?? null),
+             'to' => $this->asDate($settings['event_end_date'] ?? null)],
+        ];
+
+        return collect($rows)
+            ->filter(fn ($row) => ($row['to'] ?? null) || ($row['from'] ?? null))
+            ->map(function ($row) use ($now) {
+                $from = $row['from'] ?? null;
+                $to = $row['to'] ?? $from;
+
+                if ($to->lt($now)) {
+                    $state = 'passed';
+                    $note = 'Closed';
+                } elseif ($from && $from->gt($now)) {
+                    $state = 'upcoming';
+                    $note = 'Opens in ' . $now->diffInDays($from) . ' days';
+                } else {
+                    $state = 'open';
+                    $days = $now->diffInDays($to);
+                    $note = $days === 0 ? 'Today' : $days . ' days left';
+                }
+
+                return $row + ['from' => $from, 'to' => $to, 'state' => $state, 'note' => $note];
+            })
+            ->sortBy(fn ($row) => $row['to']->timestamp)
+            ->values()
+            ->all();
+    }
+
+    private function asDate($value): ?Carbon
+    {
+        try {
+            return $value ? Carbon::parse($value) : null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function tracksReport()

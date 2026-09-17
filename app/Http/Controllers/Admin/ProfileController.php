@@ -26,16 +26,28 @@ class ProfileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    /**
+     * Roles that may see and change the administrative side of a profile: the
+     * registration ID, the amount due, the payment status. Everyone else &mdash; an
+     * author or a participant &mdash; owns only the personal and professional details.
+     */
+    private function isDelegate(?User $user = null): bool
+    {
+        $user ??= Auth::user();
+
+        return $user && $user->roles->contains('id', 3);
+    }
+
     public function index()
     {
         $loged = Auth::user();
-        
-        // Auto-recalculate unpaid participant/author registration totals when visiting the dashboard
-        if ($loged && $loged->roles->contains('id', 3)) {
-            $myProfile = Profile::where('user_id', $loged->id)->first();
-            if ($myProfile && $myProfile->payment_status != '1') {
-                \App\Services\PricingService::updateProfileTotalDue($myProfile);
-            }
+
+        // An author or participant has one profile, not a list of them. The screen
+        // below is a staff register: filters, bulk mail, per-row administrative
+        // actions. Sending a delegate to their own profile instead answers the
+        // question they actually came with.
+        if ($this->isDelegate($loged)) {
+            return redirect()->route('my-profile');
         }
 
         $user = auth()->user()->roles->contains(3);
@@ -86,6 +98,64 @@ class ProfileController extends Controller
             'settings'=>$settings,
             'allowedDomain'=>$allowedDomain,
             'scopeNotice'=>$scopeNotice,
+        ]);
+    }
+
+    /**
+     * A delegate's own profile, as they need to read it.
+     *
+     * The staff register answers "who has registered"; this answers "where do I stand".
+     * Those are different questions, and the register was never able to show the second
+     * one: a one-row table says nothing about whether a fee is still owed, whether the
+     * author list has been confirmed, or what happens next.
+     *
+     * Everything administrative &mdash; the registration ID, the amount, the payment
+     * status &mdash; is shown but not editable. A delegate does not set their own fee;
+     * they need to see what it is.
+     */
+    public function myProfile()
+    {
+        abort_if(Gate::denies('profile'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        $user = Auth::user()->load(['profile.country', 'profile.price', 'schedules']);
+        $profile = $user->profile;
+
+        // Keep the amount due in step with the pricing stage, exactly as the staff
+        // register did when a delegate landed on it.
+        if ($profile && $profile->payment_status != '1') {
+            \App\Services\PricingService::updateProfileTotalDue($profile);
+            $profile->refresh();
+        }
+
+        $settings = Setting::pluck('value', 'key');
+
+        $papers = Paper::where('user_id', $user->id)
+            ->with(['track', 'subTrack', 'authors', 'decision'])
+            ->orderByDesc('id')
+            ->get();
+
+        $unpaidPapers = $papers
+            ->filter(fn (Paper $paper) => $paper->status === 'approved' && $paper->payment_status != 1)
+            ->values();
+
+        $paymentLastDate = isset($settings['payment_last_date'])
+            ? Carbon::parse($settings['payment_last_date'])
+            : null;
+
+        return view('admin.profile.my-profile', [
+            'user' => $user,
+            'profile' => $profile,
+            'papers' => $papers,
+            'unpaidPapers' => $unpaidPapers,
+            'payments' => \App\Models\Payment::where('user_id', $user->id)->latest()->get(),
+            'settings' => $settings,
+            'paymentLastDate' => $paymentLastDate,
+            'isPaymentOpen' => !$paymentLastDate || Carbon::now()->lte($paymentLastDate),
+            'todo' => \App\Services\DelegateChecklist::for(
+                $profile,
+                $unpaidPapers,
+                !$paymentLastDate || Carbon::now()->lte($paymentLastDate)
+            ),
         ]);
     }
 
@@ -196,9 +266,36 @@ class ProfileController extends Controller
      */
     public function edit($id)
     {
-        abort_if(Gate::denies('profile_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        abort_if(Gate::denies('profile'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $profile = Profile::find($id);
+        abort_if(!$profile, Response::HTTP_NOT_FOUND, '404 Not Found');
         $user = User::find($profile->user_id);
+
+        // Keeping your own name, institution and contact details current needs no
+        // permission beyond owning the account &mdash; profile_edit is the gate for
+        // acting on somebody else's record, which is a different thing entirely. What a
+        // delegate still may not touch is the administrative half of their own profile:
+        // the fee, the payment status and the registration ID.
+        if ($this->isDelegate()) {
+            abort_if(
+                $profile->user_id !== auth()->id(),
+                Response::HTTP_FORBIDDEN,
+                '403 Forbidden — that profile is not yours.'
+            );
+
+            $countries = Country::all();
+
+            return view('admin.profile.edit-profile', [
+                'profile' => $profile,
+                'user' => $user,
+                'countries' => $countries,
+                'schedules' => $this->openWorkshops(),
+                'workshops' => $user->schedules->pluck('id')->toArray(),
+                'canEditAdminFields' => false,
+            ]);
+        }
+
+        abort_if(Gate::denies('profile_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         // This is an administrative page (payment status, registration ID, etc.).
         // A Track / Sub-Track Chair who is not an admin may only edit profiles
@@ -212,7 +309,35 @@ class ProfileController extends Controller
             abort_if(!$canSee, Response::HTTP_FORBIDDEN, '403 Forbidden — that profile is outside your tracks.');
         }
         $countries = Country::all();
-        $schedules = Schedule::with(['speaker', 'users' => function ($query) {
+        $schedules = $this->openWorkshops();
+        $workshops = $user->schedules->pluck('id')->toArray();
+        $canEditAdminFields = true;
+        $prices = \App\Models\Price::orderBy('id')->get();
+        $countryCategories = $this->countryCategoryMap($countries);
+
+        return view('admin.profile.edit-profile',compact('profile','user','schedules','workshops', 'countries', 'canEditAdminFields', 'prices', 'countryCategories'));
+    }
+
+    /**
+     * Which delegate categories each country qualifies for, for the country-driven
+     * category select. Countries that fall out of the map are international, which is
+     * the form's default &mdash; the same shape the registration form is handed.
+     *
+     * @param \Illuminate\Support\Collection<int, Country> $countries
+     */
+    private function countryCategoryMap($countries)
+    {
+        return $countries
+            ->mapWithKeys(fn (Country $country) => [
+                $country->id => \App\Services\PricingService::allowedCategoriesFor($country->name),
+            ])
+            ->reject(fn ($categories) => $categories === ['international']);
+    }
+
+    /** Active workshops that still have a seat free, grouped by day. */
+    private function openWorkshops()
+    {
+        return Schedule::with(['speaker', 'users' => function ($query) {
             $query->whereHas('profile', function ($subQuery) {
                 $subQuery->where('payment_status', '1');
             });
@@ -225,8 +350,6 @@ class ProfileController extends Controller
                 return $schedule->total_seat > $schedule->users->count();
             })
             ->groupBy('day_number');
-        $workshops = $user->schedules->pluck('id')->toArray();
-        return view('admin.profile.edit-profile',compact('profile','user','schedules','workshops', 'countries'));
     }
 
     /**
@@ -238,8 +361,17 @@ class ProfileController extends Controller
      */
     public function update(Request $request)
     {
-        abort_if(Gate::denies('profile_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        $request->validate([
+        $isDelegate = $this->isDelegate();
+
+        // See edit(): a delegate updates their own record, staff update anybody's.
+        abort_if(
+            Gate::denies($isDelegate ? 'profile' : 'profile_edit'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
+
+        // What anybody may change about themselves.
+        $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'designation' => 'required|string|max:255',
@@ -250,28 +382,76 @@ class ProfileController extends Controller
             'whatsapp_number' => 'required|string|max:20',
             'participation_mode' => 'required|in:onsite,online',
             'id' => 'required|exists:profiles,id',
-            'author_list_confirmed' => 'nullable|boolean',
-        ]);
-        
+        ];
+
+        $editable = [
+            'first_name', 'last_name', 'designation', 'department', 'institution',
+            'country_id', 'whatsapp_number', 'participation_mode', 'orcid_id',
+        ];
+
+        if ($isDelegate) {
+            // A delegate may correct their country but not their fee tier, so the two can
+            // fall out of step &mdash; moving from Bangladesh to Germany while holding the
+            // BDT student rate would quietly cut what they owe. Refuse the change and send
+            // them to the committee, who can move both together.
+            $rules['country_id'] = ['required', 'exists:countries,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $held = Profile::where('id', $request->input('id'))->value('price_id');
+
+                    if ($held && !(new \App\Rules\DelegateCategoryMatchesCountry($value))->passes('price_id', $held)) {
+                        $fail('Your delegate category does not apply to that country. Ask the organising committee to change your category first.');
+                    }
+                }];
+        } else {
+            $rules += [
+                'payment_status' => 'required|in:0,1',
+                'author_list_confirmed' => 'nullable|boolean',
+                'is_author' => 'nullable|boolean',
+                // The delegate category the registration form collects. Same rule as
+                // registration, so correcting somebody's country here cannot leave them
+                // on a tier that country does not qualify for.
+                'price_id' => [
+                    'required', 'exists:prices,id',
+                    new \App\Rules\DelegateCategoryMatchesCountry($request->input('country_id')),
+                ],
+            ];
+
+            // registration_id, pay_amount and currency are deliberately absent: they are
+            // derived, not typed. See the recalculation below.
+            $editable = array_merge($editable, [
+                'is_author', 'payment_status', 'author_list_confirmed', 'price_id',
+            ]);
+        }
+
+        $request->validate($rules);
+
         $profile = Profile::find($request->id);
-        
+
+        abort_if(
+            $isDelegate && $profile->user_id !== auth()->id(),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden — that profile is not yours.'
+        );
+
         // Update user name as well for consistency
         $user = $profile->user;
         $user->update([
             'name' => $request->first_name . ' ' . $request->last_name
         ]);
 
-        $profileData = $request->only([
-            'first_name', 'last_name', 'designation', 'department', 'institution', 
-            'country_id', 'whatsapp_number', 'registration_id', 'is_author', 
-            'participation_mode', 'pay_amount', 'currency', 'payment_status', 'coupon_code',
-            'author_list_confirmed', 'orcid_id'
-        ]);
-        $profileData['orcid_id'] = $profileData['orcid_id'] ? strtoupper($profileData['orcid_id']) : null;
-        
+        $profileData = $request->only($editable);
+        $profileData['orcid_id'] = !empty($profileData['orcid_id']) ? strtoupper($profileData['orcid_id']) : null;
+
         $userSchedule = $request->input('schedule_ids', []);
 
         $profile->update($profileData);
+
+        // The fee follows the delegate category, the country and the papers on file, so a
+        // change to any of them has to flow through to the amount. Typing the amount by
+        // hand would only last until the next recalculation anywhere else in the portal.
+        // Already-paid profiles are left alone; updateProfileTotalDue returns early on them.
+        \App\Services\PricingService::updateProfileTotalDue($profile);
+        $profile->refresh();
 
         // If payment status changed to complete and no registration ID exists, generate one
         if ($profile->payment_status == 1 && $profile->registration_id == null) {
@@ -281,7 +461,8 @@ class ProfileController extends Controller
 
         $user->schedules()->sync($userSchedule);
 
-        return redirect('show/profile')->with('message','Profile updated successfully');
+        return redirect()->route($isDelegate ? 'my-profile' : 'show-profile')
+            ->with('message', 'Profile updated successfully');
     }
 
     /**

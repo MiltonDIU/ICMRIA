@@ -133,7 +133,7 @@
                                         {{ $user->profile->phone ?? ''   }}
                                     </td>
                                     <td>
-                                        {{ $user->profile->identity_no ?? ''   }}
+                                        {{ $user->profile->registration_id ?? '' }}
                                     </td>
                                     
                                     <td>
@@ -171,35 +171,9 @@
     <script>
         $(function () {
             let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
-            @can('student_delete')
-            let deleteButtonTrans = '{{ trans('global.datatables.delete') }}'
-            let deleteButton = {
-                text: deleteButtonTrans,
-                url: "{{ route('admin.students.massDestroy') }}",
-                className: 'btn-danger',
-                action: function (e, dt, node, config) {
-                    var ids = $.map(dt.rows({ selected: true }).nodes(), function (entry) {
-                        return $(entry).data('entry-id')
-                    });
-
-                    if (ids.length === 0) {
-                        alert('{{ trans('global.datatables.zero_selected') }}')
-
-                        return
-                    }
-
-                    if (confirm('{{ trans('global.areYouSure') }}')) {
-                        $.ajax({
-                            headers: {'x-csrf-token': _token},
-                            method: 'POST',
-                            url: config.url,
-                            data: { ids: ids, _method: 'DELETE' }})
-                            .done(function () { location.reload() })
-                    }
-                }
-            }
-            dtButtons.push(deleteButton)
-            @endcan
+            {{-- Same dead bulk-delete button as on the participants list: it pointed at
+                 route('admin.students.massDestroy'), which does not exist, so this page
+                 returned a 500 for anyone holding student_delete. --}}
 
             $.extend(true, $.fn.dataTable.defaults, {
                 orderCellsTop: true,

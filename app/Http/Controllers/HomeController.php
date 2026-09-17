@@ -366,42 +366,51 @@ public function blogsCategory($id,$slug){
         return view('theme2.payment.fail');
     }
     public function success(){
-            $profile = Profile::where('user_id',Auth::id())->first();
-        if ($profile != null){
-            $newId = $this->uniqueIdGenerate();
-            $profile->identity_no = $newId;
+        $profile = Profile::where('user_id', Auth::id())->first();
+
+        // Only fill an ID that is missing. This page can be reloaded, and minting a
+        // second ID for a registration that already has one would leave the delegate
+        // holding a number nothing else in the portal knows about.
+        if ($profile && $profile->payment_status == '1' && $profile->registration_id == null) {
+            $profile->registration_id = \App\Services\IdGeneratorService::generateRegistrationId();
             $profile->save();
         }
+
         return view('theme2.payment.success');
     }
 
-    public function generateIds($id=null){
+    /**
+     * Issue the registration ID for a profile whose payment has cleared.
+     *
+     * This wrote to profiles.identity_no, a column that does not exist, so every use of
+     * the "Generate ID" button ended in an SQL error. The ID now goes where the rest of
+     * the portal reads it from &mdash; profiles.registration_id &mdash; and is produced by
+     * IdGeneratorService, the same generator ProfileController and the dashboard use, so
+     * one registration cannot end up with two different formats depending on who issued it.
+     */
+    public function generateIds($id = null){
+        $profile = $id != null
+            ? Profile::where('id', $id)->first()
+            : Profile::where('user_id', Auth::id())->first();
 
-        if ($id!=null){
-            $profile = Profile::where('id',$id)->first();
-        }else{
-            $profile = Profile::where('user_id',Auth::id())->first();
+        if (!$profile) {
+            return redirect()->back()->with('error', 'That registration could not be found.');
         }
-        $newId = $this->uniqueIdGenerate();
 
-        $profile->identity_no = $newId;
-        $result = $profile->save();
-        return redirect()->back();
-    }
+        if ($profile->registration_id) {
+            return redirect()->back()->with('message', "This registration already holds the ID {$profile->registration_id}.");
+        }
 
+        // The button only appears on a paid registration, and the ID means the fee has
+        // cleared, so refuse rather than hand one out on a direct hit of the URL.
+        if ($profile->payment_status != '1') {
+            return redirect()->back()->with('error', 'A registration ID is issued once the payment has cleared.');
+        }
 
-    public function uniqueIdGenerate(){
-        $currentDate = Carbon::now();
-        $formattedDate = sprintf('%02d%02d%02d', $currentDate->format('y'), $currentDate->month, $currentDate->day);
-// Count existing profiles with non-zero identity numbers
-        $total = Profile::where('identity_no', '!=', '0')->count();
-// Increment the existing count
-        $newIdCount = $total + 1;
+        $profile->registration_id = \App\Services\IdGeneratorService::generateRegistrationId();
+        $profile->save();
 
-// Pad the count with leading zeros to a specific width (e.g., 4 for "0001", 5 for "00001")
-        $sequenceNumber = str_pad($newIdCount, 4, '0', STR_PAD_LEFT);
-        $newId = $formattedDate . $sequenceNumber;
-        return $newId;
+        return redirect()->back()->with('message', "Registration ID {$profile->registration_id} issued.");
     }
 public function scheduleDetails($id, $title)
 {

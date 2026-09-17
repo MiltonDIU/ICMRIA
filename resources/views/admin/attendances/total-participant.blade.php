@@ -47,7 +47,7 @@
                                     <td>
                                     </td>
                                     <td>
-                                        {{ $profile->identity_no ?? ''   }}
+                                        {{ $profile->registration_id ?? '' }}
                                     </td>
                                     <td>
                                         <input
@@ -91,35 +91,12 @@
     <script>
         $(function () {
             let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
-            @can('student_delete')
-            let deleteButtonTrans = '{{ trans('global.datatables.delete') }}'
-            let deleteButton = {
-                text: deleteButtonTrans,
-                url: "{{ route('admin.students.massDestroy') }}",
-                className: 'btn-danger',
-                action: function (e, dt, node, config) {
-                    var ids = $.map(dt.rows({ selected: true }).nodes(), function (entry) {
-                        return $(entry).data('entry-id')
-                    });
-
-                    if (ids.length === 0) {
-                        alert('{{ trans('global.datatables.zero_selected') }}')
-
-                        return
-                    }
-
-                    if (confirm('{{ trans('global.areYouSure') }}')) {
-                        $.ajax({
-                            headers: {'x-csrf-token': _token},
-                            method: 'POST',
-                            url: config.url,
-                            data: { ids: ids, _method: 'DELETE' }})
-                            .done(function () { location.reload() })
-                    }
-                }
-            }
-            dtButtons.push(deleteButton)
-            @endcan
+            {{-- A bulk-delete button pointing at route('admin.students.massDestroy') stood
+                 here. That route does not exist &mdash; there is no students controller in
+                 this application; it is left over from the admin template this panel was
+                 built from. Because the button sat behind @can('student_delete'), which
+                 SuperAdmin and Admin hold, route() threw RouteNotFoundException and this
+                 page returned a 500 for exactly the people who use it. --}}
 
             $.extend(true, $.fn.dataTable.defaults, {
                 orderCellsTop: true,

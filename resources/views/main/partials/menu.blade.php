@@ -73,13 +73,18 @@
                     </li>
                 @endcan
                 @can('profile')
+                    @php
+                        // A delegate has one profile; everybody else has a register of them.
+                        $isDelegate = auth()->user()->roles->contains('id', 3);
+                    @endphp
                     <li class="nav-item">
-                        <a href="{{ route("show-profile") }}" class="nav-link {{ request()->is('admin/profile') || request()->is('admin/profile/*') ? 'active' : '' }}">
-                            <i class="fa-fw fas fa-cogs">
+                        <a href="{{ $isDelegate ? route('my-profile') : route('show-profile') }}"
+                           class="nav-link {{ request()->is('my-profile') || request()->is('show/profile') || request()->is('edit/profile/*') ? 'active' : '' }}">
+                            <i class="fa-fw fas {{ $isDelegate ? 'fa-id-card' : 'fa-cogs' }}">
 
                             </i>
                             <p>
-                                <span>Profile</span>
+                                <span>{{ $isDelegate ? 'My Profile' : 'Profile' }}</span>
                             </p>
                         </a>
                     </li>

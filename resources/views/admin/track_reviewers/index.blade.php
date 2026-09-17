@@ -104,8 +104,7 @@
             @endif
             Adding someone here makes them available for paper assignment; it does not assign them a paper yet.
             Click a name to open that reviewer's profile &mdash; their expertise, the tracks they serve and every paper
-            already sitting with them. Profiles are conference-wide, so you can read one before pulling somebody in
-            from another chair's track; the papers themselves stay behind your own scope.
+            already sitting with them. Papers from a track you do not chair are counted there but not named.
         </p>
     </div>
 </div>

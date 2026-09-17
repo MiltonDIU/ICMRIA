@@ -113,6 +113,7 @@
                 <p class="text-muted small">
                     {{ $hidden }} of these {{ $hidden === 1 ? 'sits' : 'sit' }} in a track you do not chair. They are
                     counted here so the workload above is honest, but the title and authors stay with that track's chair.
+                    You are seeing this reviewer because they also serve a track of yours.
                 </p>
             @endif
             <div class="table-responsive">

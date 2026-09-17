@@ -1,6 +1,47 @@
 @extends('layouts.main')
 
 @section('content')
+@php
+    /**
+     * Every figure and date below comes from the settings table, through the same
+     * SubmissionRules the submission form and the validators read. This page used to
+     * spell them out by hand, so an organiser changing a deadline or a page limit in
+     * Settings would move what the portal enforces while this page kept advertising the
+     * old number to authors.
+     */
+    [$minPages, $maxPages] = \App\Services\SubmissionRules::pageLimits();
+    $abstractMin = \App\Services\SubmissionRules::abstractMinWords();
+    $abstractMax = \App\Services\SubmissionRules::abstractMaxWords();
+    $keywordsMin = \App\Services\SubmissionRules::keywordsMin();
+    $keywordsMax = \App\Services\SubmissionRules::keywordsMax();
+    $doubleBlind = \App\Services\SubmissionRules::isDoubleBlind();
+
+    $asDate = function ($value) {
+        try {
+            return $value ? \Illuminate\Support\Carbon::parse($value) : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    };
+
+    // "15–30 Nov 2026" when both ends share a month, "15 Nov – 2 Dec 2026" when they do not.
+    $dateRange = function ($start, $end) {
+        if (!$start || !$end) {
+            return optional($start ?: $end)->format('j M Y') ?: 'To be announced';
+        }
+
+        return $start->isSameMonth($end)
+            ? $start->format('j') . '–' . $end->format('j M Y')
+            : $start->format('j M') . ' – ' . $end->format('j M Y');
+    };
+
+    $abstractDeadline = $asDate($settings['abstract_submission_deadline'] ?? null);
+    $manuscriptOpens = \App\Services\SubmissionRules::manuscriptWindowOpensAt();
+    $manuscriptCloses = \App\Services\SubmissionRules::manuscriptWindowClosesAt();
+    $registrationDeadline = $asDate($settings['registration_close_date'] ?? ($settings['payment_last_date'] ?? null));
+    $eventStart = $asDate($settings['event_date'] ?? null);
+    $eventEnd = $asDate($settings['event_end_date'] ?? null);
+@endphp
 <main id="main" class="main-page">
     <!-- Hero Banner -->
     <section class="guidelines-hero text-white py-5 position-relative" style="background: linear-gradient(135deg, #001f3f 0%, #003366 55%, #004d80 100%); margin-top: -2px; padding: 90px 0 70px;">
@@ -49,19 +90,19 @@
             <div class="row text-center align-items-center">
                 <div class="col-6 col-md-3 py-2 border-right">
                     <span class="d-block text-uppercase font-weight-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">Abstract Deadline</span>
-                    <strong class="d-block text-danger" style="font-size: 1.15rem;">30 Oct 2026</strong>
+                    <strong class="d-block text-danger" style="font-size: 1.15rem;">{{ $abstractDeadline?->format('j M Y') ?? 'To be announced' }}</strong>
                 </div>
                 <div class="col-6 col-md-3 py-2 border-right">
                     <span class="d-block text-uppercase font-weight-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">Full Manuscript Window</span>
-                    <strong class="d-block text-primary" style="font-size: 1.15rem;">15–30 Nov 2026</strong>
+                    <strong class="d-block text-primary" style="font-size: 1.15rem;">{{ $dateRange($manuscriptOpens, $manuscriptCloses) }}</strong>
                 </div>
                 <div class="col-6 col-md-3 py-2 border-right">
                     <span class="d-block text-uppercase font-weight-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">Registration Deadline</span>
-                    <strong class="d-block text-dark" style="font-size: 1.15rem;">26 Dec 2026</strong>
+                    <strong class="d-block text-dark" style="font-size: 1.15rem;">{{ $registrationDeadline?->format('j M Y') ?? 'To be announced' }}</strong>
                 </div>
                 <div class="col-6 col-md-3 py-2">
                     <span class="d-block text-uppercase font-weight-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">Conference Dates</span>
-                    <strong class="d-block text-success" style="font-size: 1.15rem;">9–10 Jan 2027</strong>
+                    <strong class="d-block text-success" style="font-size: 1.15rem;">{{ $dateRange($eventStart, $eventEnd) }}</strong>
                 </div>
             </div>
         </div>
@@ -103,8 +144,8 @@
                             <h5 class="font-weight-bold mb-2 text-dark">Manuscript Submission</h5>
                             <ul class="text-muted small pl-3 mb-0" style="line-height: 1.8;">
                                 <li>Select target Conference Track & Sub-Track.</li>
-                                <li>Enter Title, 200–250 words Abstract, and 4–6 Keywords.</li>
-                                <li>Upload anonymized manuscript file (IEEE standard format).</li>
+                                <li>Enter Title, {{ $abstractMin }}–{{ $abstractMax }} words Abstract, and {{ $keywordsMin }}–{{ $keywordsMax }} Keywords.</li>
+                                <li>Upload {{ $doubleBlind ? 'anonymized ' : '' }}manuscript file (IEEE standard format).</li>
                                 <li>Conflict of Interest (CoI) declaration.</li>
                             </ul>
                         </div>
@@ -180,14 +221,14 @@
                                     <i class="fa fa-check-circle text-success mt-1 mr-3"></i>
                                     <div>
                                         <strong>Word Limit & Structure:</strong>
-                                        <p class="text-muted small mb-0">Abstracts must be between <strong>200–250 words</strong>, clearly stating research objectives, methodology, key findings, and contributions to multidisciplinary innovation.</p>
+                                        <p class="text-muted small mb-0">Abstracts must be between <strong>{{ $abstractMin }}–{{ $abstractMax }} words</strong>, clearly stating research objectives, methodology, key findings, and contributions to multidisciplinary innovation.</p>
                                     </div>
                                 </li>
                                 <li class="d-flex mb-3">
                                     <i class="fa fa-check-circle text-success mt-1 mr-3"></i>
                                     <div>
                                         <strong>Metadata Requirements:</strong>
-                                        <p class="text-muted small mb-0">Must include paper title, full author names, institutional affiliations, country, corresponding author email, selected track, and <strong>4–6 descriptive keywords</strong>.</p>
+                                        <p class="text-muted small mb-0">Must include paper title, full author names, institutional affiliations, country, corresponding author email, selected track, and <strong>{{ $keywordsMin }}–{{ $keywordsMax }} descriptive keywords</strong>.</p>
                                     </div>
                                 </li>
                                 <li class="d-flex mb-3">
@@ -229,14 +270,18 @@
                                     <i class="fa fa-check-circle text-success mt-1 mr-3"></i>
                                     <div>
                                         <strong>Page Limits:</strong>
-                                        <p class="text-muted small mb-0">Regular papers are recommended to be between <strong>6 to 8 pages</strong>, including all figures, tables, and references.</p>
+                                        <p class="text-muted small mb-0">Regular papers are recommended to be between <strong>{{ $minPages }} to {{ $maxPages }} pages</strong>, including all figures, tables, and references.</p>
                                     </div>
                                 </li>
                                 <li class="d-flex mb-3">
                                     <i class="fa fa-check-circle text-success mt-1 mr-3"></i>
                                     <div>
-                                        <strong>Blind Review Anonymity:</strong>
-                                        <p class="text-muted small mb-0">Initial manuscript drafts submitted for peer review must NOT include author names, affiliations, or self-identifying citations.</p>
+                                        <strong>{{ $doubleBlind ? 'Double-Blind Review Anonymity' : 'Single-Blind Review' }}:</strong>
+                                        @if($doubleBlind)
+                                            <p class="text-muted small mb-0">Initial manuscript drafts submitted for peer review must NOT include author names, affiliations, or self-identifying citations.</p>
+                                        @else
+                                            <p class="text-muted small mb-0">Reviewer identities are withheld from authors, but your manuscript may carry author names and affiliations &mdash; it does not need to be anonymised.</p>
+                                        @endif
                                     </div>
                                 </li>
                                 <li class="d-flex">
