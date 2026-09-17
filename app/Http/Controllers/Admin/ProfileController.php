@@ -200,19 +200,16 @@ class ProfileController extends Controller
         $profile = Profile::find($id);
         $user = User::find($profile->user_id);
 
-        // Everyone may edit their own profile. For other profiles, a chair who
-        // is not an admin may only touch those whose papers sit in their tracks.
-        $viewer = auth()->user();
-        $isOwnProfile = ($viewer->id === (int) $profile->user_id);
-
-        if (!$isOwnProfile) {
-            $scope = ChairScope::for($viewer);
-            if (!$scope->seesEverything()) {
-                $canSee = Paper::where('user_id', $profile->user_id)
-                    ->tap(fn ($q) => $scope->constrainPapers($q))
-                    ->exists();
-                abort_if(!$canSee, Response::HTTP_FORBIDDEN, '403 Forbidden — that profile is outside your tracks.');
-            }
+        // This is an administrative page (payment status, registration ID, etc.).
+        // A Track / Sub-Track Chair who is not an admin may only edit profiles
+        // whose papers sit inside their tracks; SuperAdmin, Admin and TPC Chair
+        // may edit any profile.
+        $scope = ChairScope::for(auth()->user());
+        if (!$scope->seesEverything()) {
+            $canSee = Paper::where('user_id', $profile->user_id)
+                ->tap(fn ($q) => $scope->constrainPapers($q))
+                ->exists();
+            abort_if(!$canSee, Response::HTTP_FORBIDDEN, '403 Forbidden — that profile is outside your tracks.');
         }
         $countries = Country::all();
         $schedules = Schedule::with(['speaker', 'users' => function ($query) {
