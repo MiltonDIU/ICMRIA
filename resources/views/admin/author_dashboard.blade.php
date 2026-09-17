@@ -103,6 +103,45 @@
     .ad .ad-rule strong { color: var(--brand-navy); }
     .ad .ad-rule p { margin: 2px 0 0; font-size: .86rem; color: var(--brand-grey); }
 
+    /* Programme schedule, one tab per day */
+    .ad .ad-day-tabs {
+        border-bottom: 1px solid #E3E9F0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        margin-bottom: 16px;
+    }
+    .ad .ad-day-tabs .nav-link {
+        white-space: nowrap;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        padding: 8px 14px;
+        font-weight: 600;
+        font-size: .875rem;
+        color: var(--brand-grey);
+    }
+    .ad .ad-day-tabs .nav-link:hover { border-bottom-color: #C9D6E4; color: var(--brand-navy); }
+    .ad .ad-day-tabs .nav-link.active {
+        color: var(--brand-navy);
+        background: transparent;
+        border-bottom-color: var(--brand-blue);
+    }
+    .ad .ad-day-count {
+        display: inline-block;
+        min-width: 20px;
+        margin-left: 6px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #E8F1FA;
+        color: var(--brand-blue);
+        font-size: .72rem;
+        text-align: center;
+    }
+    .ad .ad-day-tabs .nav-link.active .ad-day-count { background: var(--brand-blue); color: #fff; }
+    /* A single heavy day scrolls inside the card rather than stretching the page. */
+    .ad .ad-day-panes { max-height: 420px; overflow-y: auto; }
+
     .ad .btn-brand { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
     .ad .btn-brand:hover { background: var(--brand-navy); border-color: var(--brand-navy); color: #fff; }
     .ad .btn-brand-green { background: var(--brand-green); border-color: var(--brand-green); color: #fff; }
@@ -459,24 +498,43 @@
                         <h5><i class="far fa-clock mr-2"></i> Programme schedule</h5>
                     </div>
                     <div class="ad-card-body">
-                        @foreach($allSchedules as $day => $sessions)
-                            <div class="mb-3">
-                                <div class="ad-step-label mb-2">Day {{ $day }}</div>
-                                @foreach($sessions as $session)
-                                    <div class="ad-rule">
-                                        <i class="far fa-dot-circle"></i>
-                                        <div>
-                                            <strong>{{ $session->title }}</strong>
-                                            <p>
-                                                {{ \Carbon\Carbon::parse($session->start_time)->format('h:i A') }}
-                                                @if($session->subtitle) &middot; {{ $session->subtitle }} @endif
-                                                @if($session->speaker) &middot; {{ $session->speaker->name }} @endif
-                                            </p>
+                        {{-- One tab per day. A conference grows to dozens of sessions, and
+                             listing every day at once turned this card into most of the
+                             page; each pane also scrolls, so a single heavy day cannot do
+                             the same on its own. --}}
+                        <ul class="nav nav-tabs ad-day-tabs" role="tablist">
+                            @foreach($allSchedules as $day => $sessions)
+                                <li class="nav-item">
+                                    <a class="nav-link {{ $loop->first ? 'active' : '' }}"
+                                       data-toggle="tab" role="tab"
+                                       href="#ad-day-{{ $loop->index }}">
+                                        {{ $day === null || $day === '' ? 'Unscheduled' : 'Day ' . $day }}
+                                        <span class="ad-day-count">{{ $sessions->count() }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        <div class="tab-content ad-day-panes">
+                            @foreach($allSchedules as $day => $sessions)
+                                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                                     id="ad-day-{{ $loop->index }}" role="tabpanel">
+                                    @foreach($sessions as $session)
+                                        <div class="ad-rule">
+                                            <i class="far fa-dot-circle"></i>
+                                            <div>
+                                                <strong>{{ $session->title }}</strong>
+                                                <p>
+                                                    {{ \Carbon\Carbon::parse($session->start_time)->format('h:i A') }}
+                                                    @if($session->subtitle) &middot; {{ $session->subtitle }} @endif
+                                                    @if($session->speaker) &middot; {{ $session->speaker->name }} @endif
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endforeach
+                                    @endforeach
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
