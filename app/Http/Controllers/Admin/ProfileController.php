@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Domain;
+use App\Models\Paper;
 use App\Models\Schedule;
 use Gate;
 use App\Http\Controllers\Controller;
@@ -16,6 +17,7 @@ use App\Models\User;
 use App\Models\Country;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\Response;
+use App\Services\ChairScope;
 
 class ProfileController extends Controller
 {
@@ -45,18 +47,45 @@ class ProfileController extends Controller
             $profiles = Profile::where('user_id',$loged->id)->with(['user.papers.authors', 'country'])->get();
         }else{
             $emails = CustomMail::where('publication_status',1)->get();
-            $profiles = Profile::with(['user.papers.authors', 'country'])->orderBy('registration_id','asc')->get();
+
+            // Track / Sub-Track Chairs only see profiles whose papers fall
+            // within their assigned scope. SuperAdmin, Admin and TPC Chair
+            // continue to see everything.
+            $scope = ChairScope::for($loged);
+
+            if ($scope->seesEverything()) {
+                $profiles = Profile::with(['user.papers.authors', 'country'])
+                    ->orderBy('registration_id', 'asc')
+                    ->get();
+            } else {
+                $scopedUserIds = Paper::query()
+                    ->select('user_id')
+                    ->tap(fn ($q) => $scope->constrainPapers($q))
+                    ->distinct()
+                    ->pluck('user_id');
+
+                $profiles = Profile::whereIn('user_id', $scopedUserIds)
+                    ->with(['user.papers.authors', 'country'])
+                    ->orderBy('registration_id', 'asc')
+                    ->get();
+            }
         }
         $settings = Setting::pluck('value', 'key');
 
         $allowedDomain = Domain::where('status',1)->pluck('domain_name')->toArray();
 
+        // Let the blade know when it is showing a scoped subset so it can
+        // display a helpful notice rather than surprising the chair.
+        $scopeNotice = isset($scope) && !$scope->seesEverything()
+            ? 'Showing profiles whose papers fall within your tracks only.'
+            : null;
 
         return view('admin.profile.show-profile',[
             'profiles'=>$profiles,
             'emails' => $emails,
             'settings'=>$settings,
             'allowedDomain'=>$allowedDomain,
+            'scopeNotice'=>$scopeNotice,
         ]);
     }
 
@@ -170,6 +199,16 @@ class ProfileController extends Controller
         abort_if(Gate::denies('profile_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $profile = Profile::find($id);
         $user = User::find($profile->user_id);
+
+        // A chair who is not an admin may only touch profiles for users whose
+        // papers sit inside their tracks.
+        $scope = ChairScope::for(auth()->user());
+        if (!$scope->seesEverything()) {
+            $canSee = Paper::where('user_id', $profile->user_id)
+                ->tap(fn ($q) => $scope->constrainPapers($q))
+                ->exists();
+            abort_if(!$canSee, Response::HTTP_FORBIDDEN, '403 Forbidden — that profile is outside your tracks.');
+        }
         $countries = Country::all();
         $schedules = Schedule::with(['speaker', 'users' => function ($query) {
             $query->whereHas('profile', function ($subQuery) {

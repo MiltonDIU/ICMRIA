@@ -1,5 +1,11 @@
 @extends('layouts.admin')
 @section('content')
+    @if(!empty($scopeNotice))
+        <div class="alert alert-info d-flex align-items-center mb-3">
+            <i class="fas fa-filter mr-2"></i>
+            <span>{{ $scopeNotice }}</span>
+        </div>
+    @endif
     <div class="card">
         {{-- Bulk mail is an administrative tool. It used to be gated on profile_edit,
              which every author holds in order to edit their own profile, so authors

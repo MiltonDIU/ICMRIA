@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PaperReviewerAssignment;
+use App\Models\Setting;
 use App\Models\SubTrack;
 use App\Models\TrackAssignment;
 use App\Models\User;
@@ -43,17 +45,120 @@ class TrackReviewerController extends Controller
         $reviewers = TrackAssignment::with(['user', 'track', 'subTrack'])
             ->where('role', 'reviewer')
             ->whereIn('track_id', $scope->trackIds() ?: [0])
-            ->get()
-            ->groupBy(fn ($a) => $this->scopeKey($a->track_id, $a->sub_track_id));
+            ->get();
+
+        $pool = $this->existingReviewers();
+
+        // One query for everybody on the page: the chair needs to see how much each
+        // reviewer is already carrying before adding another paper to the pile.
+        $loads = $this->loadsFor(
+            $pool->pluck('id')->merge($reviewers->pluck('user_id'))->filter()->unique()->values()->all()
+        );
 
         return view('admin.track_reviewers.index', [
             'scopes' => $scopes,
-            'reviewersByScope' => $reviewers,
-            'pool' => $this->existingReviewers(),
+            'reviewersByScope' => $reviewers->groupBy(fn ($a) => $this->scopeKey($a->track_id, $a->sub_track_id)),
+            'pool' => $pool->map(fn (array $person) => $person + ['load' => $loads[$person['id']]['open'] ?? 0]),
             'scopeTopics' => $this->topicsByScope($scopes),
             'seesEverything' => $scope->seesEverything(),
             'hasNoScope' => $scope->isEmpty(),
+            'loads' => $loads,
+            'defaultCapacity' => $this->defaultCapacity(),
         ]);
+    }
+
+    /**
+     * One reviewer's profile: who they are, what they cover, and every paper already
+     * sitting with them.
+     *
+     * Scoped to the viewer's tracks: a chair may only open profiles of reviewers who
+     * serve at least one track they manage. Papers from other tracks are still counted
+     * for an honest workload picture, but their title and authors are withheld.
+     */
+    public function show(User $user)
+    {
+        abort_if(Gate::denies('review_assign'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        abort_if(
+            !$user->roles->contains('id', self::ROLE_REVIEWER),
+            Response::HTTP_NOT_FOUND,
+            'That person does not hold the Reviewer role.'
+        );
+
+        $viewer = ChairScope::for(auth()->user());
+
+        // Chairs may only open profiles of reviewers who serve at least one
+        // track they manage. Admins and TPC Chair see everyone.
+        if (!$viewer->seesEverything()) {
+            $viewerTrackIds = $viewer->trackIds();
+            $reviewerInScope = TrackAssignment::where('user_id', $user->id)
+                ->where('role', 'reviewer')
+                ->whereIn('track_id', $viewerTrackIds ?: [0])
+                ->exists();
+            abort_if(!$reviewerInScope, Response::HTTP_FORBIDDEN, '403 Forbidden — that reviewer is not in your tracks.');
+        }
+
+        $assignments = PaperReviewerAssignment::with(['paper.track', 'paper.subTrack', 'evaluation'])
+            ->where('reviewer_id', $user->id)
+            ->whereHas('paper')
+            ->orderByDesc('assigned_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return view('admin.track_reviewers.show', [
+            'reviewer' => $user->load('profile.country'),
+            'expertise' => $user->allExpertise(),
+            'scopes' => TrackAssignment::with(['track', 'subTrack'])
+                ->where('user_id', $user->id)
+                ->where('role', 'reviewer')
+                ->get()
+                ->sortBy(fn ($row) => [$row->track->name ?? '', $row->subTrack->name ?? '']),
+            'rows' => $assignments->map(fn (PaperReviewerAssignment $assignment) => [
+                'assignment' => $assignment,
+                'paper' => $assignment->paper,
+                'visible' => $viewer->canSee($assignment->paper),
+            ]),
+            'load' => $this->loadsFor([$user->id])[$user->id] ?? ['open' => 0, 'done' => 0, 'declined' => 0, 'total' => 0],
+            'defaultCapacity' => $this->defaultCapacity(),
+        ]);
+    }
+
+    /**
+     * How many papers each of these reviewers holds, split by what the count means:
+     * "open" is the live workload the matcher weighs, "done" the evaluations already in,
+     * "declined" the ones they turned back. Papers that have since been deleted are left
+     * out, so a count never points at something a chair cannot open.
+     *
+     * @param array<int, int> $userIds
+     * @return array<int, array{open: int, done: int, declined: int, total: int}>
+     */
+    private function loadsFor(array $userIds): array
+    {
+        if (!$userIds) {
+            return [];
+        }
+
+        return PaperReviewerAssignment::whereIn('reviewer_id', $userIds)
+            ->whereHas('paper')
+            ->selectRaw("reviewer_id,
+                SUM(CASE WHEN status IN ('invited', 'accepted', 'in_progress') THEN 1 ELSE 0 END) AS open_count,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS done_count,
+                SUM(CASE WHEN status = 'declined' THEN 1 ELSE 0 END) AS declined_count,
+                COUNT(*) AS total_count")
+            ->groupBy('reviewer_id')
+            ->get()
+            ->mapWithKeys(fn ($row) => [(int) $row->reviewer_id => [
+                'open' => (int) $row->open_count,
+                'done' => (int) $row->done_count,
+                'declined' => (int) $row->declined_count,
+                'total' => (int) $row->total_count,
+            ]])
+            ->all();
+    }
+
+    /** The conference-wide ceiling, which a track may raise or lower for itself. */
+    private function defaultCapacity(): int
+    {
+        return (int) (Setting::where('key', 'max_papers_per_reviewer')->value('value') ?: 10);
     }
 
     /**

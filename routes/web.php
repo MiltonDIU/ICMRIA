@@ -323,6 +323,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     // Reviewer pool, managed by the chairs of each track
     Route::get('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'index'])->name('track-reviewers.index');
     Route::post('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'store'])->name('track-reviewers.store');
+    // Any chair may open any reviewer's profile, because the pool they pick from is conference-wide.
+    Route::get('track-reviewers/{user}/profile', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'show'])->name('track-reviewers.show');
     Route::delete('track-reviewers/{trackAssignment}', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'destroy'])->name('track-reviewers.destroy');
 
     // Paper bidding by reviewers

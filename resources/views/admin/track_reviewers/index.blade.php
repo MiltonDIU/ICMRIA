@@ -103,6 +103,9 @@
                 An overall Track Chair covers the whole track; a Sub-Track Chair covers their own sub-track.
             @endif
             Adding someone here makes them available for paper assignment; it does not assign them a paper yet.
+            Click a name to open that reviewer's profile &mdash; their expertise, the tracks they serve and every paper
+            already sitting with them. Profiles are conference-wide, so you can read one before pulling somebody in
+            from another chair's track; the papers themselves stay behind your own scope.
         </p>
     </div>
 </div>
@@ -121,6 +124,8 @@
         $key = $track->id . ':' . ($subTrack->id ?? 'all');
         $assigned = $reviewersByScope[$key] ?? collect();
         $formId = 'add-reviewer-' . str_replace(':', '-', $key);
+        // A track may set its own ceiling; otherwise the conference-wide one applies.
+        $capacity = (int) ($track->max_papers_per_reviewer ?: $defaultCapacity);
     @endphp
 
     <div class="card mb-4 scope-card" data-track-name="{{ strtolower(($subTrack->name ?? '') . ' ' . $track->name) }}">
@@ -150,6 +155,7 @@
                                 <th>Reviewer</th>
                                 <th>Email</th>
                                 <th>Expertise</th>
+                                <th class="text-center" style="width: 9rem;">Papers assigned</th>
                                 <th class="text-right">&nbsp;</th>
                             </tr>
                         </thead>
@@ -157,9 +163,18 @@
                             @foreach($assigned as $assignment)
                                 @php
                                     $reviewerExpertise = $assignment->user ? $assignment->user->allExpertise() : ($assignment->expertise ?? []);
+                                    $load = $loads[$assignment->user_id] ?? ['open' => 0, 'done' => 0, 'declined' => 0, 'total' => 0];
                                 @endphp
                                 <tr>
-                                    <td><strong>{{ $assignment->user->name ?? 'Unknown' }}</strong></td>
+                                    <td>
+                                        @if($assignment->user)
+                                            <a href="{{ route('admin.track-reviewers.show', $assignment->user_id) }}" class="font-weight-bold">
+                                                {{ $assignment->user->name }}
+                                            </a>
+                                        @else
+                                            <strong>Unknown</strong>
+                                        @endif
+                                    </td>
                                     <td><small class="text-muted">{{ $assignment->user->email ?? '' }}</small></td>
                                     <td>
                                         @forelse($reviewerExpertise as $topic)
@@ -167,6 +182,20 @@
                                         @empty
                                             <small class="text-muted">—</small>
                                         @endforelse
+                                    </td>
+                                    <td class="text-center">
+                                        @if($assignment->user)
+                                            <a href="{{ route('admin.track-reviewers.show', $assignment->user_id) }}"
+                                               class="badge {{ $load['open'] >= $capacity ? 'badge-danger' : ($load['open'] ? 'badge-info' : 'badge-light border text-muted') }}"
+                                               title="Open papers against the limit for this track. Click for the full list.">
+                                                {{ $load['open'] }} / {{ $capacity }}
+                                            </a>
+                                            @if($load['done'])
+                                                <small class="text-muted d-block">{{ $load['done'] }} submitted</small>
+                                            @endif
+                                        @else
+                                            <small class="text-muted">—</small>
+                                        @endif
                                     </td>
                                     <td class="text-right">
                                         <form action="{{ route('admin.track-reviewers.destroy', $assignment->id) }}" method="POST" class="d-inline"
@@ -365,6 +394,7 @@ document.addEventListener('DOMContentLoaded', function () {
             option.dataset.expertise = (item.person.expertise || []).join(', ');
             option.dataset.hits = item.hits ? '1' : '0';
             option.dataset.already = item.already ? '1' : '0';
+            option.dataset.load = item.person.load || 0;
 
             var parts = [item.person.name];
             if (item.person.email) {
@@ -375,6 +405,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (item.person.expertise && item.person.expertise.length) {
                 parts.push('— ' + item.person.expertise.slice(0, 4).join(', '));
+            }
+            if (item.person.load) {
+                parts.push('— ' + item.person.load + ' paper' + (item.person.load === 1 ? '' : 's') + ' open');
             }
             if (item.already) {
                 parts.push('[Already in this track]');
@@ -442,10 +475,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 $wrapper.append($header);
 
+                var load = parseInt($opt.data('load'), 10) || 0;
+
                 var metaParts = [];
                 if (already) {
                     metaParts.push('<span class="badge badge-info mr-1">Already in this track</span>');
                 }
+                metaParts.push('<span class="badge badge-light border mr-1">' + load + ' paper' + (load === 1 ? '' : 's') + ' open</span>');
                 if (tracks) {
                     metaParts.push('<span class="badge badge-light border mr-1">in ' + tracks + '</span>');
                 }
