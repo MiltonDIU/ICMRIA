@@ -560,23 +560,15 @@ class PaperController extends Controller
         }
 
         $data = $request->validate([
-            'conflicted_user_id' => 'nullable|exists:users,id',
-            'conflicted_institution' => 'nullable|string|max:255',
+            'conflicted_user_id' => 'required|exists:users,id',
             'note' => 'nullable|string|max:255',
+        ], [
+            'conflicted_user_id.required' => 'Choose the chair or reviewer you have a conflict with.',
         ]);
-
-        // validate() leaves out keys the request never sent, so read them defensively.
-        $conflictedUserId = $data['conflicted_user_id'] ?? null;
-        $conflictedInstitution = $data['conflicted_institution'] ?? null;
-
-        if (empty($conflictedUserId) && empty($conflictedInstitution)) {
-            return back()->with('error', 'Name either a person or an institution for the conflict.');
-        }
 
         \App\Models\PaperConflict::firstOrCreate([
             'paper_id' => $paper->id,
-            'conflicted_user_id' => $conflictedUserId ?: null,
-            'conflicted_institution' => $conflictedInstitution ?: null,
+            'conflicted_user_id' => $data['conflicted_user_id'],
         ], [
             'declared_by_user_id' => $user->id,
             'note' => $data['note'] ?? null,
@@ -707,6 +699,7 @@ class PaperController extends Controller
             'co_authors.*.name' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.email' => ['required', 'email', 'max:255'],
             'co_authors.*.designation' => ['required', 'string', 'max:255', $noPhpTags],
+            'co_authors.*.department' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.institution' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.country_id' => ['required', 'exists:countries,id'],
             'co_authors.*.is_student' => ['nullable', 'in:0,1'],
@@ -881,13 +874,12 @@ class PaperController extends Controller
         $conflictCandidates = \App\Services\ConflictCandidates::byTrack();
 
         $existingConflictUserIds = $paper->conflicts->whereNotNull('conflicted_user_id')->pluck('conflicted_user_id')->all();
-        $existingConflictInstitution = $paper->conflicts->firstWhere('conflicted_institution', '!=', null)?->conflicted_institution;
         $existingConflictNote = $paper->conflicts->firstWhere('note', '!=', null)?->note;
 
         return view('admin.papers.edit', compact(
             'paper', 'tracks', 'countries', 'prices', 'countryCategories',
             'priceTable', 'currentStage', 'conflictCandidates',
-            'existingConflictUserIds', 'existingConflictInstitution', 'existingConflictNote'
+            'existingConflictUserIds', 'existingConflictNote'
         ));
     }
 

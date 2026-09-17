@@ -10,9 +10,14 @@ use App\Models\TrackAssignment;
  * Conflict-of-interest declarations made while a paper is being submitted, on either
  * the registration form or the submission form (requirement document, Phase 2).
  *
- * The author can name anyone who chairs or reviews in the chosen track, and an
- * institution besides. Declared people are then never offered the paper to review or
- * decide on; ReviewerMatcher and ChairScope already read these declarations.
+ * The author names anyone who chairs or reviews in the chosen track. Those people are
+ * then never offered the paper to review or decide on; ReviewerMatcher and ChairScope
+ * read these declarations.
+ *
+ * A conflict could once be declared against a free-text institution as well. Nothing
+ * could act on it — reviewers carry no institution to match against — so it was dropped.
+ * The requirement document asks only for "institutional reviewers/chairs", meaning the
+ * people, not a separate institution.
  */
 class ConflictCandidates
 {
@@ -49,7 +54,6 @@ class ConflictCandidates
         return [
             'conflict_user_ids' => ['nullable', 'array', 'max:50'],
             'conflict_user_ids.*' => ['integer', 'exists:users,id'],
-            'conflict_institution' => ['nullable', 'string', 'max:255'],
             'conflict_note' => ['nullable', 'string', 'max:255'],
         ];
     }
@@ -79,16 +83,6 @@ class ConflictCandidates
                 ['paper_id' => $paper->id, 'conflicted_user_id' => $userId],
                 ['declared_by_user_id' => $declaredBy, 'note' => $note]
             );
-            $recorded++;
-        }
-
-        if (filled($input['conflict_institution'] ?? null)) {
-            PaperConflict::create([
-                'paper_id' => $paper->id,
-                'declared_by_user_id' => $declaredBy,
-                'conflicted_institution' => trim($input['conflict_institution']),
-                'note' => $note,
-            ]);
             $recorded++;
         }
 

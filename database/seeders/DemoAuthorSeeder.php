@@ -195,7 +195,6 @@ class DemoAuthorSeeder extends Seeder
             'paper_id' => $paper->id,
             'declared_by_user_id' => $user->id,
             'conflicted_user_id' => $against,
-            'conflicted_institution' => $conflict['institution'] ?? null,
             'note' => $conflict['note'],
         ]);
     }

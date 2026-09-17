@@ -269,8 +269,9 @@
                                                 @error('designation') <span class="invalid-feedback"><strong>{{ $message }}</strong></span> @enderror
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label for="department"><strong>Department</strong></label>
-                                                <input type="text" id="department" name="department" class="form-control @error('department') is-invalid @enderror" value="{{ old('department') }}">
+                                                <label for="department"><strong>Department*</strong></label>
+                                                <input type="text" id="department" name="department" class="form-control @error('department') is-invalid @enderror" maxlength="255" value="{{ old('department') }}" required>
+                                                @error('department') <span class="invalid-feedback"><strong>{{ $message }}</strong></span> @enderror
                                             </div>
                                         </div>
 
@@ -377,12 +378,20 @@
                                                            onchange="toggleAbstractSection(); checkFormValidity();">
                                                     <span class="radio-circle"></span>
                                                     <span class="intent-text">
-                <span class="intent-title">Submit an Abstract</span>
+                {{-- With submission closed the author registers now and sends the abstract
+                     later, so the wording promises that instead of an upload today. --}}
+                <span class="intent-title">
+                    @if($abstractOpen)
+                        Submit an Abstract
+                    @else
+                        Register as Paper Author
+                    @endif
+                </span>
                 <span class="intent-sub">
                     @if($abstractOpen)
                         Payment required after abstract confirmation
                     @else
-                        Register as paper author — submit abstract after email verification
+                        Submit your abstract later, after email verification
                     @endif
                 </span>
             </span>
@@ -404,7 +413,7 @@
 
                                             <div class="mb-3">
                                                 <label for="paper_title"><strong>Paper Title*</strong></label>
-                                                <input type="text" id="paper_title" name="paper_title" class="form-control" value="{{ old('paper_title') }}">
+                                                <input type="text" id="paper_title" name="paper_title" class="form-control" maxlength="255" value="{{ old('paper_title') }}">
                                                 @error('paper_title') <span class="text-danger small"><strong>{{ $message }}</strong></span> @enderror
                                             </div>
 
@@ -441,18 +450,15 @@
 
                                             @include('partials.conflict-fields')
 
-                                            <div class="mb-4">
-                                                <label class="custom-check-card" for="is_corresponding_author">
-                                                    <input type="hidden" name="is_corresponding_author" value="0">
-                                                    <input type="checkbox" name="is_corresponding_author" id="is_corresponding_author" value="1"
-                                                        {{ old('is_corresponding_author', '1') ? 'checked' : '' }}>
-                                                    <span class="custom-check-box"></span>
-                                                    <span class="custom-check-content">
-                                                        <span class="custom-check-title">I am the corresponding author</span>
-                                                        <span class="custom-check-sub">The conference will use this email for all communications</span>
-                                                    </span>
-                                                </label>
-                                            </div>
+                                            <label class="presenting-author-card mb-3" for="corresponding_submitter">
+                                                <input class="corresponding-author-radio" type="radio" name="corresponding_author_index" id="corresponding_submitter" value="submitter"
+                                                    {{ old('corresponding_author_index', 'submitter') == 'submitter' ? 'checked' : '' }}>
+                                                <span class="presenting-radio-dot"></span>
+                                                <span class="presenting-author-content">
+                                                    <span class="presenting-author-title">I am the Corresponding Author</span>
+                                                    <span class="presenting-author-sub">The conference will use this email for all communications</span>
+                                                </span>
+                                            </label>
 
                                             <label class="presenting-author-card" for="presenter_submitter">
                                                 <input class="presenting-author-radio" type="radio" name="presenting_author_index" id="presenter_submitter" value="submitter"
@@ -570,7 +576,7 @@
                     <input type="text" name="co_authors[{index}][designation]" class="form-control form-control-sm" placeholder="Designation*" required>
                 </div>
                 <div class="col-md-6 mb-2">
-                    <input type="text" name="co_authors[{index}][department]" class="form-control form-control-sm" placeholder="Department">
+                    <input type="text" name="co_authors[{index}][department]" class="form-control form-control-sm" placeholder="Department*" maxlength="255" required>
                 </div>
             </div>
             <div class="row">
@@ -596,15 +602,21 @@
                     </select>
                 </div>
                 <div class="col-md-6 mb-2 d-flex align-items-center">
-                    <div class="custom-control custom-checkbox">
-                        <input type="hidden" name="co_authors[{index}][is_student]" value="0">
-                        <input type="checkbox" class="custom-control-input co-author-student" id="co_student_{index}" name="co_authors[{index}][is_student]" value="1">
-                        <label class="custom-control-label" for="co_student_{index}">
-                            This co-author is a student
-                        </label>
-                    </div>
+                    @include('partials.student-checkbox', [
+                        'name' => 'co_authors[{index}][is_student]',
+                        'id' => 'co_student_{index}',
+                        'label' => 'This co-author is a student',
+                    ])
                 </div>
             </div>
+            <label class="presenting-author-card mt-2" for="corresponding_{index}">
+                <input class="corresponding-author-radio" type="radio" name="corresponding_author_index" id="corresponding_{index}" value="{index}">
+                <span class="presenting-radio-dot"></span>
+                <span class="presenting-author-content">
+                    <span class="presenting-author-title">This co-author is the Corresponding Author</span>
+                    <span class="presenting-author-sub">All conference emails will go to them instead</span>
+                </span>
+            </label>
             <label class="presenting-author-card mt-2" for="presenter_{index}">
                 <input class="presenting-author-radio" type="radio" name="presenting_author_index" id="presenter_{index}" value="{index}">
                 <span class="presenting-radio-dot"></span>
@@ -711,8 +723,11 @@
         }
 
         function toggleAbstractSection() {
-            const isAuthor = document.getElementById('submit_abstract').checked;
+            // The author choice is not rendered at all while abstract submission is closed,
+            // so this runs with no such radio on the page.
+            const authorRadio = document.getElementById('submit_abstract');
             const isSubmissionOpen = {{ $abstractOpen ? 'true' : 'false' }};
+            const isAuthor = authorRadio ? authorRadio.checked : false;
             const showForm = isAuthor && isSubmissionOpen;
 
             const abstractSection = document.getElementById('abstract_section');
@@ -738,12 +753,13 @@
             if (authorButtons) authorButtons.style.display = showForm ? 'block' : 'none';
             if (participantButtons) participantButtons.style.display = showForm ? 'none' : 'block';
 
-            // If it's Author but submission is closed, show a "Register" button instead of "Submit Abstract"
+            // With submission closed the author option registers the person now and takes the
+            // abstract later, so the button says that rather than "Submit Abstract".
             @if(!$abstractOpen)
             if (participantButtons) {
                 const btn = participantButtons.querySelector('button');
                 if (isAuthor) {
-                    btn.innerHTML = '<i class="fa fa-user-plus"></i> Register as Author';
+                    btn.innerHTML = '<i class="fa fa-user-plus"></i> Register as Paper Author';
                     btn.value = 'save-close';
                 } else {
                     if ({{ ($settings['is_payment_enabled'] ?? 'true') == 'true' ? 'true' : 'false' }}) {
@@ -799,6 +815,11 @@
                 entry.querySelector('.presenting-author-radio').checked = true;
             }
 
+            const oldCorrespondingAuthorIndex = "{{ old('corresponding_author_index', 'submitter') }}";
+            if (oldCorrespondingAuthorIndex !== 'submitter' && String(oldCorrespondingAuthorIndex) === String(coAuthorIndex)) {
+                entry.querySelector('.corresponding-author-radio').checked = true;
+            }
+
             container.appendChild(entry);
 
             updateAuthorIndices();
@@ -810,6 +831,8 @@
             const entry = btn.closest('.co-author-entry');
             const radio = entry.querySelector('.presenting-author-radio');
             const wasChecked = radio ? radio.checked : false;
+            const correspondingRadio = entry.querySelector('.corresponding-author-radio');
+            const wasCorresponding = correspondingRadio ? correspondingRadio.checked : false;
 
             entry.remove();
             updateAuthorIndices();
@@ -818,6 +841,14 @@
                 const mainPresenter = document.getElementById('presenter_submitter');
                 if (mainPresenter) {
                     mainPresenter.checked = true;
+                }
+            }
+
+            // Removing the chosen corresponding author must never leave nobody selected.
+            if (wasCorresponding) {
+                const mainCorresponding = document.getElementById('corresponding_submitter');
+                if (mainCorresponding) {
+                    mainCorresponding.checked = true;
                 }
             }
 
@@ -1116,76 +1147,8 @@
         .intent-card.author input:checked ~ .radio-circle { background: #E8650A; border-color: #E8650A; }
 
 
-        /* ========== Corresponding Author Card ========== */
-        .custom-check-card {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            padding: 14px 16px;
-            border: 1.5px solid #dee2e6;
-            border-radius: 10px;
-            cursor: pointer;
-            background: #fff;
-            transition: all 0.18s;
-            margin-bottom: 0;
-            width: 100%;
-        }
-        .custom-check-card:hover {
-            border-color: #0055A0;
-            background: #f0f7ff;
-        }
-        .custom-check-card input[type="checkbox"] {
-            display: none;
-        }
-        .custom-check-box {
-            width: 22px;
-            height: 22px;
-            min-width: 22px;
-            border: 2px solid #ccc;
-            border-radius: 6px;
-            margin-top: 1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.18s;
-            background: #fff;
-        }
-        .custom-check-card input[type="checkbox"]:checked ~ .custom-check-box {
-            background: #0055A0;
-            border-color: #0055A0;
-        }
-        .custom-check-card input[type="checkbox"]:checked ~ .custom-check-box::after {
-            content: '';
-            display: block;
-            width: 5px;
-            height: 10px;
-            border: 2px solid #fff;
-            border-top: none;
-            border-left: none;
-            transform: rotate(45deg) translate(-1px, -1px);
-        }
-        .custom-check-card input[type="checkbox"]:checked ~ .custom-check-content .custom-check-title {
-            color: #0056cc;
-        }
-        .custom-check-card:has(input:checked) {
-            border-color: #0055A0;
-            background: #f0f7ff;
-        }
-        .custom-check-content {
-            display: flex;
-            flex-direction: column;
-        }
-        .custom-check-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            line-height: 1.3;
-        }
-        .custom-check-sub {
-            font-size: 12px;
-            color: #888;
-            margin-top: 2px;
-        }
+        {{-- The check-card styles now live in partials/student-checkbox.blade.php, which
+             pushes them once for whichever layout renders it. --}}
 
         /* ========== Declaration Checkboxes ========== */
         .declaration-group {

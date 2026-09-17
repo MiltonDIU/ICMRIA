@@ -93,6 +93,9 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'designation' => ['required', 'string', 'max:255', $noPhpTags],
+            // Required alongside designation and institution: it lands on the submitter's
+            // author row, and the paper edit page refuses to save an author without one.
+            'department' => ['required', 'string', 'max:255', $noPhpTags],
             'institution' => ['required', 'string', 'max:255', $noPhpTags],
             'country_id' => ['required', 'exists:countries,id'],
             'price_id' => ['required', 'exists:prices,id', new \App\Rules\DelegateCategoryMatchesCountry($data['country_id'] ?? null)],
@@ -113,12 +116,15 @@ class RegisterController extends Controller
             $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
 
             if ($isSubmissionOpen) {
-                $rules['paper_title'] = ['required', 'string', 'max:500', $noPhpTags];
+                // 255 is what papers.title holds; a longer title was accepted here and then
+                // overflowed the column, and could never be saved again from the edit page.
+                $rules['paper_title'] = ['required', 'string', 'max:255', $noPhpTags];
                 $rules['abstract_text'] = \App\Services\SubmissionRules::abstractRules([$noPhpTags]);
                 $rules['keywords'] = \App\Services\SubmissionRules::keywordRules([$noPhpTags]);
                 $rules['track_id'] = ['required', 'exists:tracks,id'];
                 $rules['sub_track_id'] = ['required', 'exists:sub_tracks,id'];
-                $rules['is_corresponding_author'] = ['required', 'boolean'];
+                // One radio across the submitter and every co-author; 'submitter' or a co-author index.
+                $rules['corresponding_author_index'] = ['nullable'];
                 $rules['presenting_author_index'] = ['nullable'];
 
                 // Consents
@@ -136,6 +142,7 @@ class RegisterController extends Controller
                         $rules["co_authors.$index.name"] = ['required', 'string', 'max:255', $noPhpTags];
                         $rules["co_authors.$index.email"] = ['required', 'email', 'max:255'];
                         $rules["co_authors.$index.designation"] = ['required', 'string', 'max:255', $noPhpTags];
+                        $rules["co_authors.$index.department"] = ['required', 'string', 'max:255', $noPhpTags];
                         $rules["co_authors.$index.institution"] = ['required', 'string', 'max:255', $noPhpTags];
                         $rules["co_authors.$index.country_id"] = ['required', 'exists:countries,id'];
                         $rules["co_authors.$index.price_id"] = ['required', 'exists:prices,id', new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
@@ -206,6 +213,10 @@ class RegisterController extends Controller
                 $hasCoAuthors = isset($data['co_authors']) && is_array($data['co_authors']) && count($data['co_authors']) > 0;
                 $presentingAuthorIndex = $data['presenting_author_index'] ?? 'submitter';
                 $submitterIsPresenting = $presentingAuthorIndex === 'submitter';
+                // One radio names the corresponding author, the submitter by default. With no
+                // co-authors on the paper the submitter is the only candidate there is.
+                $correspondingAuthorIndex = $data['corresponding_author_index'] ?? 'submitter';
+                $submitterIsCorresponding = !$hasCoAuthors || $correspondingAuthorIndex === 'submitter';
 
                 $paperData = [
                     'user_id' => $user->id,
@@ -216,7 +227,7 @@ class RegisterController extends Controller
                     'track_id' => $data['track_id'] ?? null,
                     'sub_track_id' => $data['sub_track_id'] ?? null,
                     'mode_of_participation' => $data['participation_mode'] ?? 'onsite',
-                    'is_corresponding_author' => $hasCoAuthors ? ($data['is_corresponding_author'] ?? true) : true,
+                    'is_corresponding_author' => $submitterIsCorresponding,
                     'has_multiple_authors' => $hasCoAuthors,
                     'status' => 'pending',
                     'payment_status' => '0',
@@ -234,6 +245,7 @@ class RegisterController extends Controller
                     'country_id' => $profile->country_id,
                     'price_id' => $profile->price_id,
                     'is_presenting_author' => $submitterIsPresenting,
+                    'is_corresponding_author' => $submitterIsCorresponding,
                     'author_order' => 1,
                 ]);
 
@@ -250,9 +262,16 @@ class RegisterController extends Controller
                             'price_id' => $co_author['price_id'] ?? null,
                             'is_student' => ($co_author['is_student'] ?? '0') == '1',
                             'is_presenting_author' => (string) $presentingAuthorIndex === (string) $index,
+                            'is_corresponding_author' => (string) $correspondingAuthorIndex === (string) $index,
                             'author_order' => $index + 2,
                         ]);
                     }
+                }
+
+                // Every paper keeps exactly one corresponding author, so a decision email
+                // always has someone to go to. PaperController::store does the same.
+                if ($paper->authors()->where('is_corresponding_author', 1)->count() === 0) {
+                    $paper->authors()->first()?->update(['is_corresponding_author' => 1]);
                 }
 
                 \App\Services\ConflictCandidates::record($paper, $user->id, $data);

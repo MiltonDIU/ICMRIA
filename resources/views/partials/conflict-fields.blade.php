@@ -6,7 +6,6 @@
 @php
     $conflictCandidates = $conflictCandidates ?? \App\Services\ConflictCandidates::byTrack();
     $oldConflictIds = array_map('intval', (array) old('conflict_user_ids', $existingConflictUserIds ?? []));
-    $defaultInstitution = old('conflict_institution', $existingConflictInstitution ?? '');
     $defaultNote = old('conflict_note', $existingConflictNote ?? '');
 @endphp
 
@@ -26,17 +25,12 @@
         @error('conflict_user_ids') <span class="text-danger small"><strong>{{ $message }}</strong></span> @enderror
     </div>
 
-    <div class="form-row">
-        <div class="form-group col-md-6 mb-2">
-            <label for="conflict_institution" class="small font-weight-bold">An institution you have a conflict with</label>
-            <input type="text" id="conflict_institution" name="conflict_institution" class="form-control" maxlength="255"
-                   value="{{ $defaultInstitution }}" placeholder="e.g. your own university" data-skip-required>
-        </div>
-        <div class="form-group col-md-6 mb-2">
-            <label for="conflict_note" class="small font-weight-bold">Reason</label>
-            <input type="text" id="conflict_note" name="conflict_note" class="form-control" maxlength="255"
-                   value="{{ $defaultNote }}" placeholder="e.g. former doctoral supervisor" data-skip-required>
-        </div>
+    <div class="form-group mb-2">
+        <label for="conflict_note" class="small font-weight-bold">
+            Reason <small class="text-muted font-weight-normal">(optional)</small>
+        </label>
+        <input type="text" id="conflict_note" name="conflict_note" class="form-control" maxlength="255"
+               value="{{ $defaultNote }}" placeholder="e.g. former doctoral supervisor" data-skip-required>
     </div>
 </div>
 
@@ -132,10 +126,33 @@
                     refreshConflictCandidates();
                 }
 
+                // The admin layout ships select2 itself; the public registration page does
+                // not, which left this field an unstyled multi-select there while the select2
+                // stylesheet was loaded over it. Fetch the library only when it is missing, so
+                // admin pages keep the copy they already have and no select2 instance that is
+                // live on the page is torn down by a second script tag.
+                function withSelect2(done) {
+                    if (!window.jQuery || jQuery.fn.select2) {
+                        done();
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js';
+                    script.onload = done;
+                    // If it cannot be fetched the field still works as a plain multi-select.
+                    script.onerror = done;
+                    document.head.appendChild(script);
+                }
+
+                function start() {
+                    withSelect2(initConflictSelect);
+                }
+
                 if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', initConflictSelect);
+                    document.addEventListener('DOMContentLoaded', start);
                 } else {
-                    initConflictSelect();
+                    start();
                 }
             })();
         </script>

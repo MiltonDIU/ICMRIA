@@ -209,21 +209,16 @@
                     </div>
                 @endif
                 <div class="form-row align-items-end">
-                    <div class="col-md-4 mb-2">
+                    <div class="col-md-6 mb-2">
                         <label class="small font-weight-bold mb-1">Person</label>
-                        <select name="conflicted_user_id" class="form-control form-control-sm">
-                            <option value="">— none —</option>
+                        <select name="conflicted_user_id" class="form-control form-control-sm" required>
+                            <option value="">— choose —</option>
                             @foreach($conflictCandidates as $candidate)
                                 <option value="{{ $candidate->id }}">{{ $candidate->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <label class="small font-weight-bold mb-1">or Institution</label>
-                        <input type="text" name="conflicted_institution" class="form-control form-control-sm"
-                               placeholder="e.g. University of X">
-                    </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-4 mb-2">
                         <label class="small font-weight-bold mb-1">Reason</label>
                         <input type="text" name="note" class="form-control form-control-sm" placeholder="Optional">
                     </div>
@@ -235,7 +230,6 @@
                 </div>
                 <small class="form-text text-muted">
                     The list offers the chairs and reviewers attached to this paper's track.
-                    Give an institution instead if the person is not listed.
                 </small>
             </form>
         @endif

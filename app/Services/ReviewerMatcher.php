@@ -37,8 +37,7 @@ class ReviewerMatcher
      *
      * @return Collection<int, array{
      *     reviewer: User, score: int, load: int, capacity: int,
-     *     expertise: array<int, string>, eligible: bool, reason: string|null, bid: string|null,
-     *     institution_warning: bool
+     *     expertise: array<int, string>, eligible: bool, reason: string|null, bid: string|null
      * }>
      */
     public function candidatesFor(Paper $paper): Collection
@@ -51,13 +50,12 @@ class ReviewerMatcher
 
         $capacity = $this->capacityFor($paper);
         $loads = $this->openLoads($pool->pluck('user_id')->all());
-        $institutions = $this->conflictedInstitutions($paper);
         $alreadyAssigned = $paper->reviewerAssignments->pluck('reviewer_id');
         $bids = $paper->bids->pluck('preference', 'reviewer_id');
 
         return $pool
             ->reject(fn ($row) => $alreadyAssigned->contains($row->user_id))
-            ->map(function ($row) use ($paper, $loads, $capacity, $institutions, $bids) {
+            ->map(function ($row) use ($paper, $loads, $capacity, $bids) {
                 $reason = $this->reasonToRefuse($paper, $row->user);
 
                 // What the chairs recorded for this track, plus the reviewer's own research keywords.
@@ -75,10 +73,6 @@ class ReviewerMatcher
                     'eligible' => $reason === null,
                     'reason' => $reason,
                     'bid' => $bids->get($row->user_id),
-                    // Reviewers carry no institution of their own, so a conflict named
-                    // against an institution cannot be matched automatically. The chair
-                    // is told to weigh it instead of it being silently ignored.
-                    'institution_warning' => $institutions->isNotEmpty(),
                 ];
             })
             // Eligible first, then those who asked for the paper, then by how well they match.
@@ -200,11 +194,6 @@ class ReviewerMatcher
             ->map(fn ($e) => Str::lower($e))
             ->unique()
             ->values();
-    }
-
-    private function conflictedInstitutions(Paper $paper): Collection
-    {
-        return $paper->conflicts->pluck('conflicted_institution')->filter()->values();
     }
 
     /**

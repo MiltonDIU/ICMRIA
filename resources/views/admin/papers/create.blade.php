@@ -44,7 +44,7 @@
 
             <div class="form-group">
                 <label class="required" for="paper_title">Paper Title*</label>
-                <input class="form-control {{ $errors->has('paper_title') ? 'is-invalid' : '' }}" type="text" name="paper_title" id="paper_title" value="{{ old('paper_title', '') }}" required>
+                <input class="form-control {{ $errors->has('paper_title') ? 'is-invalid' : '' }}" type="text" name="paper_title" id="paper_title" maxlength="255" value="{{ old('paper_title', '') }}" required>
                 @if($errors->has('paper_title'))
                     <div class="invalid-feedback">
                         {{ $errors->first('paper_title') }}
@@ -211,11 +211,10 @@
                 </select>
             </div>
             <div class="col-md-6 mb-2 d-flex align-items-center">
-                <div class="custom-control custom-checkbox">
-                    <input type="hidden" name="co_authors[{index}][is_student]" value="0">
-                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{index}" name="co_authors[{index}][is_student]" value="1">
-                    <label class="custom-control-label" for="author_student_{index}">This author is a student</label>
-                </div>
+                @include('partials.student-checkbox', [
+                    'name' => 'co_authors[{index}][is_student]',
+                    'id' => 'author_student_{index}',
+                ])
             </div>
         </div>
     </div>

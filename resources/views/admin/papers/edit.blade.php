@@ -45,7 +45,7 @@
 
             <div class="form-group">
                 <label class="required" for="paper_title">Paper Title*</label>
-                <input class="form-control {{ $errors->has('paper_title') ? 'is-invalid' : '' }}" type="text" name="paper_title" id="paper_title" value="{{ old('paper_title', $paper->title) }}" required>
+                <input class="form-control {{ $errors->has('paper_title') ? 'is-invalid' : '' }}" type="text" name="paper_title" id="paper_title" maxlength="255" value="{{ old('paper_title', $paper->title) }}" required>
                 @if($errors->has('paper_title'))
                     <div class="invalid-feedback">
                         {{ $errors->first('paper_title') }}
@@ -201,11 +201,11 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-2 d-flex align-items-center">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="hidden" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="0">
-                                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{{ $coAuthorIndex }}" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="1" {{ ($author->is_student === true || $author->is_student === 1 || $author->is_student === '1') ? 'checked' : '' }}>
-                                    <label class="custom-control-label" for="author_student_{{ $coAuthorIndex }}">This author is a student</label>
-                                </div>
+                                @include('partials.student-checkbox', [
+                                    'name' => 'co_authors[' . $coAuthorIndex . '][is_student]',
+                                    'id' => 'author_student_' . $coAuthorIndex,
+                                    'checked' => in_array($author->is_student, [true, 1, '1'], true),
+                                ])
                             </div>
                         </div>
                     </div>
@@ -267,11 +267,11 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-2 d-flex align-items-center">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="hidden" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="0">
-                                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{{ $coAuthorIndex }}" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="1" {{ ($paper->user->profile?->is_student ?? false) ? 'checked' : '' }}>
-                                    <label class="custom-control-label" for="author_student_{{ $coAuthorIndex }}">This author is a student</label>
-                                </div>
+                                @include('partials.student-checkbox', [
+                                    'name' => 'co_authors[' . $coAuthorIndex . '][is_student]',
+                                    'id' => 'author_student_' . $coAuthorIndex,
+                                    'checked' => (bool) ($paper->user->profile?->is_student ?? false),
+                                ])
                             </div>
                         </div>
                     </div>
@@ -342,11 +342,10 @@
                 </select>
             </div>
             <div class="col-md-6 mb-2 d-flex align-items-center">
-                <div class="custom-control custom-checkbox">
-                    <input type="hidden" name="co_authors[{index}][is_student]" value="0">
-                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{index}" name="co_authors[{index}][is_student]" value="1">
-                    <label class="custom-control-label" for="author_student_{index}">This author is a student</label>
-                </div>
+                @include('partials.student-checkbox', [
+                    'name' => 'co_authors[{index}][is_student]',
+                    'id' => 'author_student_{index}',
+                ])
             </div>
         </div>
     </div>
