@@ -25,7 +25,7 @@
 
                 <tr>
                     <td style="padding:28px 24px;">
-                        <p style="margin:0 0 16px; font-size:15px;">Dear {{ $paper->user->name ?? 'Author' }},</p>
+                        <p style="margin:0 0 16px; font-size:15px;">Dear {{ $paper->notificationName() ?? 'Author' }},</p>
 
                         <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
                             Thank you for submitting your work to ICMRIA 2027. The review of your paper is complete,

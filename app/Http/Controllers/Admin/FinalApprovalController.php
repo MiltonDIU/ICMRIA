@@ -173,7 +173,7 @@ class FinalApprovalController extends Controller
             'decision_ids.*' => 'integer',
         ]);
 
-        $decisions = PaperDecision::with('paper.user')
+        $decisions = PaperDecision::with(['paper.user', 'paper.correspondingAuthor'])
             ->where('status', 'approved')
             ->whereNull('notified_at')
             ->whereHas('paper')
@@ -188,7 +188,8 @@ class FinalApprovalController extends Controller
         $failed = [];
 
         foreach ($decisions as $decision) {
-            $email = $decision->paper->user?->email;
+            // The corresponding author, not whoever happened to key the submission in.
+            $email = $decision->paper->notificationEmail();
 
             if (!$email) {
                 $failed[] = $decision->paper->submission_id;

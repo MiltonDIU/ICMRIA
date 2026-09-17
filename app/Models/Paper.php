@@ -65,6 +65,28 @@ class Paper extends Model
         return $this->hasMany(PaperAuthor::class)->orderBy('author_order');
     }
 
+    /**
+     * The author the conference writes to (requirement document, Phase 5: decisions go
+     * "to corresponding authors"). Submission marks exactly one author row, but a paper
+     * created before that flag existed has none, so the submitting account stands in.
+     */
+    public function correspondingAuthor()
+    {
+        return $this->hasOne(PaperAuthor::class)->where('is_corresponding_author', 1);
+    }
+
+    /** Where a notification about this paper goes. */
+    public function notificationEmail(): ?string
+    {
+        return $this->correspondingAuthor?->email ?: $this->user?->email;
+    }
+
+    /** Who that notification is addressed to. */
+    public function notificationName(): ?string
+    {
+        return $this->correspondingAuthor?->name ?: $this->user?->name;
+    }
+
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');

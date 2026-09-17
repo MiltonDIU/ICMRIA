@@ -22,12 +22,12 @@ class DecisionNotification extends Mailable implements ShouldQueue
 
     public function __construct(Paper $paper)
     {
-        $this->paper = $paper->load(['user', 'track', 'subTrack', 'decision', 'reviewerAssignments.evaluation']);
+        $this->paper = $paper->load(['user', 'correspondingAuthor', 'track', 'subTrack', 'decision', 'reviewerAssignments.evaluation']);
     }
 
     public function build()
     {
-        return $this->to($this->paper->user->email)
+        return $this->to($this->paper->notificationEmail())
                     ->subject('Decision on ' . $this->paper->submission_id . ': ' . $this->paper->decision->label() . ' – ICMRIA 2027')
                     ->view('mail.decision_notification', [
                         'decision' => $this->paper->decision,
