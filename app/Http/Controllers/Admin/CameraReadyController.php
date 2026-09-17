@@ -177,8 +177,8 @@ class CameraReadyController extends Controller
                 : 'No registration fee is due for this paper yet.');
         }
 
-        if (!ProceedingsRules::paymentWindowIsOpen()) {
-            return back()->with('error', 'The payment deadline has passed. Payments are no longer accepted.');
+        if ($reason = ProceedingsRules::paymentBlockReason()) {
+            return back()->with('error', $reason);
         }
 
         if ($paper->paymentProofs->contains('status', 'submitted')) {

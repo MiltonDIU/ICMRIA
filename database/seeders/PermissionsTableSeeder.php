@@ -574,6 +574,12 @@ class PermissionsTableSeeder extends Seeder
             [
                 'title' => 'camera_ready_review',
             ],
+            [
+                'title' => 'paper_manuscript_manage',
+            ],
+            [
+                'title' => 'paper_conflict_manage',
+            ],
         ];
 
         foreach ($permissions as $permission) {

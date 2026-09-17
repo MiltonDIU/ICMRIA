@@ -75,14 +75,19 @@ class TrackReviewerController extends Controller
 
         return User::whereHas('roles', fn ($q) => $q->where('roles.id', self::ROLE_REVIEWER))
             ->orderBy('name')
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'email', 'research_keywords'])
             ->map(function (User $user) use ($byUser) {
                 $rows = $byUser[$user->id] ?? collect();
-                $expertise = $this->expertiseAcross($rows);
+                $trackExpertise = $this->expertiseAcross($rows);
+                $expertise = SubmissionRules::splitKeywords(array_merge(
+                    $trackExpertise,
+                    SubmissionRules::splitKeywords($user->research_keywords)
+                ));
 
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'email' => $user->email,
                     'expertise' => $expertise,
                     'slugs' => array_map([SubmissionRules::class, 'normaliseKeyword'], $expertise),
                     // "Track 4: Engineering, Robotics &hellip;" is too long for an option
@@ -207,23 +212,29 @@ class TrackReviewerController extends Controller
 
             $alreadyHere = $assignment->exists;
 
-            if (!empty($data['expertise'])) {
-                $assignment->expertise = SubmissionRules::splitKeywords($data['expertise']);
-            } elseif (!$alreadyHere) {
-                // A fresh row would otherwise hold no expertise at all, and the matcher
-                // ranks candidates on exactly that &mdash; the reviewer would score zero on
-                // every paper here. Carry over what they already cover as a starting
-                // point the chair can refine.
-                $assignment->expertise = $this->expertiseAcross(
-                    TrackAssignment::where('role', 'reviewer')->where('user_id', $user->id)->get()
-                );
-            }
+            $existingTopics = $user->allExpertise();
+            $newTopics = !empty($data['expertise']) ? SubmissionRules::splitKeywords($data['expertise']) : [];
+
+            $combinedTopics = !empty($newTopics)
+                ? SubmissionRules::splitKeywords(array_merge($existingTopics, $newTopics))
+                : (!empty($existingTopics) ? $existingTopics : SubmissionRules::splitKeywords(
+                    \App\Models\SubTrack::where('id', $subTrackId)->value('name') ?? \App\Models\Track::where('id', $data['track_id'])->value('name')
+                ));
 
             if ($alreadyHere) {
                 $outcome = empty($data['expertise']) ? 'already' : 'updated';
             }
 
+            $assignment->expertise = $combinedTopics;
             $assignment->save();
+
+            // Accumulate into user profile and keep all track assignments unified
+            $user->update(['research_keywords' => $combinedTopics]);
+            TrackAssignment::where('user_id', $user->id)
+                ->where('role', 'reviewer')
+                ->update(['expertise' => $combinedTopics]);
+
+            \Illuminate\Support\Facades\Cache::forget('suggested_research_areas');
         });
 
         $messages = [

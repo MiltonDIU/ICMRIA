@@ -26,6 +26,12 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         Gate::before(function ($user, $ability) {
+            // Author and reviewer actions require explicit role assignment,
+            // even for SuperAdmin, so removing them in role settings actually revokes access.
+            if (in_array($ability, ['paper_manuscript_manage', 'paper_conflict_manage', 'paper_edit', 'review_submit', 'review_bid'])) {
+                return null;
+            }
+
             return $user->roles->contains('id', 1) ? true : null;
         });
     }

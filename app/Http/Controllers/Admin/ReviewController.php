@@ -46,6 +46,7 @@ class ReviewController extends Controller
             'assignments' => $assignments,
             'counts' => $assignments->countBy('status'),
             'doubleBlind' => SubmissionRules::isDoubleBlind(),
+            'suggestedAreas' => SubmissionRules::suggestedResearchAreas(),
         ]);
     }
 
@@ -202,11 +203,22 @@ class ReviewController extends Controller
 
         $data = $request->validate([
             'research_keywords' => SubmissionRules::reviewerKeywordRules(),
+        ], [
+            'research_keywords.required' => 'Please select or enter at least ' . SubmissionRules::reviewerKeywordsMin() . ' research area.',
         ]);
 
-        auth()->user()->update(['research_keywords' => SubmissionRules::splitKeywords($data['research_keywords'])]);
+        $keywords = SubmissionRules::splitKeywords($data['research_keywords']);
+        $user = auth()->user();
+        $user->update(['research_keywords' => $keywords]);
 
-        return back()->with('success', 'Your research keywords have been saved.');
+        // Keep all track assignments of this reviewer synchronized with their full expertise
+        \App\Models\TrackAssignment::where('user_id', $user->id)
+            ->where('role', 'reviewer')
+            ->update(['expertise' => $keywords]);
+
+        \Illuminate\Support\Facades\Cache::forget('suggested_research_areas');
+
+        return back()->with('success', 'Your research areas have been saved successfully.');
     }
 
     /**

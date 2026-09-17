@@ -125,12 +125,12 @@ class SubmissionRules
     /** How many research keywords a reviewer gives about themselves. */
     public static function reviewerKeywordsMin(): int
     {
-        return (int) (Setting::where('key', 'reviewer_keywords_min')->value('value') ?: 3);
+        return (int) (Setting::where('key', 'reviewer_keywords_min')->value('value') ?: 1);
     }
 
     public static function reviewerKeywordsMax(): int
     {
-        return (int) (Setting::where('key', 'reviewer_keywords_max')->value('value') ?: 5);
+        return (int) (Setting::where('key', 'reviewer_keywords_max')->value('value') ?: 20);
     }
 
     /** @return array<int, mixed> */
@@ -139,12 +139,71 @@ class SubmissionRules
         $min = self::reviewerKeywordsMin();
         $max = self::reviewerKeywordsMax();
 
-        return ['required', 'string', 'max:500', function ($attribute, $value, $fail) use ($min, $max) {
-            $count = count(self::splitKeywords($value));
-            if ($count < $min || $count > $max) {
-                $fail("Please give between {$min} and {$max} research keywords, separated by commas. (Current count: {$count})");
+        return ['required', function ($attribute, $value, $fail) use ($min, $max) {
+            $keywords = self::splitKeywords($value);
+            $count = count($keywords);
+            if ($count < $min) {
+                $fail("Please provide at least {$min} research area" . ($min > 1 ? 's.' : '.'));
+            } elseif ($count > $max) {
+                $fail("You can provide at most {$max} research areas. (Current count: {$count})");
+            }
+
+            foreach ($keywords as $kw) {
+                if (mb_strlen($kw) > 100) {
+                    $fail("Each research area must be 100 characters or fewer.");
+                    break;
+                }
             }
         }];
+    }
+
+    /**
+     * Known research areas / topics across tracks, sub-tracks, assignments, and papers
+     * to offer as selectable suggestions for reviewers.
+     *
+     * @return array<int, string>
+     */
+    public static function suggestedResearchAreas(): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember('suggested_research_areas', 3600, function () {
+            $suggested = collect();
+
+            // TrackAssignment expertise
+            \App\Models\TrackAssignment::whereNotNull('expertise')->get(['expertise'])->each(function ($ta) use (&$suggested) {
+                if (!empty($ta->expertise)) {
+                    foreach (self::splitKeywords($ta->expertise) as $item) {
+                        $suggested->push($item);
+                    }
+                }
+            });
+
+            // SubTracks & Tracks
+            \App\Models\SubTrack::pluck('name')->each(fn ($name) => $suggested->push(trim($name)));
+            \App\Models\Track::pluck('name')->each(fn ($name) => $suggested->push(trim($name)));
+
+            // Paper keywords
+            \App\Models\Paper::whereNotNull('keywords')->get(['keywords'])->each(function ($p) use (&$suggested) {
+                if (!empty($p->keywords)) {
+                    foreach (self::splitKeywords($p->keywords) as $item) {
+                        $suggested->push($item);
+                    }
+                }
+            });
+
+            // User research keywords
+            \App\Models\User::whereNotNull('research_keywords')->get(['research_keywords'])->each(function ($u) use (&$suggested) {
+                if (!empty($u->research_keywords)) {
+                    foreach (self::splitKeywords($u->research_keywords) as $item) {
+                        $suggested->push($item);
+                    }
+                }
+            });
+
+            $all = self::splitKeywords($suggested->all());
+            natcasesort($all);
+
+            return array_values($all);
+        });
     }
 
     private static function parseSetting(string $key): ?Carbon

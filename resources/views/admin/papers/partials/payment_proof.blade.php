@@ -128,6 +128,10 @@
                 </details>
             @elseif($isOwner && $pending)
                 <p class="small text-muted mb-0">Your reported payment is awaiting verification by the conference team.</p>
+            @elseif($isOwner && $needsPayment && !\App\Services\ProceedingsRules::paymentWindowIsOpen())
+                <div class="alert alert-warning mb-0 small font-weight-bold">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> {{ \App\Services\ProceedingsRules::paymentBlockReason() }}
+                </div>
             @endif
         </div>
     </div>

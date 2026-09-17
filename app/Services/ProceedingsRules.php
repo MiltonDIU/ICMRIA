@@ -51,12 +51,65 @@ class ProceedingsRules
         return !$deadline || Carbon::now()->lte($deadline);
     }
 
-    /** Same deadline the online gateway checks before taking a payment. */
+    /**
+     * Whether registration payment is currently open:
+     * 1. Administrator manual switch `is_payment_enabled` is active.
+     * 2. `payment_last_date` deadline has not passed.
+     * 3. Total paid papers has not reached `max_paid_papers_limit` (if set).
+     */
     public static function paymentWindowIsOpen(): bool
     {
-        $deadline = self::dateSetting('payment_last_date');
+        return self::paymentBlockReason() === null;
+    }
 
-        return !$deadline || Carbon::now()->lte($deadline);
+    public static function paymentIsOpen(): bool
+    {
+        return self::paymentBlockReason() === null;
+    }
+
+    /**
+     * Returns null if payments are allowed, or a clear user-facing reason if blocked.
+     */
+    public static function paymentBlockReason(): ?string
+    {
+        // 1. Administrator Manual Switch
+        if (!self::isPaymentEnabled()) {
+            return 'Online payment is temporarily closed by the conference administration.';
+        }
+
+        // 2. Payment Deadline
+        $deadline = self::dateSetting('payment_last_date');
+        if ($deadline && Carbon::now()->gt($deadline)) {
+            return 'The payment deadline has passed. Payments are no longer accepted.';
+        }
+
+        // 3. Automated Capacity Cap
+        $limit = self::maxPaidPapersLimit();
+        if ($limit !== null) {
+            $paidCount = self::totalPaidPapersCount();
+            if ($paidCount >= $limit) {
+                return "The conference capacity limit of {$limit} paid papers has been reached. Payment is currently closed.";
+            }
+        }
+
+        return null;
+    }
+
+    public static function isPaymentEnabled(): bool
+    {
+        return Setting::where('key', 'is_payment_enabled')->value('value') !== 'false';
+    }
+
+    public static function totalPaidPapersCount(): int
+    {
+        return Paper::where('payment_status', 1)->count();
+    }
+
+    public static function maxPaidPapersLimit(): ?int
+    {
+        $limit = Setting::where('key', 'max_paid_papers_limit')->value('value');
+
+        return ($limit !== null && $limit !== '' && (int) $limit > 0) ? (int) $limit : null;
     }
 
     /**

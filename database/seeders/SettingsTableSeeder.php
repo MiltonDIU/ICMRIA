@@ -105,8 +105,8 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'manuscript_min_pages',          'value' => '6'],
             ['key' => 'manuscript_max_pages',          'value' => '8'],
             // Research keywords a reviewer gives about themselves.
-            ['key' => 'reviewer_keywords_min',         'value' => '3'],
-            ['key' => 'reviewer_keywords_max',         'value' => '5'],
+            ['key' => 'reviewer_keywords_min',         'value' => '1'],
+            ['key' => 'reviewer_keywords_max',         'value' => '20'],
             ['key' => 'event_date',                    'value' => '2027-01-09'],
             ['key' => 'event_end_date',                'value' => '2027-01-10'],
 
@@ -117,6 +117,7 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'maximum_abstract_submission',   'value' => '3'],
             ['key' => 'seat_is_full',                  'value' => 'false'],
             ['key' => 'is_payment_enabled',            'value' => 'true'],
+            ['key' => 'max_paid_papers_limit',         'value' => '500'],
 
             // Requirement document, "Author Guidelines": abstracts of 200-250 words
             // and 4-6 keywords. Read through App\Services\SubmissionRules so the

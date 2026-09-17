@@ -8,7 +8,17 @@ class PermissionRoleTableSeeder extends Seeder
 {
     public function run()
     {
-        $admin_permissions = Permission::all();
+        // Author-specific overrides and reviewer-only functions are withheld from SuperAdmin and Admin by default.
+        // They must be explicitly granted through role permission settings if administrative override is needed.
+        $override_permissions = [
+            'paper_manuscript_manage',
+            'paper_conflict_manage',
+            'paper_edit',
+            'review_submit',
+            'review_bid',
+        ];
+
+        $admin_permissions = Permission::whereNotIn('title', $override_permissions)->get();
         Role::findOrFail(1)->permissions()->sync($admin_permissions->pluck('id'));
         $user_permissions = $admin_permissions->filter(function ($permission) {
             return substr($permission->title, 0, 5) != 'user_' && substr($permission->title, 0, 5) != 'role_' && substr($permission->title, 0, 11) != 'permission_';

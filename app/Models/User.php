@@ -141,4 +141,24 @@ class User extends Authenticatable implements MustVerifyEmail
             ->wherePivot('role', 'chair')
             ->wherePivotNotNull('sub_track_id');
     }
+
+    /**
+     * All expertise recorded for this user across their personal research profile
+     * and every track they review for, deduplicated.
+     *
+     * @return array<int, string>
+     */
+    public function allExpertise(): array
+    {
+        $trackExpertise = $this->trackAssignments()
+            ->where('role', 'reviewer')
+            ->get()
+            ->flatMap(fn ($a) => \App\Services\SubmissionRules::splitKeywords($a->expertise))
+            ->all();
+
+        return \App\Services\SubmissionRules::splitKeywords(array_merge(
+            \App\Services\SubmissionRules::splitKeywords($this->research_keywords),
+            $trackExpertise
+        ));
+    }
 }

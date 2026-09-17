@@ -1,7 +1,8 @@
 @php
-    $isOwner = auth()->id() === $paper->user_id;
-    $isAuthorRole = auth()->user()->roles->contains('id', 3);
-    $canUpload = $isAuthorRole ? ($isOwner && $manuscriptWindowOpen) : auth()->user()->can('paper_edit');
+    $isOwner = (int) auth()->id() === (int) $paper->user_id;
+    $canAdminManage = auth()->user()->can('paper_manuscript_manage');
+    $canUpload = ($isOwner && $manuscriptWindowOpen) || $canAdminManage;
+    $canConflictManage = $isOwner || auth()->user()->can('paper_conflict_manage');
 @endphp
 
 @if(session('success'))
@@ -46,12 +47,25 @@
         @if($canUpload)
             <form action="{{ route('papers.manuscript.upload', $paper->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                @include('partials.submission-guidance', ['compact' => true])
+                @if(!$isOwner && $canAdminManage)
+                    <div class="alert alert-warning py-2 mb-3 small d-flex align-items-center">
+                        <i class="fas fa-shield-alt fa-lg mr-2 text-warning"></i>
+                        <div>
+                            <strong>Administrative Override:</strong> You have permission to upload/replace this manuscript on behalf of the author.
+                        </div>
+                    </div>
+                @else
+                    @include('partials.submission-guidance', ['compact' => true])
+                @endif
 
                 <div class="form-row align-items-end">
                     <div class="col-md-8 mb-2">
                         <label class="small font-weight-bold mb-1">
-                            {{ $paper->hasManuscript() ? 'Replace the manuscript' : 'Upload the manuscript' }}
+                            @if(!$isOwner && $canAdminManage)
+                                {{ $paper->hasManuscript() ? 'Replace manuscript (Admin Override)' : 'Upload manuscript (Admin Override)' }}
+                            @else
+                                {{ $paper->hasManuscript() ? 'Replace the manuscript' : 'Upload the manuscript' }}
+                            @endif
                         </label>
                         <input type="file" name="manuscript" class="form-control-file @error('manuscript') is-invalid @enderror"
                                accept=".pdf,.doc,.docx" required>
@@ -93,7 +107,7 @@
                     Replacing it keeps the earlier version on record.
                 </small>
             </form>
-        @elseif($isAuthorRole && $isOwner)
+        @elseif($isOwner)
             <div class="alert alert-secondary mb-0">
                 @if($manuscriptOpensAt && now()->lt($manuscriptOpensAt))
                     Manuscript submission opens on <strong>{{ $manuscriptOpensAt->format('j M Y') }}</strong>.
@@ -170,7 +184,7 @@
                                 <br><small class="text-muted">{{ $conflict->note }}</small>
                             @endif
                         </div>
-                        @if($isOwner || auth()->user()->can('paper_edit'))
+                        @if($canConflictManage)
                             <form action="{{ route('papers.conflicts.destroy', [$paper->id, $conflict->id]) }}" method="POST"
                                   onsubmit="return confirm('Remove this declared conflict?');">
                                 @csrf
@@ -183,9 +197,17 @@
             </ul>
         @endif
 
-        @if($isOwner || auth()->user()->can('paper_edit'))
+        @if($canConflictManage)
             <form action="{{ route('papers.conflicts.store', $paper->id) }}" method="POST">
                 @csrf
+                @if(!$isOwner && auth()->user()->can('paper_conflict_manage'))
+                    <div class="alert alert-warning py-2 mb-3 small d-flex align-items-center">
+                        <i class="fas fa-shield-alt fa-lg mr-2 text-warning"></i>
+                        <div>
+                            <strong>Administrative Override:</strong> You have permission to declare conflicts on behalf of the author.
+                        </div>
+                    </div>
+                @endif
                 <div class="form-row align-items-end">
                     <div class="col-md-4 mb-2">
                         <label class="small font-weight-bold mb-1">Person</label>

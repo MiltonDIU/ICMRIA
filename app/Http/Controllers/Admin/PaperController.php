@@ -36,7 +36,7 @@ class PaperController extends Controller
         $isSubmissionOpen = (($settings['is_abstract_submission_open'] ?? 'true') == 'true')
             && ($currentDate >= $eventStartDate)
             && ($currentDate <= $abstractDeadline);
-        $isPaymentOpen = !$paymentLastDate || $currentDate->lte($paymentLastDate);
+        $isPaymentOpen = \App\Services\ProceedingsRules::paymentWindowIsOpen();
 
         if ($request->ajax()) {
             $user = Auth::user();
@@ -437,16 +437,14 @@ class PaperController extends Controller
     public function uploadManuscript(Request $request, Paper $paper)
     {
         $user = Auth::user();
-        $isAuthor = $user->roles->contains('id', 3);
+        $isOwner = (int) $paper->user_id === (int) $user->id;
 
-        if ($isAuthor) {
-            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
-
+        if ($isOwner) {
             if (!\App\Services\SubmissionRules::manuscriptWindowIsOpen()) {
                 return back()->with('error', 'The manuscript submission window is closed.');
             }
         } else {
-            abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+            abort_if(Gate::denies('paper_manuscript_manage'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         }
 
         $request->validate([
@@ -558,11 +556,10 @@ class PaperController extends Controller
     public function declareConflict(Request $request, Paper $paper)
     {
         $user = Auth::user();
+        $isOwner = (int) $paper->user_id === (int) $user->id;
 
-        if ($user->roles->contains('id', 3)) {
-            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
-        } else {
-            abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        if (!$isOwner) {
+            abort_if(Gate::denies('paper_conflict_manage'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         }
 
         $data = $request->validate([
@@ -594,11 +591,10 @@ class PaperController extends Controller
     public function removeConflict(Paper $paper, \App\Models\PaperConflict $conflict)
     {
         $user = Auth::user();
+        $isOwner = (int) $paper->user_id === (int) $user->id;
 
-        if ($user->roles->contains('id', 3)) {
-            abort_if($paper->user_id !== $user->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
-        } else {
-            abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        if (!$isOwner) {
+            abort_if(Gate::denies('paper_conflict_manage'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         }
 
         abort_if($conflict->paper_id !== $paper->id, Response::HTTP_FORBIDDEN, '403 Forbidden');

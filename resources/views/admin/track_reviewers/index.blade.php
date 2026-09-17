@@ -1,4 +1,69 @@
 @extends('layouts.admin')
+
+@section('styles')
+@parent
+<style>
+    .select2-container .select2-selection--single {
+        height: 33px !important;
+        padding: 3px 8px !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+        border-radius: 0.25rem !important;
+        border: 1px solid #ced4da !important;
+        background-color: #fff;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 25px !important;
+        padding-left: 0 !important;
+        color: #495057 !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 31px !important;
+        right: 6px !important;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single,
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #80bdff !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    }
+    .select2-dropdown {
+        border-radius: 6px !important;
+        border: 1px solid #ced4da !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+        z-index: 9999 !important;
+    }
+    .select2-search--dropdown {
+        padding: 8px !important;
+    }
+    .select2-search--dropdown .select2-search__field {
+        padding: 6px 10px !important;
+        border-radius: 4px !important;
+        border: 1px solid #ced4da !important;
+        font-size: 0.875rem !important;
+        outline: none !important;
+    }
+    .select2-results__option {
+        padding: 6px 10px !important;
+        font-size: 0.875rem !important;
+    }
+    .reviewer-option-title {
+        font-weight: 600;
+        color: #212529;
+    }
+    .reviewer-option-email {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-left: 6px;
+    }
+    .reviewer-option-meta {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+</style>
+@endsection
+
 @section('content')
 
 @if(session('success'))
@@ -18,7 +83,17 @@
 @endif
 
 <div class="card mb-3">
-    <div class="card-header">Reviewers by Track</div>
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+        <span>Reviewers by Track</span>
+        <div style="min-width: 260px;" class="mt-2 mt-md-0">
+            <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                </div>
+                <input type="text" id="track-scope-search" class="form-control" placeholder="Quick filter tracks on page...">
+            </div>
+        </div>
+    </div>
     <div class="card-body">
         <p class="text-muted mb-0">
             @if($seesEverything)
@@ -48,7 +123,7 @@
         $formId = 'add-reviewer-' . str_replace(':', '-', $key);
     @endphp
 
-    <div class="card mb-4">
+    <div class="card mb-4 scope-card" data-track-name="{{ strtolower(($subTrack->name ?? '') . ' ' . $track->name) }}">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div>
                 @if($subTrack)
@@ -80,12 +155,15 @@
                         </thead>
                         <tbody>
                             @foreach($assigned as $assignment)
+                                @php
+                                    $reviewerExpertise = $assignment->user ? $assignment->user->allExpertise() : ($assignment->expertise ?? []);
+                                @endphp
                                 <tr>
-                                    <td>{{ $assignment->user->name ?? 'Unknown' }}</td>
-                                    <td><small>{{ $assignment->user->email ?? '' }}</small></td>
+                                    <td><strong>{{ $assignment->user->name ?? 'Unknown' }}</strong></td>
+                                    <td><small class="text-muted">{{ $assignment->user->email ?? '' }}</small></td>
                                     <td>
-                                        @forelse($assignment->expertise ?? [] as $topic)
-                                            <span class="badge badge-light border mr-1">{{ $topic }}</span>
+                                        @forelse($reviewerExpertise as $topic)
+                                            <span class="badge badge-light border mr-1 mb-1">{{ $topic }}</span>
                                         @empty
                                             <small class="text-muted">—</small>
                                         @endforelse
@@ -113,10 +191,12 @@
 
                     <div class="form-row align-items-end">
                         <div class="col-md-6 mb-2">
-                            <label class="small font-weight-bold mb-1">Add someone who already reviews</label>
+                            <label class="small font-weight-bold mb-1">
+                                <i class="fas fa-search text-primary mr-1"></i> Add someone who already reviews
+                            </label>
                             <select name="reviewer_id" class="form-control form-control-sm js-reviewer-pool" required
                                     data-topics="{{ implode(',', $scopeTopics[$key] ?? []) }}"
-                                    data-here="{{ $assigned->pluck('user_id')->implode(',') }}">
+                                    data-here="{{ $assigned->pluck('user_id')->implode(',') }}" style="width: 100%;">
                                 <option value="">Loading the reviewer pool&hellip;</option>
                             </select>
                         </div>
@@ -132,10 +212,8 @@
                         </div>
                     </div>
                     <small class="form-text text-muted">
-                        Anyone holding the Reviewer role can be added here, whichever track brought them in &mdash;
-                        one person, one account, as many tracks as needed.
-                        <strong>&#9733;</strong> marks those whose recorded expertise overlaps this subject; the rest are
-                        still listed, because a suitable reviewer may simply not have their topics written down yet.
+                        Anyone holding the Reviewer role can be searched and added here.
+                        <strong>&#9733;</strong> marks those whose recorded expertise overlaps this subject.
                     </small>
                 </form>
             @endif
@@ -180,54 +258,226 @@
 
 @push('script')
 <script>
-// The pool is the same for every scope on the page, so it is sent once and each
-// picker is filled from it. Rendering the options into every form instead would
-// repeat a hundred-odd names across forty tracks for an administrator.
 document.addEventListener('DOMContentLoaded', function () {
     var pool = @json($pool);
+
+    // Track scope quick filter
+    var $trackSearch = $('#track-scope-search');
+    if ($trackSearch.length) {
+        $trackSearch.on('input keyup', function () {
+            var q = $(this).val().toLowerCase().trim();
+            $('.scope-card').each(function () {
+                var name = $(this).data('track-name') || $(this).text().toLowerCase();
+                $(this).toggle(q === '' || name.indexOf(q) !== -1);
+            });
+        });
+    }
+
+    // Custom multi-field search matcher for Select2
+    function reviewerCustomMatcher(params, data) {
+        // If there's no search term, return all data
+        if (!params.term || $.trim(params.term) === '') {
+            return data;
+        }
+
+        // Skip placeholder
+        if (!data.id) {
+            return null;
+        }
+
+        // Check if data is an optgroup
+        if (data.children && data.children.length) {
+            var matchGroup = $.extend(true, {}, data);
+            var filteredChildren = [];
+            for (var c = 0; c < data.children.length; c++) {
+                var childMatch = reviewerCustomMatcher(params, data.children[c]);
+                if (childMatch) {
+                    filteredChildren.push(childMatch);
+                }
+            }
+            if (filteredChildren.length) {
+                matchGroup.children = filteredChildren;
+                return matchGroup;
+            }
+            return null;
+        }
+
+        var $opt = $(data.element);
+        var name = ($opt.data('name') || data.name || '').toString().toLowerCase();
+        var email = ($opt.data('email') || data.email || '').toString().toLowerCase();
+        var tracks = ($opt.data('tracks') || data.tracks || '').toString().toLowerCase();
+        var expertise = ($opt.data('expertise') || data.expertise || '').toString().toLowerCase();
+        var text = (data.text || '').toString().toLowerCase();
+
+        var haystack = name + ' ' + email + ' ' + tracks + ' ' + expertise + ' ' + text;
+        var queryTerms = params.term.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
+        var matchesAll = queryTerms.every(function (term) {
+            return haystack.indexOf(term) !== -1;
+        });
+
+        return matchesAll ? data : null;
+    }
 
     document.querySelectorAll('.js-reviewer-pool').forEach(function (select) {
         var topics = (select.dataset.topics || '').split(',').filter(Boolean);
         var here = (select.dataset.here || '').split(',').filter(Boolean).map(Number);
 
-        var rows = pool
-            .filter(function (person) { return here.indexOf(person.id) === -1; })
-            .map(function (person) {
-                var hits = person.slugs.filter(function (slug) {
-                    return topics.indexOf(slug) !== -1;
-                }).length;
+        var availableRows = [];
+        var assignedRows = [];
 
-                return { person: person, hits: hits };
-            })
-            // Best subject match first, then alphabetically, so a chair scanning the
-            // list meets the relevant people before the merely available ones.
-            .sort(function (a, b) {
-                return b.hits - a.hits || a.person.name.localeCompare(b.person.name);
-            });
+        pool.forEach(function (person) {
+            var isHere = here.indexOf(person.id) !== -1;
+            var hits = (person.slugs || []).filter(function (slug) {
+                return topics.indexOf(slug) !== -1;
+            }).length;
+
+            var item = { person: person, hits: hits, already: isHere };
+            if (isHere) {
+                assignedRows.push(item);
+            } else {
+                availableRows.push(item);
+            }
+        });
+
+        // Best subject match first, then alphabetically
+        availableRows.sort(function (a, b) {
+            return b.hits - a.hits || a.person.name.localeCompare(b.person.name);
+        });
+
+        assignedRows.sort(function (a, b) {
+            return a.person.name.localeCompare(b.person.name);
+        });
 
         select.innerHTML = '';
 
         var blank = document.createElement('option');
         blank.value = '';
-        blank.textContent = rows.length
-            ? 'Choose a reviewer… (' + rows.length + ' available)'
-            : 'Everyone in the pool is already listed here';
+        blank.textContent = 'Search or select a reviewer (' + pool.length + ' available in pool)...';
         select.appendChild(blank);
 
-        rows.forEach(function (row) {
+        function createOption(item) {
             var option = document.createElement('option');
-            option.value = row.person.id;
+            option.value = item.person.id;
+            option.dataset.name = item.person.name;
+            option.dataset.email = item.person.email || '';
+            option.dataset.tracks = (item.person.tracks || []).join(', ');
+            option.dataset.expertise = (item.person.expertise || []).join(', ');
+            option.dataset.hits = item.hits ? '1' : '0';
+            option.dataset.already = item.already ? '1' : '0';
 
-            var parts = [row.person.name];
-            if (row.person.tracks.length) {
-                parts.push('in ' + row.person.tracks.join(', '));
+            var parts = [item.person.name];
+            if (item.person.email) {
+                parts.push('(' + item.person.email + ')');
             }
-            if (row.person.expertise.length) {
-                parts.push(row.person.expertise.slice(0, 3).join(' / '));
+            if (item.person.tracks && item.person.tracks.length) {
+                parts.push('— in ' + item.person.tracks.join(', '));
+            }
+            if (item.person.expertise && item.person.expertise.length) {
+                parts.push('— ' + item.person.expertise.slice(0, 4).join(', '));
+            }
+            if (item.already) {
+                parts.push('[Already in this track]');
             }
 
-            option.textContent = (row.hits ? '★ ' : '') + parts.join(' — ');
-            select.appendChild(option);
+            option.textContent = (item.hits ? '★ ' : '') + parts.join(' ');
+            return option;
+        }
+
+        if (availableRows.length) {
+            var groupAvailable = document.createElement('optgroup');
+            groupAvailable.label = 'Available Reviewers (' + availableRows.length + ')';
+            availableRows.forEach(function (item) {
+                groupAvailable.appendChild(createOption(item));
+            });
+            select.appendChild(groupAvailable);
+        }
+
+        if (assignedRows.length) {
+            var groupAssigned = document.createElement('optgroup');
+            groupAssigned.label = 'Already in this Track (' + assignedRows.length + ') — Select to update expertise';
+            assignedRows.forEach(function (item) {
+                groupAssigned.appendChild(createOption(item));
+            });
+            select.appendChild(groupAssigned);
+        }
+
+        // Initialize Select2
+        var $s2 = $(select);
+        if ($s2.hasClass('select2-hidden-accessible')) {
+            $s2.select2('destroy');
+        }
+
+        $s2.select2({
+            width: '100%',
+            placeholder: 'Type name, email or expertise to search (' + pool.length + ' reviewers)...',
+            allowClear: true,
+            matcher: reviewerCustomMatcher,
+            minimumResultsForSearch: 0,
+            templateResult: function (data) {
+                if (!data.id) {
+                    return data.text;
+                }
+                var $opt = $(data.element);
+                var name = $opt.data('name') || data.name || data.text;
+                var email = $opt.data('email') || data.email || '';
+                var tracks = $opt.data('tracks') || data.tracks || '';
+                var expertise = $opt.data('expertise') || data.expertise || '';
+                var hits = ($opt.data('hits') === '1' || $opt.data('hits') === 1);
+                var already = ($opt.data('already') === '1' || $opt.data('already') === 1);
+
+                var $wrapper = $('<div class="py-1"></div>');
+                var $header = $('<div class="d-flex align-items-center justify-content-between flex-wrap"></div>');
+                
+                var $title = $('<span></span>').addClass('reviewer-option-title');
+                if (hits) {
+                    $title.append('<span class="text-warning mr-1">&#9733;</span>');
+                    $title.addClass('text-primary font-weight-bold');
+                }
+                $title.append(document.createTextNode(name));
+                $header.append($title);
+
+                if (email) {
+                    $header.append($('<small></small>').addClass('reviewer-option-email').text(email));
+                }
+                $wrapper.append($header);
+
+                var metaParts = [];
+                if (already) {
+                    metaParts.push('<span class="badge badge-info mr-1">Already in this track</span>');
+                }
+                if (tracks) {
+                    metaParts.push('<span class="badge badge-light border mr-1">in ' + tracks + '</span>');
+                }
+                if (expertise) {
+                    metaParts.push('<span class="text-muted small">' + expertise + '</span>');
+                }
+                if (metaParts.length) {
+                    $wrapper.append($('<div class="reviewer-option-meta mt-1"></div>').html(metaParts.join(' ')));
+                }
+
+                return $wrapper;
+            },
+            templateSelection: function (data) {
+                if (!data.id) {
+                    return data.text;
+                }
+                var $opt = $(data.element);
+                var name = $opt.data('name') || data.name || data.text;
+                var email = $opt.data('email') || data.email || '';
+                var already = ($opt.data('already') === '1' || $opt.data('already') === 1);
+                return name + (email ? ' (' + email + ')' : '') + (already ? ' [Already in track]' : '');
+            }
+        });
+
+        // Auto-focus the search field upon opening
+        $s2.on('select2:open', function () {
+            setTimeout(function () {
+                var search = document.querySelector('.select2-container--open .select2-search__field');
+                if (search) {
+                    search.focus();
+                }
+            }, 10);
         });
     });
 });

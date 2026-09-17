@@ -512,16 +512,25 @@ We are pleased to inform you that your payment has been <strong>successfully</st
                                             </table>
                                         </div>
 
-                                        <form action="{{ route('payNowPapers') }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="user_id" value="{{ auth()->id() }}">
-                                            @foreach($unpaidPapers as $up)
-                                                <input type="hidden" name="paper_ids[]" value="{{ $up->id }}">
-                                            @endforeach
-                                            <button type="submit" class="btn btn-primary btn-block btn-lg shadow-sm py-3" style="border-radius: 8px;">
-                                                <i class="fas fa-lock mr-2"></i> Proceed to Secure Checkout
-                                            </button>
-                                        </form>
+                                        @php
+                                            $paymentBlockReason = \App\Services\ProceedingsRules::paymentBlockReason();
+                                        @endphp
+                                        @if($paymentBlockReason)
+                                            <div class="alert alert-warning text-center font-weight-bold py-3 mb-0" style="border-radius: 8px;">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> {{ $paymentBlockReason }}
+                                            </div>
+                                        @else
+                                            <form action="{{ route('payNowPapers') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                                                @foreach($unpaidPapers as $up)
+                                                    <input type="hidden" name="paper_ids[]" value="{{ $up->id }}">
+                                                @endforeach
+                                                <button type="submit" class="btn btn-primary btn-block btn-lg shadow-sm py-3" style="border-radius: 8px;">
+                                                    <i class="fas fa-lock mr-2"></i> Proceed to Secure Checkout
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
