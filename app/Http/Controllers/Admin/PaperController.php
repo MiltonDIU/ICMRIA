@@ -856,13 +856,22 @@ class PaperController extends Controller
 
         $tracks = Track::with('subTracks')->get();
         $countries = Country::where('is_active', 1)->orderBy('name', 'asc')->get();
-        $paper->load('authors');
+        $paper->load(['authors', 'conflicts']);
         $prices = \App\Models\Price::orderBy('id')->get();
         $countryCategories = $this->countryCategoryMap($countries);
         $priceTable = $this->priceTableForJs($prices);
         $currentStage = \App\Services\PricingService::currentStage();
+        $conflictCandidates = \App\Services\ConflictCandidates::byTrack();
 
-        return view('admin.papers.edit', compact('paper', 'tracks', 'countries', 'prices', 'countryCategories', 'priceTable', 'currentStage'));
+        $existingConflictUserIds = $paper->conflicts->whereNotNull('conflicted_user_id')->pluck('conflicted_user_id')->all();
+        $existingConflictInstitution = $paper->conflicts->firstWhere('conflicted_institution', '!=', null)?->conflicted_institution;
+        $existingConflictNote = $paper->conflicts->firstWhere('note', '!=', null)?->note;
+
+        return view('admin.papers.edit', compact(
+            'paper', 'tracks', 'countries', 'prices', 'countryCategories',
+            'priceTable', 'currentStage', 'conflictCandidates',
+            'existingConflictUserIds', 'existingConflictInstitution', 'existingConflictNote'
+        ));
     }
 
     public function update(Request $request, Paper $paper)
@@ -913,7 +922,12 @@ class PaperController extends Controller
                 new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
         }
 
-        $request->validate($rules);
+        // Conflicts of interest declared with the abstract, all optional.
+        $rules = array_merge($rules, \App\Services\ConflictCandidates::rules());
+
+        $request->validate($rules, [
+            'regex' => 'The :attribute contains forbidden characters (PHP tags are not allowed).',
+        ]);
 
         try {
             DB::beginTransaction();
@@ -1003,6 +1017,11 @@ class PaperController extends Controller
 
             // 3. Delete any strictly removed authors from the database (cleanup orphans)
             $paper->authors()->whereNotIn('id', $incomingIds)->delete();
+
+            // 4. Sync conflicts of interest
+            $paper->conflicts()->where('declared_by_user_id', $user->id)->delete();
+            \App\Services\ConflictCandidates::record($paper, $user->id, $request->all());
+
             DB::commit();
 
             // Recalculate and sync the total due amount on the profile

@@ -12,6 +12,8 @@
 
             <h4 class="mb-4 text-primary"><strong>Abstract Submission Details</strong></h4>
 
+            @include('partials.submission-guidance')
+
             <div class="form-group">
                 <label class="required" for="paper_title">Paper Title*</label>
                 <input class="form-control {{ $errors->has('paper_title') ? 'is-invalid' : '' }}" type="text" name="paper_title" id="paper_title" value="{{ old('paper_title', $paper->title) }}" required>
@@ -83,6 +85,8 @@
                 @endif
             </div>
 
+            @include('partials.conflict-fields')
+
             <hr>
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0"><strong>Co-Authors (If any)</strong></h5>
@@ -120,10 +124,10 @@
                             <div class="col-md-6 mb-2">
                                 <input type="email" name="co_authors[{{ $coAuthorIndex }}][email]" class="form-control form-control-sm" placeholder="Email*" value="{{ $author->email }}" required>
                             </div>
-                            <div class="col-md-2 mb-2">
+                            <div class="col-md-3 mb-2">
                                 <input type="text" name="co_authors[{{ $coAuthorIndex }}][designation]" class="form-control form-control-sm" placeholder="Designation*" value="{{ $author->designation }}" required>
                             </div>
-                            <div class="col-md-2 mb-2">
+                            <div class="col-md-3 mb-2">
                                 <input type="text" name="co_authors[{{ $coAuthorIndex }}][department]" class="form-control form-control-sm" placeholder="Department*" value="{{ $author->department }}" required>
                             </div>
                             <div class="col-md-3 mb-2">
@@ -137,20 +141,20 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2 mb-2">
-                                <select name="co_authors[{{ $coAuthorIndex }}][is_student]" class="form-control form-control-sm">
-                                    <option value="" {{ is_null($author->is_student) ? 'selected' : '' }}>Student Status</option>
-                                    <option value="1" {{ ($author->is_student === true || $author->is_student === 1 || $author->is_student === '1') ? 'selected' : '' }}>Student</option>
-                                    <option value="0" {{ ($author->is_student === false || $author->is_student === 0 || $author->is_student === '0') ? 'selected' : '' }}>Regular/Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-2">
+                            <div class="col-md-6 mb-2">
                                 <select name="co_authors[{{ $coAuthorIndex }}][price_id]" class="form-control form-control-sm delegate-category-select" required>
                                     <option value="">Delegate Category*</option>
                                     @foreach($prices as $priceOption)
                                         <option value="{{ $priceOption->id }}" data-category="{{ $priceOption->category }}" {{ $author->price_id == $priceOption->id ? 'selected' : '' }}>{{ $priceOption->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-6 mb-2 d-flex align-items-center">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="hidden" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="0">
+                                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{{ $coAuthorIndex }}" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="1" {{ ($author->is_student === true || $author->is_student === 1 || $author->is_student === '1') ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="author_student_{{ $coAuthorIndex }}">This author is a student</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -175,10 +179,10 @@
                             <div class="col-md-6 mb-2">
                                 <input type="email" name="co_authors[{{ $coAuthorIndex }}][email]" class="form-control form-control-sm" placeholder="Email*" value="{{ $submitterEmail }}" required>
                             </div>
-                            <div class="col-md-2 mb-2">
+                            <div class="col-md-3 mb-2">
                                 <input type="text" name="co_authors[{{ $coAuthorIndex }}][designation]" class="form-control form-control-sm" placeholder="Designation*" value="{{ $paper->user->profile?->designation ?? '' }}" required>
                             </div>
-                            <div class="col-md-2 mb-2">
+                            <div class="col-md-3 mb-2">
                                 <input type="text" name="co_authors[{{ $coAuthorIndex }}][department]" class="form-control form-control-sm" placeholder="Department*" value="{{ $paper->user->profile?->department ?? '' }}" required>
                             </div>
                             <div class="col-md-3 mb-2">
@@ -192,14 +196,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2 mb-2">
-                                <select name="co_authors[{{ $coAuthorIndex }}][is_student]" class="form-control form-control-sm">
-                                    <option value="" selected>Student Status</option>
-                                    <option value="1">Student</option>
-                                    <option value="0">Regular/Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-2">
+                            <div class="col-md-6 mb-2">
                                 <select name="co_authors[{{ $coAuthorIndex }}][price_id]" class="form-control form-control-sm delegate-category-select" required>
                                     <option value="">Delegate Category*</option>
                                     @foreach($prices as $priceOption)
@@ -207,18 +204,26 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="col-md-6 mb-2 d-flex align-items-center">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="hidden" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="0">
+                                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{{ $coAuthorIndex }}" name="co_authors[{{ $coAuthorIndex }}][is_student]" value="1" {{ ($paper->user->profile?->is_student ?? false) ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="author_student_{{ $coAuthorIndex }}">This author is a student</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     @php $coAuthorIndex++; @endphp
                 @endif
             </div>
+
             <button type="button" class="btn btn-info btn-sm mb-4" onclick="addCoAuthor()"><i class="fa fa-plus"></i> Add Co-Author</button>
 
             @include('partials.fee-summary')
 
             <div class="form-group mb-0 mt-4">
                 <button class="btn btn-success" type="submit">
-                    <i class="fa fa-save"></i> Update Abstract
+                    <i class="fa fa-save"></i> Save Changes
                 </button>
                 <a href="{{ route('papers.index') }}" class="btn btn-default">Cancel</a>
             </div>
@@ -229,7 +234,6 @@
 <template id="co_author_template">
     <div class="co-author-entry border p-3 mb-3 rounded position-relative bg-white shadow-sm">
         <button type="button" class="btn btn-danger btn-sm position-absolute" style="top: 10px; right: 10px;" onclick="removeCoAuthor(this)"><i class="fa fa-times"></i></button>
-        <input type="hidden" name="co_authors[{index}][id]" value="">
         <div class="d-flex justify-content-between align-items-center mb-3 pr-5">
             <h6 class="mb-0 font-weight-bold text-secondary text-uppercase" style="font-size: 0.8rem;">Co-Author Entry</h6>
             <div class="d-flex align-items-center">
@@ -244,10 +248,10 @@
             <div class="col-md-6 mb-2">
                 <input type="email" name="co_authors[{index}][email]" class="form-control form-control-sm" placeholder="Email*" required>
             </div>
-            <div class="col-md-2 mb-2">
+            <div class="col-md-3 mb-2">
                 <input type="text" name="co_authors[{index}][designation]" class="form-control form-control-sm" placeholder="Designation*" required>
             </div>
-            <div class="col-md-2 mb-2">
+            <div class="col-md-3 mb-2">
                 <input type="text" name="co_authors[{index}][department]" class="form-control form-control-sm" placeholder="Department*" required>
             </div>
             <div class="col-md-3 mb-2">
@@ -261,20 +265,20 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2 mb-2">
-                <select name="co_authors[{index}][is_student]" class="form-control form-control-sm">
-                    <option value="" selected>Student Status</option>
-                    <option value="1">Student</option>
-                    <option value="0">Regular/Other</option>
-                </select>
-            </div>
-            <div class="col-md-4 mb-2">
+            <div class="col-md-6 mb-2">
                 <select name="co_authors[{index}][price_id]" class="form-control form-control-sm delegate-category-select" required>
                     <option value="">Delegate Category*</option>
                     @foreach($prices as $priceOption)
                         <option value="{{ $priceOption->id }}" data-category="{{ $priceOption->category }}">{{ $priceOption->name }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="col-md-6 mb-2 d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    <input type="hidden" name="co_authors[{index}][is_student]" value="0">
+                    <input type="checkbox" class="custom-control-input co-author-student" id="author_student_{index}" name="co_authors[{index}][is_student]" value="1">
+                    <label class="custom-control-label" for="author_student_{index}">This author is a student</label>
+                </div>
             </div>
         </div>
     </div>
@@ -373,15 +377,12 @@
 
         counter.innerText = count;
 
-        // Empty is flagged at once because the abstract is mandatory. Being short of
-        // the minimum only means it is unfinished, so that stays green.
         const ok = count > 0 && count <= {{ \App\Services\SubmissionRules::abstractMaxWords() }};
         display.classList.remove('text-muted');
         display.classList.toggle('text-success', ok);
         display.classList.toggle('text-danger', !ok);
         display.classList.toggle('font-weight-bold', !ok);
     }
-
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -416,9 +417,9 @@
             }
 
             if (data.is_student !== undefined && data.is_student !== null) {
-                const studentSelect = div.querySelector(`select[name="co_authors[${coAuthorIndex}][is_student]"]`);
-                if (studentSelect) {
-                    studentSelect.value = (data.is_student === true || data.is_student == 1) ? '1' : '0';
+                const studentCheck = div.querySelector(`input.co-author-student`);
+                if (studentCheck) {
+                    studentCheck.checked = (data.is_student === true || data.is_student == 1 || data.is_student === '1');
                 }
             }
         }
