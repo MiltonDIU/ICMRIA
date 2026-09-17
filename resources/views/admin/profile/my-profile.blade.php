@@ -158,6 +158,18 @@
     $pending = $papers->filter(fn ($p) => $p->status === null || $p->status === 'pending')->count();
     $rejected = $papers->where('status', 'rejected')->count();
 
+    // Fees are charged per listed author per abstract, so the number that decides what is
+    // owed is the total of the author rows, not the number of people. Somebody named on
+    // two of your abstracts is billed twice, so both figures are worth showing when they
+    // differ: the billable total, and how many distinct people that is.
+    $authorRows = $papers->flatMap(fn ($paper) => $paper->authors);
+    $authorTotal = $authorRows->count();
+    $distinctAuthors = $authorRows
+        ->map(fn ($author) => strtolower(trim((string) $author->email)))
+        ->filter()
+        ->unique()
+        ->count();
+
     $statusStyles = [
         'approved' => ['Approved', 'success'],
         'pending'  => ['Under screening', 'warning'],
@@ -218,9 +230,10 @@
         </div>
     @else
 
-        {{-- Where things stand, at a glance. --}}
+        {{-- Where things stand, at a glance. Five across on a wide screen, three then two
+             on a tablet, two per row on a phone. --}}
         <div class="row mb-4">
-            <div class="col-md-3 col-6 mb-3">
+            <div class="col-6 col-md-4 col-xl mb-3">
                 <div class="mp-tile {{ $paid ? 'is-good' : 'is-due' }}">
                     <div class="mp-tile-label">Registration</div>
                     <div class="mp-tile-value">{{ $paid ? 'Paid' : 'Unpaid' }}</div>
@@ -229,7 +242,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6 mb-3">
+            <div class="col-6 col-md-4 col-xl mb-3">
                 <div class="mp-tile {{ $paid ? 'is-good' : 'is-due' }}">
                     <div class="mp-tile-label">{{ $paid ? 'Amount paid' : 'Amount due' }}</div>
                     <div class="mp-tile-value">{{ $currency }} {{ number_format($profile->pay_amount ?? 0, 2) }}</div>
@@ -238,7 +251,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6 mb-3">
+            <div class="col-6 col-md-4 col-xl mb-3">
                 <div class="mp-tile">
                     <div class="mp-tile-label">Abstracts</div>
                     <div class="mp-tile-value">{{ $papers->count() }}</div>
@@ -254,7 +267,23 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6 mb-3">
+            <div class="col-6 col-md-4 col-xl mb-3">
+                <div class="mp-tile">
+                    <div class="mp-tile-label">Authors</div>
+                    <div class="mp-tile-value">{{ $authorTotal }}</div>
+                    <div class="mp-tile-note">
+                        @if($papers->isEmpty())
+                            No abstract submitted
+                        @else
+                            across {{ $papers->count() }} abstract{{ $papers->count() === 1 ? '' : 's' }}
+                            @if($distinctAuthors && $distinctAuthors !== $authorTotal)
+                                &middot; {{ $distinctAuthors }} distinct people
+                            @endif
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl mb-3">
                 <div class="mp-tile">
                     <div class="mp-tile-label">Workshops</div>
                     <div class="mp-tile-value">{{ $user->schedules->count() }}</div>
@@ -614,6 +643,7 @@
                                     <th style="width: 8rem;">ID</th>
                                     <th>Title</th>
                                     <th>Track</th>
+                                    <th style="width: 14rem;">Authors</th>
                                     <th style="width: 10rem;">Screening</th>
                                     <th style="width: 8rem;">Fee</th>
                                 </tr>
@@ -638,6 +668,16 @@
                                                 <small class="text-muted d-block">{{ $paper->subTrack->name }}</small>
                                             @endif
                                         </td>
+                                        <td>
+                                            <span class="badge badge-light border">
+                                                {{ $paper->authors->count() }} author{{ $paper->authors->count() === 1 ? '' : 's' }}
+                                            </span>
+                                            @if($paper->authors->isNotEmpty())
+                                                <small class="text-muted d-block mt-1">
+                                                    {{ $paper->authors->pluck('name')->filter()->implode(', ') }}
+                                                </small>
+                                            @endif
+                                        </td>
                                         <td><span class="badge badge-{{ $style }}">{{ $label }}</span></td>
                                         <td>
                                             @if($paper->payment_status == 1)
@@ -651,8 +691,26 @@
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3" class="text-right border-top">Total</th>
+                                    <th class="border-top">
+                                        {{ $authorTotal }} author{{ $authorTotal === 1 ? '' : 's' }}
+                                        @if($distinctAuthors && $distinctAuthors !== $authorTotal)
+                                            <small class="text-muted font-weight-normal d-block">
+                                                {{ $distinctAuthors }} distinct people
+                                            </small>
+                                        @endif
+                                    </th>
+                                    <th colspan="2" class="border-top"></th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
+                    <small class="form-text text-muted mt-2">
+                        Every author listed on an abstract is charged a registration fee, so this total is what the
+                        amount above is worked out from. Somebody named on two of your abstracts counts once for each.
+                    </small>
                 @endif
             </div>
         </div>
