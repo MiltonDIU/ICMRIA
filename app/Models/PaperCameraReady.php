@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperCameraReady extends Model
 {
+    use LogsActivity;
+
     public $table = 'paper_camera_ready';
 
     public const STATUSES = [
@@ -65,4 +70,13 @@ class PaperCameraReady extends Model
     {
         return $this->belongsTo(User::class, 'confirmed_by');
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'status', 'schedule_id', 'presentation_order'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
+
 }

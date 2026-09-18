@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +15,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class BlogCategory extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia, HasFactory;
+    use SoftDeletes, InteractsWithMedia, HasFactory, LogsActivity;
 
     public $table = 'blog_categories';
 
@@ -72,5 +75,13 @@ class BlogCategory extends Model implements HasMedia
     }
     public function post(){
         return $this->hasMany(Post::class, 'blog_category_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'slug', 'parent_id', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

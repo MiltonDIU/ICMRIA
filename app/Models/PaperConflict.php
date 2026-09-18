@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperConflict extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'paper_id',
         'declared_by_user_id',
@@ -37,5 +42,13 @@ class PaperConflict extends Model
     {
         return $this->conflictedUser?->name
             ?: ($this->conflicted_institution ?: 'Unnamed conflict');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'declared_by_user_id', 'conflicted_user_id', 'conflicted_institution'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

@@ -51,6 +51,7 @@
         "league/flysystem-sftp-v3": "^3.0",
         "masbug/flysystem-google-drive-ext": "^2.5",
         "nuovo/spreadsheet-reader": "^0.5.11",
+        "spatie/laravel-activitylog": "^5.1",
         "spatie/laravel-backup": "^10.2",
         "spatie/laravel-html": "^3.0",
         "spatie/laravel-medialibrary": "^11.0",

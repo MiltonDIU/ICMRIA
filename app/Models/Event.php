@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +15,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Event extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia;
+    use SoftDeletes, InteractsWithMedia, LogsActivity;
 
     public $table = 'events';
 
@@ -116,5 +119,13 @@ class Event extends Model implements HasMedia
     {
         $this->attributes['date_time'] = Carbon::parse($value);
 
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'slug', 'date_time', 'reg_close_time', 'is_active', 'is_free', 'is_events'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

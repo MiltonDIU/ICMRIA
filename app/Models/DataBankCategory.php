@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DataBankCategory extends Model
 {
-    use SoftDeletes, HasFactory;
+    use SoftDeletes, HasFactory, LogsActivity;
 
     public $table = 'data_bank_categories';
 
@@ -40,5 +43,13 @@ class DataBankCategory extends Model
     public function dataBankCategoryDataBanks()
     {
         return $this->belongsToMany(DataBank::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title_of_data_bank', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

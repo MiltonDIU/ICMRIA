@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -9,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperBid extends Model
 {
+    use LogsActivity;
+
     public const WANT = 'want';
     public const CAN = 'can';
     public const NEUTRAL = 'neutral';
@@ -49,5 +54,13 @@ class PaperBid extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'reviewer_id', 'preference'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

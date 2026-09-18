@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperDecision extends Model
 {
+    use LogsActivity;
+
     /** The three outcomes a chair may choose, in the document's words. */
     public const DECISIONS = [
         'accept' => 'Accept',
@@ -71,5 +76,13 @@ class PaperDecision extends Model
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'decision', 'status', 'round', 'decided_by', 'decided_at', 'approved_by', 'approved_at', 'notified_at'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

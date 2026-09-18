@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Track extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = ['name', 'reviewers_per_paper', 'max_papers_per_reviewer'];
 
@@ -30,5 +33,13 @@ class Track extends Model
     public function chairs()
     {
         return $this->hasMany(TrackAssignment::class)->chairs()->wholeTrack();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'reviewers_per_paper', 'max_papers_per_reviewer'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

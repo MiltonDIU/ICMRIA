@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PaperAuthor extends Model
 {
+    use LogsActivity;
+
     use SoftDeletes;
 
     protected $fillable = [
@@ -44,4 +49,13 @@ class PaperAuthor extends Model
     {
         return $this->belongsTo(Price::class);
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'name', 'email', 'institution', 'is_corresponding_author', 'is_presenting_author'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
+
 }

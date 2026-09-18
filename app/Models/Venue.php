@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
@@ -10,7 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Venue extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia;
+    use SoftDeletes, InteractsWithMedia, LogsActivity;
 
     public $table = 'venues';
 
@@ -55,4 +58,11 @@ class Venue extends Model implements HasMedia
         return $this->belongsToMany(Event::class);
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'address', 'latitude', 'longitude'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 }

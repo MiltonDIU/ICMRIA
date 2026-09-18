@@ -68,6 +68,14 @@
                                         </p>
                                     </a>
                                 </li>
+                        @if(auth()->user()->roles->contains('id', 1))
+                            <li class="nav-item">
+                                 <a href="{{ route('admin.activity-logs.index') }}" class="nav-link {{ request()->is('admin/activity-logs*') ? 'active' : '' }}">
+                                     <i class="fa-fw fas fa-history"></i>
+                                     <p><span>Activity Logs</span></p>
+                                 </a>
+                            </li>
+                        @endif
                             @endcan
                         </ul>
                     </li>

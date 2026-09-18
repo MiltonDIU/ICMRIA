@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
@@ -10,7 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Sponsor extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia;
+    use SoftDeletes, InteractsWithMedia, LogsActivity;
 
     public $table = 'sponsors';
 
@@ -58,5 +61,13 @@ class Sponsor extends Model implements HasMedia
     }
     public function sponsorType(){
         return $this->belongsTo(SponsorType::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'link', 'serial', 'sponsor_type_id', 'amount'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +15,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class EventActivity extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia, HasFactory;
+    use SoftDeletes, InteractsWithMedia, HasFactory, LogsActivity;
 
     public $table = 'event_activities';
 
@@ -62,5 +65,13 @@ class EventActivity extends Model implements HasMedia
         }
 
         return $file;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'link', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

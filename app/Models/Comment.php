@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Comment extends Model
 {
-    use SoftDeletes, HasFactory;
+    use SoftDeletes, HasFactory, LogsActivity;
 
     public $table = 'comments';
 
@@ -62,5 +65,13 @@ class Comment extends Model
     public function like()
     {
         return $this->hasMany(Like::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['post_id', 'user_id', 'parent_id', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

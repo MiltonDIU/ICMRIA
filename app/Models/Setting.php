@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Setting extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     public $table = 'settings';
 
@@ -24,4 +27,12 @@ class Setting extends Model
         'updated_at',
         'deleted_at',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['key', 'value'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 }

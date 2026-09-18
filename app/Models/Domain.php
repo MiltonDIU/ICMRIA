@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Domain extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
     protected $fillable = ['concern_name','domain_name','status','user_id'];
     public function user(){
         return $this->belongsTo(User::class,'user_id','id');
@@ -27,4 +30,11 @@ class Domain extends Model
         return $count;
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['concern_name', 'domain_name', 'status', 'user_id'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 }

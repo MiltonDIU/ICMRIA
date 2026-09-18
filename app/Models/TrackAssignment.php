@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TrackAssignment extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'user_id',
         'track_id',
@@ -48,5 +53,13 @@ class TrackAssignment extends Model
     public function scopeWholeTrack($query)
     {
         return $query->whereNull('sub_track_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['user_id', 'track_id', 'sub_track_id', 'role', 'expertise'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

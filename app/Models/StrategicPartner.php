@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +14,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class StrategicPartner extends Model  implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
     use SoftDeletes, InteractsWithMedia;
 
     public $table = 'strategic_partners';
@@ -54,5 +57,13 @@ class StrategicPartner extends Model  implements HasMedia
     public function events()
     {
         return $this->belongsToMany(Event::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'link', 'serial'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

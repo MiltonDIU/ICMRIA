@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Permission extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     public $table = 'permissions';
 
@@ -27,5 +30,13 @@ class Permission extends Model
     public function roles()
     {
         return $this->belongsToMany(Role::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

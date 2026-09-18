@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -9,7 +12,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ConferenceMessage extends Model implements HasMedia
 {
-    use InteractsWithMedia;
+    use InteractsWithMedia, LogsActivity;
 
     public $table = 'conference_messages';
 
@@ -60,5 +63,13 @@ class ConferenceMessage extends Model implements HasMedia
         }
 
         return $file;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['conference_message_category_id', 'variant', 'person_name', 'designation', 'affiliation', 'sort_order', 'is_published'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

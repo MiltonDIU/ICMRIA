@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Carbon\Carbon;
 use Hash;
 use App\Notifications\VerifyEmailNotification;
@@ -16,6 +19,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
+    use LogsActivity;
+
     use SoftDeletes, Notifiable, HasApiTokens, HasFactory;
 
     public $table = 'users';
@@ -161,4 +166,13 @@ class User extends Authenticatable implements MustVerifyEmail
             $trackExpertise
         ));
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'research_keywords'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
+
 }

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SubTrack extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = ['track_id', 'name'];
 
@@ -29,5 +32,13 @@ class SubTrack extends Model
     public function chairs()
     {
         return $this->hasMany(TrackAssignment::class)->chairs();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['track_id', 'name'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

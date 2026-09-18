@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperEvaluation extends Model
 {
+    use LogsActivity;
+
     /** The three scored criteria, each 1 to 5, in the document's words. */
     public const CRITERIA = [
         'originality' => 'Originality & Novelty',
@@ -91,5 +96,13 @@ class PaperEvaluation extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'reviewer_id', 'originality', 'soundness', 'relevance', 'recommendation', 'submitted_at'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
@@ -10,7 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Gallery extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia;
+    use SoftDeletes, InteractsWithMedia, LogsActivity;
 
     public $table = 'galleries';
 
@@ -50,5 +53,13 @@ class Gallery extends Model implements HasMedia
     public function event()
     {
         return $this->belongsTo(Event::class, 'event_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'event_id'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

@@ -37,6 +37,7 @@ class RolesController extends Controller
     {
         $role = Role::create($request->all());
         $role->permissions()->sync($request->input('permissions', []));
+        $this->logPermissionChange($role, []);
 
         return redirect()->route('admin.roles.index');
     }
@@ -54,10 +55,39 @@ class RolesController extends Controller
 
     public function update(UpdateRoleRequest $request, Role $role)
     {
+        $before = $role->permissions->pluck('title')->all();
+
         $role->update($request->all());
         $role->permissions()->sync($request->input('permissions', []));
+        $this->logPermissionChange($role, $before);
 
         return redirect()->route('admin.roles.index');
+    }
+
+    /**
+     * Permissions live on a pivot table and a sync fires no model event. Granting a role
+     * the right to decide on papers is worth a trace, so it is written by hand; only what
+     * moved is recorded, since a full list of sixty permissions reads as nothing at all.
+     */
+    private function logPermissionChange(Role $role, array $before): void
+    {
+        $after = $role->load('permissions')->permissions->pluck('title')->all();
+
+        $added = array_values(array_diff($after, $before));
+        $removed = array_values(array_diff($before, $after));
+
+        if (!$added && !$removed) {
+            return;
+        }
+
+        activity()
+            ->performedOn($role)
+            ->event('updated')
+            ->withChanges(['attributes' => [
+                'permissions_added' => implode(', ', $added) ?: '—',
+                'permissions_removed' => implode(', ', $removed) ?: '—',
+            ]])
+            ->log('Permissions changed');
     }
 
     public function show(Role $role)

@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Committee extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'committee_type_id', 
         'parent_id',
@@ -35,5 +40,13 @@ class Committee extends Model
         return $this->belongsToMany(ConferenceMember::class, 'committee_conference_member')
                     ->withPivot('role', 'level', 'remarks', 'sort_order')
                     ->withTimestamps();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['committee_type_id', 'parent_id', 'section', 'name', 'sort_order'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
@@ -10,7 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Speaker extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia;
+    use SoftDeletes, InteractsWithMedia, LogsActivity;
 
     public $table = 'speakers';
 
@@ -88,4 +91,11 @@ class Speaker extends Model implements HasMedia
         return $this->belongsToMany(Speaker::class);
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'slug', 'speaker_type_id', 'track_id', 'focus_area', 'affiliation', 'country', 'show_home', 'serial'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 }

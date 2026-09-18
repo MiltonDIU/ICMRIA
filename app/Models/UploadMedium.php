@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +14,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class UploadMedium extends Model implements HasMedia
 {
-    use InteractsWithMedia, HasFactory;
+    use InteractsWithMedia, HasFactory, LogsActivity;
 
     public $table = 'upload_media';
 
@@ -46,5 +49,13 @@ class UploadMedium extends Model implements HasMedia
     public function getFileNameAttribute()
     {
         return $this->getMedia('file_name');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

@@ -41,6 +41,7 @@ class UsersController extends Controller
         $user = User::create($data);
 
         $user->roles()->sync($request->input('roles', []));
+        $this->logRoleChange($user, []);
 
         return redirect()->route('admin.users.index');
     }
@@ -58,10 +59,36 @@ class UsersController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
+        $before = $user->roles->pluck('title')->sort()->values()->all();
+
         $user->update($request->all());
         $user->roles()->sync($request->input('roles', []));
+        $this->logRoleChange($user, $before);
 
         return redirect()->route('admin.users.index');
+    }
+
+    /**
+     * Roles live on a pivot table and a sync fires no model event, so making someone a
+     * Track Chair would leave nothing behind in the activity log. Written by hand here,
+     * in the shape the log page renders.
+     */
+    private function logRoleChange(User $user, array $before): void
+    {
+        $after = $user->load('roles')->roles->pluck('title')->sort()->values()->all();
+
+        if ($before === $after) {
+            return;
+        }
+
+        activity()
+            ->performedOn($user)
+            ->event('updated')
+            ->withChanges([
+                'old' => ['roles' => implode(', ', $before) ?: '—'],
+                'attributes' => ['roles' => implode(', ', $after) ?: '—'],
+            ])
+            ->log('Roles changed');
     }
 
     public function show(User $user)

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperManuscriptVersion extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'paper_id',
         'uploaded_by',
@@ -33,4 +38,13 @@ class PaperManuscriptVersion extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'version', 'uploaded_by', 'original_name'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
+
 }

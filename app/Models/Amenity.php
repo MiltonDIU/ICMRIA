@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Amenity extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     public $table = 'amenities';
 
@@ -27,5 +30,13 @@ class Amenity extends Model
     public function prices()
     {
         return $this->belongsToMany(Price::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

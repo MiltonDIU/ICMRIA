@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class ConferenceMessageCategory extends Model
 {
+    use LogsActivity;
+
     public $table = 'conference_message_categories';
 
     protected $fillable = [
@@ -43,5 +48,13 @@ class ConferenceMessageCategory extends Model
             ->where('is_published', true)
             ->orderBy('sort_order')
             ->orderBy('id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'slug', 'sort_order', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

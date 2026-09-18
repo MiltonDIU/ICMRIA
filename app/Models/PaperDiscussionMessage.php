@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -9,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperDiscussionMessage extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'paper_id',
         'user_id',
@@ -23,5 +28,13 @@ class PaperDiscussionMessage extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'user_id'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

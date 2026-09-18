@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -9,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperReviewerAssignment extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'paper_id',
         'reviewer_id',
@@ -59,5 +64,13 @@ class PaperReviewerAssignment extends Model
     public function scopeActive($query)
     {
         return $query->where('status', '!=', 'declined');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'reviewer_id', 'assigned_by', 'assignment_source', 'status', 'match_score', 'decline_reason'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

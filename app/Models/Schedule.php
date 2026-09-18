@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Schedule extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     public $table = 'schedules';
 
@@ -85,5 +88,13 @@ class Schedule extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', '1');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'subtitle', 'day_number', 'start_time', 'speaker_id', 'schedule_category_id', 'total_seat', 'is_workshop', 'event_id', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

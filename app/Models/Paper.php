@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Paper extends Model
 {
+    use LogsActivity;
+
     use SoftDeletes;
 
     protected $fillable = [
@@ -176,4 +181,13 @@ class Paper extends Model
     {
         return $this->manuscript_path !== null;
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'abstract', 'keywords', 'track_id', 'sub_track_id', 'status', 'manuscript_status', 'payment_status'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
+
 }

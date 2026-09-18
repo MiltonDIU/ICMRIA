@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use App\Services\PricingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Price extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     public $table = 'prices';
 
@@ -62,5 +65,13 @@ class Price extends Model
     public function getFormattedPriceAttribute(): string
     {
         return $this->currency_symbol . number_format($this->amountFor());
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'category', 'early_bird_price', 'regular_price', 'currency'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

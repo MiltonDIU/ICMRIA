@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaperDecisionComment extends Model
 {
+    use LogsActivity;
+
     public const ROLES = [
         'chair' => 'Chair',
         'tpc' => 'TPC Chair',
@@ -50,5 +55,13 @@ class PaperDecisionComment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['paper_id', 'paper_decision_id', 'user_id', 'author_role', 'kind', 'round'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

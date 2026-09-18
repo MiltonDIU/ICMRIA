@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Coupon extends Model
 {
-    use SoftDeletes, HasFactory;
+    use SoftDeletes, HasFactory, LogsActivity;
     protected $fillable = ['title','value','expire_date','email','user_id','publication_status','use_status','is_domain'];
     public function user(){
         return $this->belongsTo(User::class,'user_id','id');
@@ -26,4 +29,12 @@ class Coupon extends Model
         return $count;
     }
     
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'value', 'expire_date', 'email', 'user_id', 'publication_status', 'use_status', 'is_domain'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 }
