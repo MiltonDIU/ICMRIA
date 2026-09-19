@@ -39,10 +39,10 @@ class DatabaseSeeder extends Seeder
             TrackChairSeeder::class,
             // A separate TPC Chair account for final approval.
             TpcChairSeeder::class,
-            ReviewerSeeder::class,
+           // ReviewerSeeder::class,
             // Placeholder reviewers on @icmria.com for when the faculty directory is empty.
             // Refuses to run in production.
-            ReviewerPoolSeeder::class,
+            //ReviewerPoolSeeder::class,
 
             // 6. Public site content. Speakers need their types and the tracks
             //    (SpeakersTableSeeder calls KeynoteInvitedSpeakerSeeder); schedule
@@ -63,8 +63,8 @@ class DatabaseSeeder extends Seeder
             // 7. Demonstration data, last, since it needs tracks, prices, chairs and
             //    the reviewer pool. The demo authors take ICMRIA2027-001 to 005 and
             //    the review workflow papers follow. Both refuse to run in production.
-            DemoAuthorSeeder::class,
-            DemoReviewWorkflowSeeder::class,
+           // DemoAuthorSeeder::class,
+           // DemoReviewWorkflowSeeder::class,
         ]);
     }
 }
