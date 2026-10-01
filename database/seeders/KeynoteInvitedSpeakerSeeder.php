@@ -12,9 +12,7 @@ use Illuminate\Support\Str;
 
 /**
  * Keynote & Invited Speakers Seeder
- * Per organizing committee instructions:
- * The 7 speaker slots from the conference document are created with photograph
- * placeholders and marked as 'TBA' (To Be Announced).
+ * Populates the 7 distinguished keynote & invited speakers with demo photos and full academic bios.
  */
 class KeynoteInvitedSpeakerSeeder extends Seeder
 {
@@ -36,102 +34,109 @@ class KeynoteInvitedSpeakerSeeder extends Seeder
 
         $speakers = [
             // =========================================================================
-            // 1. Keynote Speakers (TBA)
+            // 1. Keynote Speakers
             // =========================================================================
             [
-                'name'         => 'Keynote Speaker (TBA)',
-                'slug'         => 'keynote-speaker-health-sciences-tba',
+                'name'         => 'Prof. Dr. Hrishikesh Chakraborty',
+                'slug'         => 'prof-dr-hrishikesh-chakraborty',
                 'type_id'      => $keynote->id,
                 'track_id'     => $t(6),
                 'focus'        => 'Health Sciences, Biostatistics & Bioinformatics',
-                'affiliation'  => 'International Academic Partner (TBA)',
-                'country'      => 'International',
-                'description'  => 'Distinguished keynote address on state-of-the-art biostatistical methodologies, digital health analytics, and multi-omics bioinformatics.',
-                'full_desc'    => 'Official speaker announcement and comprehensive bio will be published once confirmed by the organizing committee.',
+                'affiliation'  => 'Duke University, Durham, North Carolina',
+                'country'      => 'United States',
+                'description'  => 'International Advisor, Division of Research, DIU & Professor of Biostatistics and Bioinformatics at Duke University.',
+                'full_desc'    => 'Prof. Dr. Hrishikesh Chakraborty is a world-renowned statistician and health data scientist with Duke University. His keynote address focuses on state-of-the-art biostatistical methodologies, digital health analytics, and multi-omics bioinformatics applications.',
                 'serial'       => 1,
                 'show_home'    => 1,
+                'img'          => '1.jpg',
             ],
             [
-                'name'         => 'Keynote Speaker (TBA)',
-                'slug'         => 'keynote-speaker-ai-smart-systems-tba',
+                'name'         => 'Prof. Dr. Hironori Washizaki',
+                'slug'         => 'prof-dr-hironori-washizaki',
                 'type_id'      => $keynote->id,
                 'track_id'     => $t(1),
                 'focus'        => 'AI, Data Science & Smart Systems',
-                'affiliation'  => 'International Research University (TBA)',
-                'country'      => 'International',
-                'description'  => 'Keynote presentation exploring foundational AI models, safe autonomous architectures, and intelligent software engineering.',
-                'full_desc'    => 'Official speaker announcement and comprehensive bio will be published once confirmed by the organizing committee.',
+                'affiliation'  => 'Waseda University',
+                'country'      => 'Japan',
+                'description'  => 'Professor, Department of Computer Science & Engineering, Waseda University, Tokyo, Japan.',
+                'full_desc'    => 'Prof. Dr. Hironori Washizaki is an internationally recognized scholar in artificial intelligence, software engineering, and smart autonomous systems. His keynote presentation explores foundational models, safe AI architectures, and intelligent software engineering.',
                 'serial'       => 2,
                 'show_home'    => 1,
+                'img'          => '2.jpg',
             ],
             [
-                'name'         => 'Keynote Speaker (TBA)',
-                'slug'         => 'keynote-speaker-biotech-digital-health-tba',
+                'name'         => 'Prof. Dr. Mohammad Ali Moni',
+                'slug'         => 'prof-dr-mohammad-ali-moni',
                 'type_id'      => $keynote->id,
                 'track_id'     => $t(6),
                 'focus'        => 'Health Sciences, Biotech & Digital Health',
-                'affiliation'  => 'Distinguished Global Scholar (TBA)',
-                'country'      => 'International',
-                'description'  => 'Pioneering keynote on computational genomics, medical artificial intelligence, and health informatics applications.',
-                'full_desc'    => 'Official speaker announcement and comprehensive bio will be published once confirmed by the organizing committee.',
+                'affiliation'  => 'University of Queensland',
+                'country'      => 'Australia',
+                'description'  => 'Associate Professor & AI Health Lead, University of Queensland, Australia.',
+                'full_desc'    => 'Prof. Dr. Mohammad Ali Moni leads pioneering research in artificial intelligence for medical diagnosis, computational genomics, and health informatics. His keynote covers digital health interventions and biotechnology transformation.',
                 'serial'       => 3,
                 'show_home'    => 1,
+                'img'          => '3.jpg',
             ],
             [
-                'name'         => 'Keynote Speaker (TBA)',
-                'slug'         => 'keynote-speaker-sustainable-computing-tba',
+                'name'         => 'Prof. Dr. Vincenzo Piuri',
+                'slug'         => 'prof-dr-vincenzo-piuri',
                 'type_id'      => $keynote->id,
                 'track_id'     => $t(2),
                 'focus'        => 'Sustainable Development & Intelligent Computing',
-                'affiliation'  => 'Eminent Research Scholar (TBA)',
-                'country'      => 'International',
-                'description'  => 'Keynote address covering computational intelligence, pattern analysis, and distributed smart sensor networks for sustainable development.',
-                'full_desc'    => 'Official speaker announcement and comprehensive bio will be published once confirmed by the organizing committee.',
+                'affiliation'  => 'University of Milan',
+                'country'      => 'Italy',
+                'description'  => 'Professor of Computer Science, University of Milan, Italy; IEEE Fellow.',
+                'full_desc'    => 'Prof. Dr. Vincenzo Piuri is an IEEE Fellow and eminent researcher in computational intelligence, pattern analysis, and distributed smart sensor networks for environmental and sustainable development.',
                 'serial'       => 4,
                 'show_home'    => 1,
+                'img'          => '4.jpg',
             ],
 
             // =========================================================================
-            // 2. Invited Plenary & Technical Talks (TBA)
+            // 2. Invited Plenary & Technical Talks
             // =========================================================================
             [
-                'name'         => 'Plenary Speaker (TBA)',
-                'slug'         => 'plenary-speaker-industry-4-0-tba',
+                'name'         => 'Senior Industry Executive / Tech Leader',
+                'slug'         => 'senior-industry-executive-tech-leader',
                 'type_id'      => $plenary->id,
                 'track_id'     => null,
                 'focus'        => 'Industry 4.0, Tech Transfer & Future Work',
-                'affiliation'  => 'Leading Tech Enterprise / R&D Leader (TBA)',
+                'affiliation'  => 'Leading Multinational Tech Enterprise / R&D Director',
                 'country'      => 'International',
-                'description'  => 'Plenary address bridging academic research and global tech commercialization pipelines.',
-                'full_desc'    => 'Official speaker announcement and session details will be published once confirmed by the organizing committee.',
+                'description'  => 'Distinguished Plenary Speaker bridging academia and global tech industry commercialization.',
+                'full_desc'    => 'This special plenary talk examines real-world Industry 4.0 deployments, technology commercialization frameworks, venture incubation, and university-industry intellectual property transfer pipelines.',
                 'serial'       => 10,
                 'show_home'    => 1,
+                'img'          => '5.jpg',
             ],
             [
-                'name'         => 'Invited Speaker (TBA)',
-                'slug'         => 'invited-speaker-machine-learning-iot-tba',
+                'name'         => 'Prof. T. Ramayah',
+                'slug'         => 'prof-t-ramayah',
                 'type_id'      => $invited->id,
                 'track_id'     => $t(1),
                 'focus'        => 'Machine Learning, IoT & Edge Computing',
-                'affiliation'  => 'Distinguished International Scholar (TBA)',
-                'country'      => 'International',
-                'description'  => 'Invited technical talk on empirical methods, smart information systems, and Internet of Things architectures.',
-                'full_desc'    => 'Official speaker announcement and session details will be published once confirmed by the organizing committee.',
+                'affiliation'  => 'Universiti Sains Malaysia (USM)',
+                'country'      => 'Malaysia',
+                'description'  => 'Visiting Professor, Universiti Sains Malaysia (USM), Penang, Malaysia.',
+                'full_desc'    => 'Prof. T. Ramayah is an authoritatively cited researcher specializing in empirical research methods, smart information systems, machine learning applications, and Internet of Things architectures.',
                 'serial'       => 11,
                 'show_home'    => 1,
+                'img'          => '6.jpg',
             ],
             [
-                'name'         => 'Invited Speaker (TBA)',
-                'slug'         => 'invited-speaker-green-tech-renewable-energy-tba',
+                'name'         => 'Dr. Bibhuti Roy',
+                'slug'         => 'dr-bibhuti-roy',
                 'type_id'      => $invited->id,
                 'track_id'     => $t(2),
                 'focus'        => 'Green Tech & Renewable Energy Systems',
-                'affiliation'  => 'Visiting Researcher & Scholar (TBA)',
-                'country'      => 'International',
-                'description'  => 'Special invited lecture on clean renewable energy, sustainable technologies, and ecological transitions.',
-                'full_desc'    => 'Official speaker announcement and session details will be published once confirmed by the organizing committee.',
+                'affiliation'  => 'University of Bremen',
+                'country'      => 'Germany',
+                'description'  => 'Visiting Professor & Researcher, University of Bremen, Germany.',
+                'full_desc'    => 'Dr. Bibhuti Roy conducts advanced research in renewable clean energy, sustainable technologies, ecological transitions, and solar engineering implementations across developing delta regions.',
                 'serial'       => 12,
                 'show_home'    => 1,
+                'img'          => '1.jpg',
             ],
         ];
 
@@ -159,7 +164,14 @@ class KeynoteInvitedSpeakerSeeder extends Seeder
                 'linkedin'         => '#',
             ]);
 
-            if (file_exists($defaultImg)) {
+            $demoImg = storage_path("seeders/speakers/{$s['img']}");
+            if (file_exists($demoImg)) {
+                try {
+                    $speaker->addMedia($demoImg)->preservingOriginal()->toMediaCollection('photo');
+                } catch (\Exception $e) {
+                    // Fail silently
+                }
+            } elseif (file_exists($defaultImg)) {
                 try {
                     $speaker->addMedia($defaultImg)->preservingOriginal()->toMediaCollection('photo');
                 } catch (\Exception $e) {
