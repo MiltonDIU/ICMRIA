@@ -14,7 +14,7 @@
                <div class="row">
                    <div class="col-md-12">
                        <p>
-                           Daffodil International Professional Training Institute operates [aiconnect.dipti.com.bd] (the "Site"). This page informs you of our policies regarding the collection, use, and disclosure of Personal Information we receive from users of the Site.
+                           ICMRIA 2027 Conference Secretariat, Daffodil International University operates [icmria.daffodilvarsity.edu.bd] (the "Site"). This page informs you of our policies regarding the collection, use, and disclosure of Personal Information we receive from users of the Site.
                        </p>
                        <p>
                        We use your Personal Information only for providing and improving the Site. By using the Site, you agree to the collection and use of information in accordance with this policy.
@@ -59,7 +59,7 @@
 
                             <h4>Contact Us</h4>
                        <p>
-                       If you have any questions about this Privacy Policy, please contact us at info@dipti.com.bd.
+                       If you have any questions about this Privacy Policy, please contact us at icmria2027@diu.edu.bd.
                        </p>
                    </div>
                </div>

@@ -46,9 +46,14 @@
         <div class="col-lg-3 col-md-6 footer-contact">
           <h4>Contact Us</h4>
           <p>
-            {!! $settings['footer_address'] ?? '' !!}<br>
-            <strong>Phone:</strong> @if(isset($settings['contact_phone'])){{ $settings['contact_phone'] }}@endif<br>
-            <strong>Email:</strong> @if(isset($settings['contact_email'])){{ $settings['contact_email'] }}@endif<br>
+            {!! $settings['footer_address'] ?? 'Daffodil International University<br>Daffodil Smart City (DSC),<br>Birulia, Savar, Dhaka-1216' !!}<br><br>
+            <strong>Official Helpline:</strong><br>
+            <i class="fa fa-phone mr-1"></i> <a href="tel:+8801711851121" style="color: #cbd5e1;">+880 1711-851121</a><br>
+            <i class="fa fa-phone mr-1"></i> <a href="tel:+8801946704373" style="color: #cbd5e1;">+880 1946-704373</a><br><br>
+            <strong>WhatsApp Support:</strong><br>
+            <i class="fa fa-whatsapp mr-1 text-success"></i> <span style="color: #cbd5e1;">+880 1711-851121, +880 1946-704373</span><br><br>
+            <strong>Email:</strong><br>
+            <i class="fa fa-envelope-o mr-1"></i> <a href="mailto:icmria2027@diu.edu.bd" style="color: #cbd5e1;">icmria2027@diu.edu.bd</a><br>
           </p>
 
           <div class="social-links">

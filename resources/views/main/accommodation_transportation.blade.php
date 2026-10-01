@@ -45,7 +45,7 @@
                         <div class="venue-details-list p-3 rounded mb-4" style="background: #F1F5F9; font-size: 13px; border: 1px solid #E2E8F0;">
                             <div class="mb-2"><i class="fa fa-map-marker text-primary mr-2"></i> <strong>Address:</strong> Daffodil Smart City, Khagan, Birulia, Savar, Dhaka-1216, Bangladesh</div>
                             <div class="mb-2"><i class="fa fa-university text-primary mr-2"></i> <strong>Host:</strong> Daffodil International University (DIU)</div>
-                            <div><i class="fa fa-envelope text-primary mr-2"></i> <strong>Email:</strong> fahadhossain.swe@diu.edu.bd</div>
+                            <div><i class="fa fa-envelope text-primary mr-2"></i> <strong>Email:</strong> icmria2027@diu.edu.bd</div>
                         </div>
                         <a href="https://maps.google.com/maps?q=Daffodil+International+University,+Birulia,+Savar" target="_blank" class="btn btn-primary rounded-pill px-4 font-weight-bold" style="background: #0055A0; border-color: #0055A0;">
                             <i class="fa fa-external-link mr-1"></i> Open in Google Maps
@@ -192,11 +192,11 @@
                     Our hospitality committee is ready to assist you with airport pickup coordination, visa invitation letters, and hotel bookings.
                 </p>
                 <div class="d-flex flex-wrap justify-content-center" style="gap: 15px;">
-                    <a href="mailto:fahadhossain.swe@diu.edu.bd" class="btn btn-primary rounded-pill px-4 py-2 font-weight-bold" style="background: #0055A0; border-color: #0055A0;">
+                    <a href="mailto:icmria2027@diu.edu.bd" class="btn btn-primary rounded-pill px-4 py-2 font-weight-bold" style="background: #0055A0; border-color: #0055A0;">
                         <i class="fa fa-envelope mr-1"></i> Contact Hospitality Committee
                     </a>
-                    <a href="tel:01946704373" class="btn btn-outline-primary rounded-pill px-4 py-2 font-weight-bold" style="border-color: #0055A0; color: #0055A0;">
-                        <i class="fa fa-phone mr-1"></i> Hotline: +8801946704373
+                    <a href="tel:+8801711851121" class="btn btn-outline-primary rounded-pill px-4 py-2 font-weight-bold" style="border-color: #0055A0; color: #0055A0;">
+                        <i class="fa fa-phone mr-1"></i> Helpline: +880 1711-851121, +880 1946-704373
                     </a>
                 </div>
             </div>

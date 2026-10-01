@@ -235,7 +235,7 @@
 
                 <p class="message-intro" style="margin-top: 24px;">
                     If you have any questions, please contact us at
-                    <a href="mailto:fahadhossain.swe@diu.edu.bd" class="contact-info">fahadhossain.swe@diu.edu.bd</a>.
+                    <a href="mailto:icmria2027@diu.edu.bd" class="contact-info">icmria2027@diu.edu.bd</a>.
                 </p>
             </div>
 

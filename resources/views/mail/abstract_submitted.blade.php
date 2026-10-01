@@ -223,7 +223,7 @@
 
                 <p class="disclaimer">Please note that this message confirms receipt of your abstract only. The final decision will be communicated after the review process is completed.</p>
 
-                <p class="message-intro">If you have any questions, please contact the conference team at <a href="mailto:fahadhossain.swe@diu.edu.bd" class="contact-info">fahadhossain.swe@diu.edu.bd</a>.</p>
+                <p class="message-intro">If you have any questions, please contact the conference team at <a href="mailto:icmria2027@diu.edu.bd" class="contact-info">icmria2027@diu.edu.bd</a>.</p>
 
                 <p class="message-intro">Thank you for your interest in ICMRIA 2027.</p>
             </div>

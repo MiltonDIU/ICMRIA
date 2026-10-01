@@ -4,7 +4,7 @@
 
     <div class="section-header">
       <h2>Contact Us</h2>
-      <p>This is our contact detail.</p>
+      <p>Official Secretariat &amp; Conference Support</p>
     </div>
 
     <div class="row contact-info">
@@ -13,60 +13,37 @@
         <div class="contact-address">
           <i class="ion-ios-location-outline"></i>
           <h3>Address</h3>
-          <a href="https://goo.gl/maps/LEutqFoJkC5Yj9h17" target="_blank"><address>@if(isset($settings['contact_address'])){{ $settings['contact_address'] }}@endif</address></a>
+          <a href="https://goo.gl/maps/LEutqFoJkC5Yj9h17" target="_blank"><address>Daffodil International University, Daffodil Smart City, Birulia, Savar, Dhaka-1216, Bangladesh</address></a>
         </div>
       </div>
 
       <div class="col-md-4">
         <div class="contact-phone">
           <i class="ion-ios-telephone-outline"></i>
-          <h3>Helpline & WhatsApp</h3>
+          <h3>Official Helpline</h3>
           <p class="mb-1">
             <i class="fa fa-phone mr-1 text-primary"></i> <a href="tel:+8801711851121">+880 1711-851121</a>
           </p>
           <p class="mb-1">
             <i class="fa fa-phone mr-1 text-primary"></i> <a href="tel:+8801946704373">+880 1946-704373</a>
           </p>
-          <small class="text-success font-weight-bold"><i class="fa fa-whatsapp"></i> WhatsApp Support Available</small>
+          <div class="mt-2 pt-2 border-top">
+            <small class="text-success font-weight-bold d-block"><i class="fa fa-whatsapp"></i> Official WhatsApp Support:</small>
+            <span class="small font-weight-bold" style="color: #003366;">+880 1711-851121, +880 1946-704373</span>
+          </div>
         </div>
       </div>
 
       <div class="col-md-4">
         <div class="contact-email">
           <i class="ion-ios-email-outline"></i>
-          <h3>Email</h3>
-          <p>@if(isset($settings['contact_email']))<a href="mailto:{{ $settings['contact_email'] ?? '' }}">{{ $settings['contact_email'] ?? '' }}</a>@endif</p>
+          <h3>Dedicated Conference Email</h3>
+          <p><a href="mailto:icmria2027@diu.edu.bd">icmria2027@diu.edu.bd</a></p>
+          <small class="text-muted">Secretariat &amp; Paper Inquiries</small>
         </div>
       </div>
 
     </div>
-
-
-    <!--<div class="form">-->
-    <!--  <div id="sendmessage">Your message has been sent. Thank you!</div>-->
-    <!--  <div id="errormessage"></div>-->
-    <!--  <form action="" method="post" role="form" class="contactForm">-->
-    <!--    <div class="form-row">-->
-    <!--      <div class="form-group col-md-6">-->
-    <!--        <input type="text" name="name" class="form-control" id="name" placeholder="Your Name" data-rule="minlen:4" data-msg="Please enter at least 4 chars" />-->
-    <!--        <div class="validation"></div>-->
-    <!--      </div>-->
-    <!--      <div class="form-group col-md-6">-->
-    <!--        <input type="email" class="form-control" name="email" id="email" placeholder="Your Email" data-rule="email" data-msg="Please enter a valid email" />-->
-    <!--        <div class="validation"></div>-->
-    <!--      </div>-->
-    <!--    </div>-->
-    <!--    <div class="form-group">-->
-    <!--      <input type="text" class="form-control" name="subject" id="subject" placeholder="Subject" data-rule="minlen:4" data-msg="Please enter at least 8 chars of subject" />-->
-    <!--      <div class="validation"></div>-->
-    <!--    </div>-->
-    <!--    <div class="form-group">-->
-    <!--      <textarea class="form-control" name="message" rows="5" data-rule="required" data-msg="Please write something for us" placeholder="Message"></textarea>-->
-    <!--      <div class="validation"></div>-->
-    <!--    </div>-->
-    <!--    <div class="text-center"><button type="submit">Send Message</button></div>-->
-    <!--  </form>-->
-    <!--</div>-->
 
   </div>
 </section><!-- #contact -->
