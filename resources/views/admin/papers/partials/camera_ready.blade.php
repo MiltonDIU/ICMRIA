@@ -143,7 +143,7 @@
                         <div class="custom-control custom-checkbox mb-3">
                             <input type="checkbox" class="custom-control-input" id="names_confirmed" name="names_confirmed" value="1">
                             <label class="custom-control-label" for="names_confirmed">
-                                The camera-ready manuscript carries every author name and affiliation and follows the conference template.
+                                The camera-ready manuscript carries every author name and affiliation and follows the <a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}">conference template</a>.
                             </label>
                         </div>
                         <div class="form-group">

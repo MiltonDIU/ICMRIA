@@ -42,6 +42,9 @@
                 The full manuscript must use the <strong>IEEE conference template</strong> and be
                 <strong>{{ $minPages }}&ndash;{{ $maxPages }} pages</strong> long.
                 <a href="{{ route('author-guidelines') }}#templates" target="_blank" rel="noopener">Author guidelines &amp; templates</a>
+                @if(\App\Services\ConferenceDocuments::templateExists())
+                    &mdash; <a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}" class="font-weight-bold"><i class="fas fa-file-download"></i> Download Template (.DOCX)</a>
+                @endif
             </li>
             @if(\App\Services\SubmissionRules::isDoubleBlind())
                 <li>

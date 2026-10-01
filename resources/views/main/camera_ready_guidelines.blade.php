@@ -88,6 +88,9 @@
                             </div>
                             <p class="text-muted small mb-0" style="line-height: 1.7;">
                                 Preserve standard IEEE 2-column formatting. Verify margins, embedded fonts, high-resolution figures, and adhere strictly to the 6–8 page conference limit.
+                                @if(\App\Services\ConferenceDocuments::templateExists())
+                                    <br><a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}" class="font-weight-bold" style="color: #0055A0;"><i class="fa fa-download mr-1"></i> Download Conference Template (.DOCX)</a>
+                                @endif
                             </p>
                         </div>
                     </div>

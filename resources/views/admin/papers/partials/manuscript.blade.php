@@ -83,7 +83,7 @@
                     <input type="checkbox" class="custom-control-input @error('format_confirmed') is-invalid @enderror"
                            id="format_confirmed" name="format_confirmed" value="1" required>
                     <label class="custom-control-label" for="format_confirmed">
-                        I confirm the manuscript follows the IEEE conference template and is {{ $minPages }}&ndash;{{ $maxPages }} pages long
+                        I confirm the manuscript follows the IEEE conference template (<a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}">download template</a>) and is {{ $minPages }}&ndash;{{ $maxPages }} pages long
                     </label>
                     @error('format_confirmed') <span class="text-danger small d-block">{{ $message }}</span> @enderror
                 </div>
@@ -100,7 +100,7 @@
                 @endif
 
                 <small class="form-text text-muted">
-                    PDF or Word, up to 20&nbsp;MB, following the conference template.
+                    PDF or Word, up to 20&nbsp;MB, following the <a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}">conference template (.DOCX)</a>.
                     @if(\App\Services\SubmissionRules::isDoubleBlind())
                         Review is <strong>double-blind</strong>, and nothing can remove names from inside your file but you.
                     @endif

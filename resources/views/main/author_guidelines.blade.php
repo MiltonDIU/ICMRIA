@@ -263,7 +263,7 @@
                                     <i class="fa fa-check-circle text-success mt-1 mr-3"></i>
                                     <div>
                                         <strong>IEEE Standard Conference Format:</strong>
-                                        <p class="text-muted small mb-0">Papers must strictly adhere to standard IEEE two-column conference paper guidelines (A4 size, standard margins, Times New Roman typeface).</p>
+                                        <p class="text-muted small mb-0">Papers must strictly adhere to standard IEEE two-column conference paper guidelines (A4 size, standard margins, Times New Roman typeface). <a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}" class="font-weight-bold ml-1" style="color: #0055A0;"><i class="fa fa-download"></i> Download Template</a></p>
                                     </div>
                                 </li>
                                 <li class="d-flex mb-3">
@@ -318,10 +318,17 @@
                                 <p class="text-muted small">Standard conference manuscript template for Microsoft Word (.DOCX).</p>
                             </div>
                             <div>
-                                <span class="badge badge-light px-2 py-1 text-muted mb-2" style="font-size: 11px;">Coming Soon</span>
-                                <a href="#" class="btn btn-outline-primary btn-block" style="border-color: #0055A0; color: #0055A0;">
-                                    <i class="fa fa-download mr-1"></i> Download .DOCX
-                                </a>
+                                @if(\App\Services\ConferenceDocuments::templateExists())
+                                    <span class="badge badge-success px-2 py-1 mb-2" style="font-size: 11px;">{{ \App\Services\ConferenceDocuments::badge('template_word') ?: 'Available' }}</span>
+                                    <a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}" class="btn btn-primary btn-block shadow-sm" style="background: #0055A0; border-color: #0055A0; color: #ffffff; font-weight: 600;">
+                                        <i class="fa fa-download mr-1"></i> Download .DOCX
+                                    </a>
+                                @else
+                                    <span class="badge badge-light px-2 py-1 text-muted mb-2" style="font-size: 11px;">Coming Soon</span>
+                                    <a href="#" class="btn btn-outline-primary btn-block disabled" style="border-color: #0055A0; color: #0055A0;">
+                                        <i class="fa fa-download mr-1"></i> Download .DOCX
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -334,10 +341,17 @@
                                 <p class="text-muted small">Comprehensive CFP brochure detailing all tracks, sub-tracks, and advisory boards.</p>
                             </div>
                             <div>
-                                <span class="badge badge-light px-2 py-1 text-muted mb-2" style="font-size: 11px;">Coming Soon</span>
-                                <a href="#" class="btn btn-outline-primary btn-block" style="border-color: #0055A0; color: #0055A0;">
-                                    <i class="fa fa-file-pdf-o mr-1"></i> View Full PDF
-                                </a>
+                                @if(\App\Services\ConferenceDocuments::exists('cfp_pdf'))
+                                    <span class="badge badge-primary px-2 py-1 mb-2" style="font-size: 11px;">Official Brochure</span>
+                                    <a href="{{ \App\Services\ConferenceDocuments::url('cfp_pdf') }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-block" style="border-color: #0055A0; color: #0055A0; font-weight: 600;">
+                                        <i class="fa fa-file-pdf-o mr-1"></i> View Full PDF
+                                    </a>
+                                @else
+                                    <span class="badge badge-light px-2 py-1 text-muted mb-2" style="font-size: 11px;">Coming Soon</span>
+                                    <a href="#" class="btn btn-outline-primary btn-block disabled" style="border-color: #0055A0; color: #0055A0;">
+                                        <i class="fa fa-file-pdf-o mr-1"></i> View Full PDF
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>

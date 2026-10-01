@@ -456,6 +456,11 @@
                 <a href="{{ route('author-guidelines') }}#templates" target="_blank" rel="noopener" class="btn btn-sm btn-brand-outline mr-1 mb-1">
                     <i class="fas fa-download mr-1"></i> Templates &amp; forms
                 </a>
+                @if(\App\Services\ConferenceDocuments::templateExists())
+                    <a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}" class="btn btn-sm btn-primary mr-1 mb-1">
+                        <i class="fas fa-file-word mr-1"></i> Download Template (.DOCX)
+                    </a>
+                @endif
                 <a href="{{ route('tracks') }}" target="_blank" rel="noopener" class="btn btn-sm btn-brand-outline mr-1 mb-1">
                     <i class="fas fa-sitemap mr-1"></i> Tracks &amp; sub-tracks
                 </a>
