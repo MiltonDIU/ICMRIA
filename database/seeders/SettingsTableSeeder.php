@@ -58,14 +58,16 @@ class SettingsTableSeeder extends Seeder
                 'value' => 'Daffodil International University, Daffodil Smart City, Birulia, Savar, Dhaka-1216, Bangladesh',
             ],
             [
-                // DIU Engineering events office (WhatsApp) — carried over from the
-                // live database; confirm/replace with the official ICMRIA 2027 number.
                 'key'   => 'contact_phone',
-                'value' => '+8801946704373 (WhatsApp)',
+                'value' => '+880 1711-851121, +880 1946-704373',
+            ],
+            [
+                'key'   => 'contact_whatsapp',
+                'value' => '+880 1711-851121, +880 1946-704373',
             ],
             [
                 'key'   => 'contact_email',
-                'value' => 'fahadhossain.swe@diu.edu.bd',
+                'value' => 'icmria2027@diu.edu.bd',
             ],
 
             // ---------------------------------------------------------------

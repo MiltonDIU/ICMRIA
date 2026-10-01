@@ -17,13 +17,7 @@
                 {{-- <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#CallforPapers">Call for Papers</a></li> --}}
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#committee">Committee</a>
                 </li>
-                @php
-                    $hasPublishedMessages = isset($conferenceMessages) ? $conferenceMessages->isNotEmpty() : \App\Models\ConferenceMessage::where('is_published', 1)->exists();
-                @endphp
-                @if($hasPublishedMessages)
-                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#messages">Messages</a>
-                </li>
-                @endif
+                <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#messages">Messages</a></li>
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#speakers">Speakers</a>
                 </li>
                 <li><a href="{{ Route::current()->getName() != 'home' ? route('home') : '' }}#schedule">Schedule</a>

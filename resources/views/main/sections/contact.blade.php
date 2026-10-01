@@ -20,8 +20,14 @@
       <div class="col-md-4">
         <div class="contact-phone">
           <i class="ion-ios-telephone-outline"></i>
-          <h3>Phone Number</h3>
-          <p>@if(isset($settings['contact_phone']))<a href="tel:{{ str_replace(' ', '', $settings['contact_phone'] ?? '') }}">{{ $settings['contact_phone'] ?? '' }}</a>@endif</p>
+          <h3>Helpline & WhatsApp</h3>
+          <p class="mb-1">
+            <i class="fa fa-phone mr-1 text-primary"></i> <a href="tel:+8801711851121">+880 1711-851121</a>
+          </p>
+          <p class="mb-1">
+            <i class="fa fa-phone mr-1 text-primary"></i> <a href="tel:+8801946704373">+880 1946-704373</a>
+          </p>
+          <small class="text-success font-weight-bold"><i class="fa fa-whatsapp"></i> WhatsApp Support Available</small>
         </div>
       </div>
 

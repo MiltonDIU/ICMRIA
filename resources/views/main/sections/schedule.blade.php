@@ -3,6 +3,7 @@
         <div class="section-header">
             <h2>Conference Program Schedule</h2>
             <p>Comprehensive two-day itinerary for ICMRIA 2027 (9–10 January 2027)</p>
+            <p class="text-muted small mx-auto mt-2" style="max-width: 680px;"><i class="fa fa-info-circle mr-1 text-primary"></i> The detailed session-wise program schedule will be finalized and updated periodically as conference planning progresses.</p>
         </div>
 
         <ul class="nav nav-tabs justify-content-center" role="tablist">

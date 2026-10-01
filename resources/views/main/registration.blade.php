@@ -191,12 +191,12 @@
                                             <i class="fa fa-envelope-o mr-1"></i> Secretariat & Submission Inquiries
                                         </div>
                                         <div class="small text-dark font-weight-bold">
-                                            <a href="mailto:{{ $settings['contact_email'] ?? 'fahadhossain.swe@diu.edu.bd' }}" style="color: #003366;">
-                                                {{ $settings['contact_email'] ?? 'fahadhossain.swe@diu.edu.bd' }}
+                                            <a href="mailto:{{ $settings['contact_email'] ?? 'icmria2027@diu.edu.bd' }}" style="color: #003366;">
+                                                {{ $settings['contact_email'] ?? 'icmria2027@diu.edu.bd' }}
                                             </a>
                                         </div>
                                         <div class="small text-muted mt-1">
-                                            <i class="fa fa-whatsapp text-success mr-1"></i> {{ $settings['contact_phone'] ?? '+8801946704373' }}
+                                            <i class="fa fa-whatsapp text-success mr-1"></i> {{ $settings['contact_phone'] ?? '+880 1711-851121 / +880 1946-704373' }}
                                         </div>
                                     </div>
 

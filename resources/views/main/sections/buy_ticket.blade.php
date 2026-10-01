@@ -122,6 +122,9 @@
     <div class="section-header text-center">
       <h2>Registration & Participation Fees</h2>
       <p>Transparent fee structure with comprehensive, all-inclusive privileges for all authors and delegates</p>
+      <div class="alert alert-info py-2 px-3 mx-auto mt-2 text-center d-inline-block small" style="border-radius: 25px; max-width: 780px;">
+        <i class="fa fa-info-circle mr-1"></i> <strong>Note for Authors:</strong> Detailed registration and payment instructions will be communicated directly to authors of accepted papers via email upon acceptance notification.
+      </div>
     </div>
 
     <!-- ========================================================= -->
