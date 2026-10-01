@@ -29,7 +29,7 @@
           <h4>Conference Portal</h4>
           <div style="background: #ffffff; padding: 12px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 170px; text-align: center;">
             <a href="https://icmria.daffodilvarsity.edu.bd" target="_blank" title="Scan or click to visit official conference website">
-              <img src="{{ asset('img/qr-code.png') }}" alt="ICMRIA 2027 Official Website QR Code" style="width: 100%; max-width: 145px; height: auto; display: block; border-radius: 4px;">
+              <img src="{{ asset('img/icmria-qr-code.png') . '?v=' . time() }}" alt="ICMRIA 2027 Official Website QR Code" style="width: 100%; max-width: 145px; height: auto; display: block; border-radius: 4px;">
             </a>
             <div style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #003366; line-height: 1.3;">
               <i class="fa fa-qrcode mr-1"></i> Scan to Visit
