@@ -13,7 +13,7 @@
           <ul>
             <li><i class="fa fa-angle-right"></i> <a href="{{ url('/') }}">Home</a></li>
             <li><i class="fa fa-angle-right"></i> <a href="{{ url('/#about') }}">About Conference</a></li>
-            <li><i class="fa fa-angle-right"></i> <a href="{{ route('author.guidelines') }}">Author Guidelines</a></li>
+            <li><i class="fa fa-angle-right"></i> <a href="{{ route('author-guidelines') }}">Author Guidelines</a></li>
             <li><i class="fa fa-angle-right"></i> <a href="{{ route('tracks') }}">Conference Tracks</a></li>
             <li><i class="fa fa-angle-right"></i> <a href="{{ route('privacy-policy') }}">Privacy Policy</a></li>
             @guest
