@@ -550,7 +550,13 @@
                                             <input type="text" name="extra_info" id="extra_info" value="">
                                         </div>
 
-                                        @include('partials.fee-summary')
+                                        {{-- Amount Payable temporarily commented out as requested --}}
+                                        {{-- @include('partials.fee-summary') --}}
+                                        <script>
+                                            if (typeof renderFeeSummary === 'undefined') {
+                                                function renderFeeSummary() {}
+                                            }
+                                        </script>
 
                                         <div class="row pt-4 border-top">
                                             <div class="col-md-12">

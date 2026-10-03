@@ -267,9 +267,14 @@ class ProfileController extends Controller
     public function edit($id)
     {
         abort_if(Gate::denies('profile'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        $profile = Profile::find($id);
+        $profile = Profile::with(['price', 'country'])->find($id);
         abort_if(!$profile, Response::HTTP_NOT_FOUND, '404 Not Found');
         $user = User::find($profile->user_id);
+
+        if ($profile && $profile->payment_status != '1') {
+            \App\Services\PricingService::updateProfileTotalDue($profile);
+            $profile->refresh();
+        }
 
         // Keeping your own name, institution and contact details current needs no
         // permission beyond owning the account &mdash; profile_edit is the gate for

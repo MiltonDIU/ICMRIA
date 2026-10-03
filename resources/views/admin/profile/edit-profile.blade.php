@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 @section('content')
+@php
+    $priceRow = $profile ? \App\Services\PricingService::priceRowFor($profile) : null;
+    $currency = $priceRow->currency ?? $profile->currency ?? 'BDT';
+@endphp
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -147,7 +151,7 @@
                                     </div>
                                     <div class="col-md-2 mb-2 mb-md-0">
                                         <small class="text-muted d-block">Amount</small>
-                                        <strong>{{ $profile->currency ?? 'BDT' }} {{ number_format($profile->pay_amount ?? 0, 2) }}</strong>
+                                        <strong>{{ $currency }} {{ number_format($profile->pay_amount ?? 0, 2) }}</strong>
                                     </div>
                                     <div class="col-md-2">
                                         <small class="text-muted d-block">Payment</small>
@@ -211,7 +215,7 @@
                         </div>
                         <div class="col-md-4 mb-2 mb-md-0">
                             <small class="text-muted d-block">Amount due</small>
-                            <strong>{{ $profile->currency ?? 'BDT' }} {{ number_format($profile->pay_amount ?? 0, 2) }}</strong>
+                            <strong>{{ $currency }} {{ number_format($profile->pay_amount ?? 0, 2) }}</strong>
                             <small class="text-muted d-block">
                                 {{ ucwords(str_replace('_', ' ', \App\Services\PricingService::currentStage())) }} rate
                                 @if($profile->payment_status == '1')

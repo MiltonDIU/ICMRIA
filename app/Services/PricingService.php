@@ -143,7 +143,7 @@ class PricingService
         $profilePrice = self::priceRowFor($profile);
 
         $basePrice = $profilePrice ? $profilePrice->amountFor($stage) : 0.0;
-        $currencyCode = strtoupper($profilePrice->currency ?? 'USD');
+        $currencyCode = strtoupper($profilePrice->currency ?? ($profile->currency ?: 'BDT'));
         $finalPrice = self::applyDomainDiscount($profile, $basePrice);
 
         $totalBasePrice = 0;
@@ -208,7 +208,7 @@ class PricingService
 
         return [
             'final_price' => $price ? $price->amountFor() : 0.0,
-            'currency' => strtoupper($price->currency ?? 'USD')
+            'currency' => strtoupper($price->currency ?? ($profile->currency ?: 'BDT'))
         ];
     }
 
@@ -225,8 +225,9 @@ class PricingService
             return;
         }
 
+        $priceRow = self::priceRowFor($profile);
+        $currency = strtoupper($priceRow->currency ?? ($profile->currency ?: 'BDT'));
         $totalAmount = 0;
-        $currency = 'USD'; // Default
 
         if (!$profile->is_author) {
             // Logic for Participant Only
@@ -242,10 +243,16 @@ class PricingService
                 })
                 ->get();
 
-            foreach ($papers as $paper) {
-                $paperPricing = self::calculatePaperCost($profile, $paper);
-                $totalAmount += $paperPricing['final_price'];
-                $currency = $paperPricing['currency'];
+            if ($papers->isEmpty()) {
+                $totalAmount = $priceRow ? $priceRow->amountFor(self::currentStage()) : 0.0;
+                $currency = strtoupper($priceRow->currency ?? ($profile->currency ?: 'BDT'));
+            } else {
+                $totalAmount = 0;
+                foreach ($papers as $paper) {
+                    $paperPricing = self::calculatePaperCost($profile, $paper);
+                    $totalAmount += $paperPricing['final_price'];
+                    $currency = $paperPricing['currency'];
+                }
             }
         }
 

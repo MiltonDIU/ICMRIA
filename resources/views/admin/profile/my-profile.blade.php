@@ -152,7 +152,8 @@
         ->implode('');
 
     $paid = $profile && $profile->payment_status == '1';
-    $currency = $profile->currency ?? 'BDT';
+    $priceRow = $profile ? \App\Services\PricingService::priceRowFor($profile) : null;
+    $currency = $priceRow->currency ?? $profile->currency ?? 'BDT';
 
     $approved = $papers->where('status', 'approved')->count();
     $pending = $papers->filter(fn ($p) => $p->status === null || $p->status === 'pending')->count();
