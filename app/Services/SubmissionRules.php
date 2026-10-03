@@ -100,6 +100,21 @@ class SubmissionRules
      * between the opening date and the abstract deadline, so a forgotten switch cannot
      * keep submissions open past the deadline on one route but not the other.
      */
+    /**
+     * Whether abstract submission is accepted on the public registration page (/book-ticket).
+     * Controlled independently by the 'is_registration_abstract_submission_open' setting
+     * so organisers can turn off abstracts during registration while keeping submissions
+     * open on the internal author portal (papers/submit).
+     */
+    public static function registrationAbstractIsOpen(): bool
+    {
+        if (Setting::where('key', 'is_registration_abstract_submission_open')->value('value') === 'false') {
+            return false;
+        }
+
+        return self::abstractWindowIsOpen();
+    }
+
     public static function abstractWindowIsOpen(): bool
     {
         if (Setting::where('key', 'is_abstract_submission_open')->value('value') === 'false') {

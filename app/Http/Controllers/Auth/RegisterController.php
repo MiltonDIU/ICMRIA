@@ -113,7 +113,7 @@ class RegisterController extends Controller
 
         if (isset($data['is_author']) && $data['is_author'] == "1") {
             $settings = Setting::pluck('value', 'key');
-            $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
+            $isSubmissionOpen = \App\Services\SubmissionRules::registrationAbstractIsOpen();
 
             if ($isSubmissionOpen) {
                 // 255 is what papers.title holds; a longer title was accepted here and then
@@ -209,7 +209,7 @@ class RegisterController extends Controller
             $profile = Profile::create($profileData);
 
             // 2. Handle Paper Submission if Author
-            if ($profile->is_author && \App\Services\SubmissionRules::abstractWindowIsOpen()) {
+            if ($profile->is_author && \App\Services\SubmissionRules::registrationAbstractIsOpen()) {
                 $hasCoAuthors = isset($data['co_authors']) && is_array($data['co_authors']) && count($data['co_authors']) > 0;
                 $presentingAuthorIndex = $data['presenting_author_index'] ?? 'submitter';
                 $submitterIsPresenting = $presentingAuthorIndex === 'submitter';

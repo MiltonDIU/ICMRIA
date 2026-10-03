@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-@php $abstractOpen = \App\Services\SubmissionRules::abstractWindowIsOpen(); @endphp
+@php $abstractOpen = \App\Services\SubmissionRules::registrationAbstractIsOpen(); @endphp
     <main id="main" class="main-page">
         <section class="wow fadeIn">
             <div class="title-section" style="background: linear-gradient(135deg, #001f3f 0%, #003366 55%, #004d80 100%); padding: 75px 0 45px;">

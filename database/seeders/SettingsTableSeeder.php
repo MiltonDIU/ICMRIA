@@ -116,6 +116,7 @@ class SettingsTableSeeder extends Seeder
             // Abstract submission rules
             // ---------------------------------------------------------------
             ['key' => 'is_abstract_submission_open',   'value' => 'true'],
+            ['key' => 'is_registration_abstract_submission_open', 'value' => 'true'],
             ['key' => 'maximum_abstract_submission',   'value' => '3'],
             ['key' => 'seat_is_full',                  'value' => 'false'],
             ['key' => 'is_payment_enabled',            'value' => 'true'],
