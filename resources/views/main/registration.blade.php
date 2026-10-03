@@ -186,17 +186,40 @@
                                     </div>
 
                                     {{-- Secretariat Support --}}
-                                    <div class="sidebar-contact text-center p-3 rounded" style="background: #EEF4FA; border: 1px dashed #0055A0;">
-                                        <div class="small font-weight-bold text-primary mb-1">
-                                            <i class="fa fa-envelope-o mr-1"></i> Secretariat & Submission Inquiries
+                                    <div class="sidebar-contact p-3 rounded" style="background: #EEF4FA; border: 1px dashed #0055A0;">
+                                        <div class="text-center mb-2">
+                                            <div class="small font-weight-bold text-primary mb-1">
+                                                <i class="fa fa-envelope-o mr-1"></i> Secretariat &amp; Conference Support
+                                            </div>
+                                            <div class="small text-dark font-weight-bold">
+                                                <a href="mailto:icmria2027@diu.edu.bd" style="color: #003366;">
+                                                    icmria2027@diu.edu.bd
+                                                </a>
+                                            </div>
+                                            <small class="text-muted d-block" style="font-size: 11px;">Secretariat &amp; Paper Inquiries</small>
                                         </div>
-                                        <div class="small text-dark font-weight-bold">
-                                            <a href="mailto:{{ $settings['contact_email'] ?? 'icmria2027@diu.edu.bd' }}" style="color: #003366;">
-                                                {{ $settings['contact_email'] ?? 'icmria2027@diu.edu.bd' }}
-                                            </a>
-                                        </div>
-                                        <div class="small text-muted mt-1">
-                                            <i class="fa fa-whatsapp text-success mr-1"></i> {{ $settings['contact_phone'] ?? '+880 1711-851121 / +880 1946-704373' }}
+
+                                        <div class="border-top pt-2 mt-2" style="font-size: 12px; line-height: 1.6;">
+                                            <div class="text-muted font-weight-bold mb-1" style="font-size: 11px;">
+                                                <i class="fa fa-phone mr-1 text-primary"></i> Official Helpline:
+                                            </div>
+                                            <div class="d-flex justify-content-between flex-wrap">
+                                                <a href="tel:+8801711851121" class="font-weight-bold" style="color: #0055A0;"><i class="fa fa-phone mr-1 text-primary"></i>+880 1711-851121</a>
+                                                <a href="tel:+8801946704373" class="font-weight-bold" style="color: #0055A0;"><i class="fa fa-phone mr-1 text-primary"></i>+880 1946-704373</a>
+                                            </div>
+
+                                            <div class="mt-2 pt-2 border-top">
+                                                <small class="text-success font-weight-bold d-block" style="font-size: 11px;">
+                                                    <i class="fa fa-whatsapp"></i> Official WhatsApp Support:
+                                                </small>
+                                                <span class="font-weight-bold" style="color: #003366; font-size: 12px;">+880 1711-851121, +880 1946-704373</span>
+                                            </div>
+
+                                            <div class="mt-2 pt-2 border-top text-center" style="font-size: 11px;">
+                                                <a href="https://goo.gl/maps/LEutqFoJkC5Yj9h17" target="_blank" class="text-muted" title="View on Google Maps">
+                                                    <i class="fa fa-map-marker text-danger mr-1"></i> DSC, Birulia, Savar, Dhaka-1216
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -556,6 +579,8 @@
                         </div>
             </div>
         </section>
+
+        @include('main.sections.contact')
     </main>
 
     <!-- Co-author Template -->
