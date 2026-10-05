@@ -196,6 +196,13 @@ class DashboardController extends Controller
             $profile = $user->profile;
         }
 
+        // The amount due follows today's pricing stage, as on My Profile: an early-bird rate
+        // stored at registration must not be shown once early-bird has closed.
+        if ($profile && $profile->payment_status != '1') {
+            \App\Services\PricingService::updateProfileTotalDue($profile);
+            $profile->refresh();
+        }
+
         $papers = Paper::where('user_id', $user->id)
             ->with(['track', 'subTrack', 'authors', 'decision', 'cameraReady'])
             ->orderByDesc('id')

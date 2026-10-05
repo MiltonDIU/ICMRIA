@@ -57,15 +57,15 @@
             <div class="card mb-4 border-warning shadow-sm" style="border-width: 2px; border-radius: 12px; overflow: hidden;">
                 <div class="card-header bg-warning text-dark py-3">
                     <h5 class="card-title font-weight-bold mb-0">
-                        <i class="fas fa-id-card mr-2"></i> Confirm Author List, Attendance & Delegate Category
+                        <i class="fas fa-id-card mr-2"></i> Confirm Author List & Attendance
                     </h5>
                 </div>
                 <div class="card-body bg-white p-4">
                     <p class="text-muted mb-4">
-                        Before proceeding to payment, please confirm which authors will attend the conference and the delegate category
-                        of each (choose the Student category for a student author).
+                        Before proceeding to payment, please confirm which authors will attend the conference.
                         <strong>The registration fee is charged only for attending authors, each at their own rate.</strong>
-                        At least one author of every paper must attend.
+                        At least one author of every paper must attend@if(\App\Services\ProceedingsRules::attendanceChangeAllowed()); you can change who attends from the paper page until the
+                        fee is paid@endif.
                     </p>
                     
                     <form action="{{ route('profile.confirm-student-status') }}" method="POST">
@@ -85,7 +85,6 @@
                                             <th>Designation</th>
                                             <th>Country</th>
                                             <th style="width: 180px;" class="text-center">Will Attend?</th>
-                                            <th style="width: 240px;">Delegate Category</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -96,6 +95,7 @@
                                                 <td class="align-middle">{{ $author->designation }}</td>
                                                 <td class="align-middle">{{ $author->country->name ?? 'N/A' }}</td>
                                                 <td class="align-middle text-center">
+                                                    @if(\App\Services\ProceedingsRules::attendanceChangeAllowed())
                                                     <div class="student-status-toggle">
                                                         <input type="radio" id="attend_yes_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="1" {{ $author->is_attending ? 'checked' : '' }} required>
                                                         <label for="attend_yes_{{ $author->id }}" class="toggle-btn toggle-yes">Yes</label>
@@ -103,9 +103,11 @@
                                                         <input type="radio" id="attend_no_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="0" {{ !$author->is_attending ? 'checked' : '' }} required>
                                                         <label for="attend_no_{{ $author->id }}" class="toggle-btn toggle-no">No</label>
                                                     </div>
-                                                </td>
-                                                <td class="align-middle">
-                                                    @include('partials.author-category-select', ['author' => $author])
+                                                    @else
+                                                        {{-- Closed in Settings: as chosen at submission. --}}
+                                                        <span class="badge badge-{{ $author->is_attending ? 'success' : 'light border' }}">{{ $author->is_attending ? 'Yes' : 'No' }}</span>
+                                                    @endif
+                                                    <input type="hidden" name="authors[{{ $author->id }}][id]" value="{{ $author->id }}">
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -125,7 +127,7 @@
         @else
             <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-radius: 8px; background-color: #e8f5e9;">
                 <i class="fas fa-check-circle mr-2 text-success"></i> 
-                <strong>Author list and student status confirmed!</strong> You can now proceed with the payment for your approved abstract(s) in the table below.
+                <strong>Author list and attendance confirmed!</strong> You can now proceed with the payment for your accepted paper(s) in the table below.
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>

@@ -126,6 +126,19 @@ class PaymentController extends Controller
         if ($user->profile && $user->profile->is_author) {
             return redirect()->back()->with('error', 'Authors pay the registration fee per paper, from the Papers page, once the camera-ready step is complete.');
         }
+
+        // Once paid, the registration is settled: never charge it a second time, and never
+        // touch the amount that was paid.
+        if ($user->profile && $user->profile->payment_status == '1') {
+            return redirect()->back()->with('error', 'Your registration fee has already been paid.');
+        }
+
+        // Charge today's rate, not the one stored when the page was opened or at
+        // registration: the early-bird window may have opened or closed since.
+        if ($user->profile) {
+            \App\Services\PricingService::updateProfileTotalDue($user->profile);
+            $user->profile->refresh();
+        }
         //$this->setPayment($user);
         $randomNum= rand(100,999).'-'."ICMRIA2027-".strtotime(now());  //substr(str_shuffle
         $this->paymentStore($user,$randomNum,'onecard');
@@ -146,7 +159,7 @@ class PaymentController extends Controller
         // The signed-in author pays for their own papers; a user_id in the form is not trusted.
         $user = auth()->user();
         if ($user->profile && $user->profile->is_author && !$user->profile->author_list_confirmed) {
-            return redirect()->back()->with('error', 'Please confirm your author list and student status first.');
+            return redirect()->back()->with('error', 'Please confirm your author list and who will attend first.');
         }
 
         $papers = \App\Models\Paper::whereIn('id', (array) $request->input('paper_ids'))

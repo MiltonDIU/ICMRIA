@@ -184,7 +184,7 @@
                                 <input type="checkbox" class="custom-control-input" id="author_list_confirmed" name="author_list_confirmed" value="1" {{ $profile->author_list_confirmed ? 'checked' : '' }}>
                                 <label class="custom-control-label font-weight-bold" for="author_list_confirmed">Author List Confirmed?</label>
                             </div>
-                            <small class="form-text text-muted">Clearing this lets the author set student status again.</small>
+                            <small class="form-text text-muted">Clearing this lets the author confirm the author list and attendance again.</small>
                         </div>
                     </div>
                     <div class="col-md-3">

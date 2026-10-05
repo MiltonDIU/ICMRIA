@@ -385,7 +385,7 @@ class PaperController extends Controller
         }
 
         if ($user->roles->contains('id', 3) && !$user->profile->author_list_confirmed) {
-            return response()->json(['error' => 'Please confirm your author list and student status first.'], 422);
+            return response()->json(['error' => 'Please confirm your author list and who will attend first.'], 422);
         }
 
         try {
@@ -586,6 +586,55 @@ class PaperController extends Controller
         ]);
 
         return back()->with('success', 'Conflict of interest recorded. Reviewer assignment will avoid it.');
+    }
+
+    /**
+     * Who will attend, the one detail the author may change right up to the moment the
+     * fee is paid: plans change after submission, and only attending authors are charged.
+     * Every other detail follows its own step and deadline. At least one author attends.
+     */
+    public function updateAttendance(Request $request, Paper $paper)
+    {
+        abort_unless((int) $paper->user_id === (int) Auth::id(), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        if (!\App\Services\ProceedingsRules::attendanceChangeAllowed()) {
+            return back()->with('error', 'Changing the attending authors is closed. Please contact the conference team.');
+        }
+
+        if (\App\Services\ProceedingsRules::isPaid($paper)) {
+            return back()->with('error', 'The registration fee for this paper has been paid, so the attending authors can no longer be changed.');
+        }
+
+        if ($paper->status === 'rejected' || \App\Services\ProceedingsRules::isRejected($paper)) {
+            return back()->with('error', 'This paper was not accepted, so there is no attendance to set.');
+        }
+
+        $data = $request->validate([
+            'attending' => 'nullable|array',
+            'attending.*' => 'integer',
+        ]);
+
+        $attendingIds = collect($data['attending'] ?? [])->map(fn ($id) => (int) $id);
+        $authors = $paper->authors()->get();
+
+        if ($authors->whereIn('id', $attendingIds)->isEmpty()) {
+            return back()->with('error', 'At least one author must attend the conference.');
+        }
+
+        DB::transaction(function () use ($authors, $attendingIds) {
+            foreach ($authors as $author) {
+                $author->update(['is_attending' => $attendingIds->contains($author->id)]);
+            }
+        });
+
+        $names = $authors->whereIn('id', $attendingIds)->pluck('name')->implode(', ');
+        \App\Services\PaperProgress::record($paper, 'attendance_updated', 'Attending: ' . $names);
+
+        if ($profile = $paper->user->profile) {
+            \App\Services\PricingService::updateProfileTotalDue($profile->fresh());
+        }
+
+        return back()->with('success', 'Attending authors updated. The registration fee now covers: ' . $names . '.');
     }
 
     public function removeConflict(Paper $paper, \App\Models\PaperConflict $conflict)

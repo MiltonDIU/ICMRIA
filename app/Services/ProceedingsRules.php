@@ -106,6 +106,16 @@ class ProceedingsRules
         return Setting::where('key', 'manual_payment_enabled')->value('value') === 'true';
     }
 
+    /**
+     * Whether authors may change who attends after the abstract is submitted, up to paying
+     * (paper page card and the confirm-authors step). Setting attendance_change_enabled;
+     * on unless set to 'false', in which case the choices made at submission stand.
+     */
+    public static function attendanceChangeAllowed(): bool
+    {
+        return Setting::where('key', 'attendance_change_enabled')->value('value') !== 'false';
+    }
+
     public static function isPaymentEnabled(): bool
     {
         return Setting::where('key', 'is_payment_enabled')->value('value') !== 'false';

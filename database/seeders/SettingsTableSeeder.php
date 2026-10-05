@@ -126,6 +126,8 @@ class SettingsTableSeeder extends Seeder
             // 'true' lets authors report a bank/mobile transfer with a receipt for admin
             // verification. Off: OneCard takes every payment, USD converted at the day's rate.
             ['key' => 'manual_payment_enabled',        'value' => 'false'],
+            // 'true' lets authors change who attends after submitting, up to paying.
+            ['key' => 'attendance_change_enabled',     'value' => 'true'],
 
             // 'true' sends paper emails (submission, decision, camera-ready...) to every
             // author on the paper; 'false' to the corresponding author only.

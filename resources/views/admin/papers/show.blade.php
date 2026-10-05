@@ -34,6 +34,7 @@
 
         @include('admin.papers.partials.decision')
         @include('admin.papers.partials.camera_ready')
+        @include('admin.papers.partials.attendance')
         @include('admin.papers.partials.payment_proof')
         @include('admin.papers.partials.progress_history')
 

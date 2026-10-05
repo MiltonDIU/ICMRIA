@@ -433,6 +433,8 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('papers/{paper}/manuscript', [App\Http\Controllers\Admin\PaperController::class, 'downloadManuscript'])->name('papers.manuscript.download');
     Route::get('papers/{paper}/manuscript/v{version}', [App\Http\Controllers\Admin\PaperController::class, 'downloadManuscript'])->name('papers.manuscript.version');
     Route::post('papers/{paper}/conflicts', [App\Http\Controllers\Admin\PaperController::class, 'declareConflict'])->name('papers.conflicts.store');
+    // Who will attend: the one thing an author may change right up to paying.
+    Route::post('papers/{paper}/attendance', [App\Http\Controllers\Admin\PaperController::class, 'updateAttendance'])->name('papers.attendance.update');
     Route::delete('papers/{paper}/conflicts/{conflict}', [App\Http\Controllers\Admin\PaperController::class, 'removeConflict'])->name('papers.conflicts.destroy');
 
     // Camera-ready files, copyright form and fees paid by transfer (accepted papers)

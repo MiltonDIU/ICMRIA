@@ -173,15 +173,14 @@
                     <div class="card mb-4 border-warning shadow-sm" style="border-width: 2px; border-radius: 12px; overflow: hidden;">
                         <div class="card-header bg-warning text-dark py-3">
                             <h5 class="card-title font-weight-bold mb-0">
-                                <i class="fas fa-id-card mr-2"></i> Confirm Author List, Attendance & Delegate Category
+                                <i class="fas fa-id-card mr-2"></i> Confirm Author List & Attendance
                             </h5>
                         </div>
                         <div class="card-body bg-white p-4">
                             <p class="text-muted mb-4">
                                 Choose which authors will attend the conference: the registration fee is charged only for them, each at
-                                their own rate, and at least one author of every paper must attend. Check each author's delegate category
-                                (choose the Student category for a student author) very carefully, as these choices can be made only once
-                                and cannot be changed later.   </p>
+                                their own rate, and at least one author of every paper must attend@if(\App\Services\ProceedingsRules::attendanceChangeAllowed()); you can change who attends from the paper
+                                page until the fee is paid@endif.   </p>
 
                             <form action="{{ route('profile.confirm-student-status') }}" method="POST">
                                 @csrf
@@ -200,7 +199,6 @@
                                                     <th>Designation</th>
                                                     <th>Country</th>
                                                     <th style="width: 180px;" class="text-center">Will Attend?</th>
-                                                    <th style="width: 240px;">Delegate Category</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -211,6 +209,7 @@
                                                         <td class="align-middle">{{ $author->designation }}</td>
                                                         <td class="align-middle">{{ $author->country->name ?? 'N/A' }}</td>
                                                         <td class="align-middle text-center">
+                                                            @if(\App\Services\ProceedingsRules::attendanceChangeAllowed())
                                                             <div class="student-status-toggle">
                                                                 <input type="radio" id="attend_yes_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="1" {{ $author->is_attending ? 'checked' : '' }} required>
                                                                 <label for="attend_yes_{{ $author->id }}" class="toggle-btn toggle-yes">Yes</label>
@@ -218,9 +217,11 @@
                                                                 <input type="radio" id="attend_no_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="0" {{ !$author->is_attending ? 'checked' : '' }} required>
                                                                 <label for="attend_no_{{ $author->id }}" class="toggle-btn toggle-no">No</label>
                                                             </div>
-                                                        </td>
-                                                        <td class="align-middle">
-                                                            @include('partials.author-category-select', ['author' => $author])
+                                                            @else
+                                                                {{-- Closed in Settings: as chosen at submission. --}}
+                                                                <span class="badge badge-{{ $author->is_attending ? 'success' : 'light border' }}">{{ $author->is_attending ? 'Yes' : 'No' }}</span>
+                                                            @endif
+                                                            <input type="hidden" name="authors[{{ $author->id }}][id]" value="{{ $author->id }}">
                                                         </td>
                                                     </tr>
                                                 @endforeach

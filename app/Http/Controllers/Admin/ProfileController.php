@@ -566,22 +566,18 @@ class ProfileController extends Controller
             return redirect()->back()->with('error', 'Profile not found.');
         }
 
-        $rules = [
+        // With attendance changes closed in Settings, the choices made at submission stand
+        // and anything sent for is_attending is ignored.
+        $attendanceEditable = \App\Services\ProceedingsRules::attendanceChangeAllowed();
+
+        // Attendance is the only thing confirmed here. The delegate category was chosen at
+        // submission, and is_student follows it (PaperAuthor::booted).
+        $request->validate([
             'authors' => 'required|array',
             'authors.*.id' => 'required|exists:paper_authors,id',
             // Only attending authors are charged; see PricingService::billableAuthors.
-            'authors.*.is_attending' => 'required|in:0,1',
-        ];
-
-        // The delegate category sets the fee, and the Student category marks the author as
-        // a student (PaperAuthor::booted). It must be one the author's country qualifies for.
-        foreach ((array) $request->input('authors', []) as $key => $authorData) {
-            $countryId = \App\Models\PaperAuthor::where('id', $authorData['id'] ?? 0)->value('country_id');
-            $rules["authors.$key.price_id"] = ['required', 'exists:prices,id',
-                new \App\Rules\DelegateCategoryMatchesCountry($countryId)];
-        }
-
-        $request->validate($rules);
+            'authors.*.is_attending' => $attendanceEditable ? 'required|in:0,1' : 'nullable',
+        ]);
 
         // Every paper needs at least one registered author (Author Guidelines).
         $attendingByPaper = [];
@@ -593,11 +589,14 @@ class ProfileController extends Controller
             }
             $paperId = $author->paper_id;
             $titles[$paperId] = $author->paper->submission_id;
-            $attendingByPaper[$paperId] = ($attendingByPaper[$paperId] ?? false) || $authorData['is_attending'] == '1';
+            $attends = $attendanceEditable ? ($authorData['is_attending'] ?? '0') == '1' : (bool) $author->is_attending;
+            $attendingByPaper[$paperId] = ($attendingByPaper[$paperId] ?? false) || $attends;
         }
 
         $noneAttending = array_keys(array_filter($attendingByPaper, fn ($attending) => !$attending));
-        if ($noneAttending) {
+        // Closed: nothing the author can do here, so an older paper with nobody marked is
+        // left to the presenting-author fallback in PricingService::billableAuthors.
+        if ($noneAttending && $attendanceEditable) {
             return redirect()->back()->with('error', 'Mark at least one author who will attend for paper '
                 . implode(', ', array_map(fn ($id) => $titles[$id], $noneAttending)) . '.');
         }
@@ -611,9 +610,8 @@ class ProfileController extends Controller
                         $q->where('user_id', $user->id);
                     })->first();
 
-                if ($author) {
-                    $author->price_id = $authorData['price_id'];
-                    $author->is_attending = (bool)$authorData['is_attending'];
+                if ($author && $attendanceEditable) {
+                    $author->is_attending = ($authorData['is_attending'] ?? '0') == '1';
                     $author->save();
                 }
             }
@@ -621,16 +619,16 @@ class ProfileController extends Controller
             $profile->author_list_confirmed = true;
             $profile->save();
 
-            // Recalculate total due based on the confirmed categories and attendance
+            // Recalculate total due based on the confirmed attendance
             \App\Services\PricingService::updateProfileTotalDue($profile);
 
             \Illuminate\Support\Facades\DB::commit();
 
-            return redirect()->back()->with('message', 'Author list, attendance and student status confirmed. Your registration fee has been updated.');
+            return redirect()->back()->with('message', 'Author list and attendance confirmed. Your registration fee has been updated.');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Confirm Student Status Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to confirm student status. Please try again.');
+            return redirect()->back()->with('error', 'Failed to confirm the author list. Please try again.');
         }
     }
 }

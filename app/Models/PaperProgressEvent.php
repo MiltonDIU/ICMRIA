@@ -24,6 +24,7 @@ class PaperProgressEvent extends Model
         'revision_changes_requested' => 'Revised manuscript sent back by chair',
         'camera_ready_uploaded' => 'Camera-ready manuscript uploaded',
         'copyright_uploaded' => 'Copyright form uploaded',
+        'attendance_updated' => 'Attending authors changed',
         'payment_reported' => 'Transfer payment reported',
         'payment_verified' => 'Transfer payment verified',
         'payment_rejected' => 'Transfer payment rejected',

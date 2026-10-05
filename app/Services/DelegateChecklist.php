@@ -54,8 +54,8 @@ class DelegateChecklist
         if ($unpaidPapers->isNotEmpty() && !$profile->author_list_confirmed) {
             $todo[] = [
                 'tone' => 'warning',
-                'title' => 'Confirm the author list, attendance and delegate category',
-                'body' => 'Before you can pay for your accepted paper(s) we need to know which authors will attend and the delegate category of each (Student for a student author). It can only be set once, so check it carefully.',
+                'title' => 'Confirm the author list and who will attend',
+                'body' => 'Before you can pay for your accepted paper(s) we need to know which authors will attend. The fee is charged only for them.',
                 'url' => route('papers.index'),
                 'action' => 'Confirm on the Abstracts page',
             ];
