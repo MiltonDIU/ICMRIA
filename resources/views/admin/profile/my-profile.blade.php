@@ -410,7 +410,7 @@
             </div>
         @endif
 
-        {{-- Abstract fees: every listed author pays, settled in one transaction. --}}
+        {{-- Paper fees: each attending author pays, settled in one transaction. --}}
         @if($unpaidPapers->isNotEmpty() && $profile->author_list_confirmed)
             <div class="mp-card">
                 <div class="mp-card-head">
@@ -605,10 +605,12 @@
                                 <dt>{{ $paid ? 'Amount paid' : 'Amount due' }}</dt>
                                 <dd class="font-weight-bold">{{ $currency }} {{ number_format($profile->pay_amount ?? 0, 2) }}</dd>
                             </div>
-                            <div class="mp-field">
-                                <dt>Author list confirmed</dt>
-                                <dd>{{ $profile->author_list_confirmed ? 'Yes' : 'Not yet' }}</dd>
-                            </div>
+                            @if($profile->is_author)
+                                <div class="mp-field">
+                                    <dt>Author list confirmed</dt>
+                                    <dd>{{ $profile->author_list_confirmed ? 'Yes' : 'Not yet' }}</dd>
+                                </div>
+                            @endif
                             <div class="mp-field">
                                 <dt>Registered on</dt>
                                 <dd>{{ optional($profile->created_at)->format('j M Y') ?: '—' }}</dd>
@@ -631,7 +633,8 @@
             </div>
         </div>
 
-        {{-- Submissions. --}}
+        {{-- Submissions. A participant-only registration has none. --}}
+        @unless($user->isParticipantOnly())
         <div class="mp-card">
             <div class="mp-card-head">
                 <h5><i class="fas fa-file-alt mr-2"></i> Your abstracts</h5>
@@ -713,12 +716,13 @@
                         </table>
                     </div>
                     <small class="form-text text-muted mt-2">
-                        Every author listed on an abstract is charged a registration fee, so this total is what the
-                        amount above is worked out from. Somebody named on two of your abstracts counts once for each.
+                        The registration fee is charged for each author marked as attending, at their own delegate
+                        category. Somebody attending on two of your papers counts once for each.
                     </small>
                 @endif
             </div>
         </div>
+        @endunless
 
         {{-- Workshops. --}}
         <div class="mp-card">

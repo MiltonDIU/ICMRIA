@@ -333,7 +333,7 @@
                     </li>
                 @endcan
                 @can('paper_access')
-                @if(!auth()->user()->roles->contains('id', 3) || (auth()->user()->profile && auth()->user()->profile->is_author))
+                @if(!auth()->user()->isParticipantOnly())
                 <li class="nav-item">
                     <a href="{{ route("papers.index") }}" class="nav-link {{ request()->is('papers*') ? 'active' : '' }}">
                         <i class="fa-fw fas fa-file-alt">

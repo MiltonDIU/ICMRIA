@@ -101,6 +101,19 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Profile::class,'user_id','id');
     }
 
+    /**
+     * Registered to take part only, not to submit: the delegate role (3), a profile that
+     * is not an author's, and no committee or staff role. Such a person has no abstracts,
+     * so the Papers pages and the "submit an abstract" links are kept from them. Someone
+     * who also chairs or reviews keeps those screens for that work.
+     */
+    public function isParticipantOnly(): bool
+    {
+        return $this->roles->contains('id', 3)
+            && $this->roles->where('id', '!=', 3)->isEmpty()
+            && !($this->profile && $this->profile->is_author);
+    }
+
     public function feedback()
     {
         return $this->hasMany(Schedule::class);

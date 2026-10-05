@@ -274,7 +274,8 @@
             </div>
         </div>
 
-        {{-- Their own submissions. --}}
+        {{-- Their own submissions. A participant-only registration has none. --}}
+        @unless($user->isParticipantOnly())
         <div class="col-lg-6">
             <div class="ad-card">
                 <div class="ad-card-head">
@@ -328,6 +329,7 @@
                 </div>
             </div>
         </div>
+        @endunless
     </div>
 
     {{-- The fee table from the requirement document, with the stage in force marked and

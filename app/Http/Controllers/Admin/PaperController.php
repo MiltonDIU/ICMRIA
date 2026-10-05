@@ -28,6 +28,16 @@ class PaperController extends Controller
 {
     public function index(Request $request)
     {
+        // A participant-only registration has no abstracts to list or submit.
+        if (Auth::user()?->isParticipantOnly()) {
+            if ($request->ajax()) {
+                abort(Response::HTTP_FORBIDDEN, '403 Forbidden');
+            }
+
+            return redirect()->route('my-profile')
+                ->with('error', 'You registered as a participant, so there are no abstracts to show.');
+        }
+
         $settings = Setting::pluck('value', 'key');
         $eventStartDate = Carbon::parse($settings['registration_start_date'] ?? now());
         $abstractDeadline = Carbon::parse($settings['abstract_submission_deadline'] ?? $settings['registration_close_date'] ?? now());
@@ -677,7 +687,7 @@ class PaperController extends Controller
 
 
         if (!$profile || !$profile->is_author) {
-            return redirect()->route('show-profile')->with('error', 'Only registered authors can submit papers.');
+            return redirect()->route('my-profile')->with('error', 'You registered as a participant, so you cannot submit an abstract.');
         }
 
 
@@ -716,7 +726,7 @@ class PaperController extends Controller
 
         $profile = Profile::where('user_id', $user->id)->first();
         if (!$profile || !$profile->is_author) {
-            return redirect()->route('show-profile')->with('error', 'Only registered authors can submit papers.');
+            return redirect()->route('my-profile')->with('error', 'You registered as a participant, so you cannot submit an abstract.');
         }
 
         $settings = Setting::pluck('value', 'key');
