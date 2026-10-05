@@ -57,13 +57,13 @@
     </noscript>
     <!-- End Meta Pixel Code -->
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-GEPJR65WYL"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-13KWG1JMB2"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'G-GEPJR65WYL');
+  gtag('config', 'G-13KWG1JMB2');
 </script>
 </head>
 
