@@ -28,7 +28,7 @@
                     <div class="custom-control custom-checkbox mb-2">
                         <input type="checkbox" class="custom-control-input" id="attending_{{ $author->id }}"
                                name="attending[]" value="{{ $author->id }}" {{ $author->is_attending ? 'checked' : '' }}>
-                        <label class="custom-control-label" for="attending_{{ $author->id }}">
+                        <label class="custom-control-label pl-2" for="attending_{{ $author->id }}">
                             {{ $author->name }}
                             <small class="text-muted">&middot; {{ $author->price->name ?? 'No category' }}</small>
                         </label>

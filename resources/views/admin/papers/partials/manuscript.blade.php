@@ -84,7 +84,7 @@
                 <div class="custom-control custom-checkbox mt-2 mb-2">
                     <input type="checkbox" class="custom-control-input @error('format_confirmed') is-invalid @enderror"
                            id="format_confirmed" name="format_confirmed" value="1" required>
-                    <label class="custom-control-label" for="format_confirmed">
+                    <label class="custom-control-label pl-2" for="format_confirmed">
                         I confirm the manuscript follows the IEEE conference template (<a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}">download template</a>) and is {{ $minPages }}&ndash;{{ $maxPages }} pages long
                     </label>
                     @error('format_confirmed') <span class="text-danger small d-block">{{ $message }}</span> @enderror
@@ -94,7 +94,7 @@
                     <div class="custom-control custom-checkbox mt-2 mb-2">
                         <input type="checkbox" class="custom-control-input @error('anonymity_confirmed') is-invalid @enderror"
                                id="anonymity_confirmed" name="anonymity_confirmed" value="1" required>
-                        <label class="custom-control-label" for="anonymity_confirmed">
+                        <label class="custom-control-label pl-2" for="anonymity_confirmed">
                             I confirm the file contains no author names or affiliations
                         </label>
                         @error('anonymity_confirmed') <span class="text-danger small d-block">{{ $message }}</span> @enderror
