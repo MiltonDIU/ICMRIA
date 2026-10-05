@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('title', 'Camera-Ready Guidelines')
 
 @section('content')
 <main id="main" class="main-page">

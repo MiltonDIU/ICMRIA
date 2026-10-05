@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('title', $blog->title ?? 'Blog')
 @section('content')
     <main id="main" class="main-page">
         <section class="wow fadeIn">

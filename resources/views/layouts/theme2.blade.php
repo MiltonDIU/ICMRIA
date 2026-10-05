@@ -6,8 +6,11 @@
   <title>{{ env('APP_NAME', 'ICMRIA 2027 | Daffodil International University') }}</title>
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="@yield('meta_description', 'International Conference on Multidisciplinary Research, Innovation and Applications 2027, Daffodil International University')">
+  <meta name="robots" content="@yield('robots', 'index, follow')">
+  <link rel="canonical" href="{{ url()->current() }}">
 
-  <meta property="og:url"               content="{{ config('app.url') }}" />
+  <meta property="og:url"               content="{{ url()->current() }}" />
   <meta property="og:type"              content="website" />
   <meta property="og:title"             content="{{ env('APP_NAME', 'ICMRIA 2027') }}" />
   <meta property="og:description"       content="International Conference on Multidisciplinary Research, Innovation and Applications 2027, Daffodil International University" />

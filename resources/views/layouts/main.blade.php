@@ -3,9 +3,12 @@
 
 <head>
   <meta charset="utf-8">
-  <title>{{ env('APP_NAME', 'ICMRIA 2027 | Daffodil International University') }}</title>
+  <title>@hasSection('title')@yield('title') | @endif{{ env('APP_NAME', 'ICMRIA 2027 | Daffodil International University') }}</title>
+  <meta name="description" content="@yield('meta_description', 'International Conference on Multidisciplinary Research, Innovation and Applications 2027, Daffodil International University')">
+  <meta name="robots" content="@yield('robots', 'index, follow')">
+  <link rel="canonical" href="{{ url()->current() }}">
 
-  <meta property="og:url"               content="{{ config('app.url') }}" />
+  <meta property="og:url"               content="{{ url()->current() }}" />
   <meta property="og:type"              content="website" />
   <meta property="og:title"             content="{{ env('APP_NAME', 'ICMRIA 2027') }}" />
   <meta property="og:description"       content="International Conference on Multidisciplinary Research, Innovation and Applications 2027, Daffodil International University" />

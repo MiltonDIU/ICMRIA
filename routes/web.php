@@ -121,6 +121,8 @@ Route::get('/fail/', [OneCardPaymentController::class, 'fail'])->name('fail');
 
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'sitemap'])->name('sitemap');
 Route::get('/book-ticket', [HomeController::class,'bookTicket'])->name('book-ticket');
 Route::get('/book-ticket/{title}', [HomeController::class,'bookTicket'])->name('book-ticket-referral');
 Route::get('/check-referral-coupon', [HomeController::class,'checkReferralCoupon'])->name('checkReferralCoupon');

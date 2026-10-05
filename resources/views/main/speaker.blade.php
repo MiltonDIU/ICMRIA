@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('title', $speaker->name)
 
 @section('content')
 <main id="main" class="main-page">

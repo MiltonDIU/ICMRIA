@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('title', 'Author Guidelines')
 
 @section('content')
 @php

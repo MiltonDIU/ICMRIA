@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('robots', 'noindex, nofollow')
 @section('content')
     <main id="main" class="main-page">
         <section class="wow fadeIn">

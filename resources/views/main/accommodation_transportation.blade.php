@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('title', 'Accommodation & Transportation')
 
 @section('content')
 <main id="main" class="main-page">

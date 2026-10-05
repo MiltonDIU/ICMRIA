@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('title', 'Registration')
 
 @section('content')
 @php $abstractOpen = \App\Services\SubmissionRules::registrationAbstractIsOpen(); @endphp

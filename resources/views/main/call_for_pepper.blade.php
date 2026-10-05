@@ -1,4 +1,5 @@
 @extends('layouts.main')
+@section('title', 'Call for Papers')
 
 @section('content')
 <main id="main" class="main-page">
