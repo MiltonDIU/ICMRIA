@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ICMRIA 2027 — Administrator Guide</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.6; background: #fff; }
+  h1 { color: #003366; font-size: 1.6rem; margin-bottom: 0; }
+  h2 { color: #003366; font-size: 1.2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-top: 32px; }
+  .sub { color: #64748b; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: .92rem; }
+  th, td { border: 1px solid #e2e8f0; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; }
+  code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: .88rem; }
+  .box { background: #f0f7ff; border-left: 4px solid #0055a0; padding: 10px 14px; margin: 14px 0; }
+  .warn { background: #fffbeb; border-left: 4px solid #d97706; padding: 10px 14px; margin: 14px 0; }
+  ol li, ul li { margin-bottom: 4px; }
+  a { color: #0055a0; }
+</style>
+</head>
+<body>
+<p><a href="index.html">&larr; All guides</a></p>
+<h1>Administrator Guide</h1>
+<p class="sub">SuperAdmin and Admin &mdash; ICMRIA 2027 submission portal</p>
+
+<div class="box">
+  Administrators see every track and can do what chairs and the TPC Chair do, plus run the conference: users and roles, settings,
+  proceedings (confirmation, programme, exports) and the history of every change. Read the other guides too &mdash; they describe what
+  each role sees.
+</div>
+
+<h2>1. The paper's path</h2>
+<p>abstract &rarr; full manuscript &rarr; reviewers assigned &rarr; evaluations &rarr; chair's decision &rarr; TPC approval &rarr; decision email
+&rarr; (revision checked by chair) &rarr; camera-ready &rarr; copyright form &rarr; attendance &amp; payment &rarr; <strong>Confirm</strong> (admin) &rarr;
+programme session. Every step is recorded with who did it and when.</p>
+<p>The Papers list shows each paper's <strong>stage</strong>, a Manuscript column and filters. The old <em>abstract screening</em>
+(approve / reject) is optional: rejecting there acts as a desk reject (the paper is never reviewed).</p>
+
+<h2>2. Users and roles</h2>
+<table>
+  <tr><th>Role</th><th>Can</th></tr>
+  <tr><td>Author</td><td>Submit and follow their papers, pay. (Participants share this role but see no paper pages.)</td></tr>
+  <tr><td>Reviewer</td><td>Bid, accept/decline and evaluate assigned papers.</td></tr>
+  <tr><td>Track Chair / Sub-Track Chair</td><td>Reviewer pool, assignment, decisions, revision checks in their scope.</td></tr>
+  <tr><td>TPC Chair</td><td>Final approval and sending decision emails; reads everything.</td></tr>
+  <tr><td>Admin / SuperAdmin</td><td>Everything, conference-wide.</td></tr>
+</table>
+<div class="warn">A person can hold several roles. When adding a role under <strong>Users</strong>, keep the existing ones ticked &mdash;
+saving replaces the whole list (e.g. a chair given the Reviewer role must keep the Sub-Track Chair role too). Chairs are attached to
+their track under <strong>Tracks &amp; Chairs</strong>; the role alone is not enough.</div>
+
+<h2>3. Settings</h2>
+<p>Menu <strong>Settings</strong>. Every row now shows <strong>what it does</strong> and the accepted values; the edit page repeats it.
+Dates are entered as <code>YYYY-MM-DD HH:MM:SS</code>; switches as <code>true</code> / <code>false</code>. The ones that change the workflow:</p>
+<table>
+  <tr><th>Setting</th><th>Default</th><th>Effect</th></tr>
+  <tr><td><code>review_requires_manuscript</code></td><td>true</td><td>Reviewers only for papers with a manuscript.</td></tr>
+  <tr><td><code>review_waits_for_manuscript_deadline</code></td><td>true</td><td>No assignment before the manuscript deadline.</td></tr>
+  <tr><td><code>manuscript_locks_on_review</code></td><td>true</td><td>Author cannot replace the manuscript once a reviewer has it.</td></tr>
+  <tr><td><code>chairs_can_review_own_track</code></td><td>false</td><td>Chairs may review in their own track.</td></tr>
+  <tr><td><code>reviewer_chair_can_decide</code></td><td>false</td><td>A chair who reviewed a paper may still decide it.</td></tr>
+  <tr><td><code>tpc_can_override_decision</code></td><td>false</td><td>TPC Chair may set the decision directly.</td></tr>
+  <tr><td><code>min_reviewers_per_paper</code></td><td>2</td><td>Evaluations needed before a decision.</td></tr>
+  <tr><td><code>review_feedback_min_chars</code></td><td>0</td><td>Shortest feedback for authors.</td></tr>
+  <tr><td><code>email_all_authors</code></td><td>false</td><td>Paper emails to all authors (true) or the corresponding author.</td></tr>
+  <tr><td><code>attendance_change_enabled</code></td><td>true</td><td>Authors may change who attends until paying.</td></tr>
+  <tr><td><code>manual_payment_enabled</code></td><td>false</td><td>Allow bank/mobile transfer reports for verification.</td></tr>
+  <tr><td><code>author_conflict_declaration_enabled</code></td><td>true</td><td>Authors may declare conflicts.</td></tr>
+  <tr><td><code>is_payment_enabled</code>, <code>payment_last_date</code>, <code>max_paid_papers_limit</code></td><td></td><td>When payment is open.</td></tr>
+  <tr><td><code>early_registration_start_date</code> / <code>_last_date</code></td><td></td><td>Early-bird window.</td></tr>
+</table>
+
+<h2>4. Proceedings</h2>
+<p>Menu <strong>Proceedings</strong>:</p>
+<ul>
+  <li><strong>Camera-ready</strong> tab: each accepted paper's camera-ready, copyright and fee. When all are in, press <strong>Confirm</strong>
+      (online payments do not confirm automatically). Use <strong>Request changes</strong> with a note to reopen the author's upload.</li>
+  <li><strong>Payments to verify</strong>: only used when manual transfers are enabled.</li>
+  <li><strong>Confirmed for Proceedings</strong>: place each paper in a programme session and slot.</li>
+  <li>Upload the blank <strong>Copyright Transfer Form</strong> here before camera-ready opens.</li>
+  <li>Exports: JSON, XML, Book of Abstracts (PDF), Programme (PDF), camera-ready files (ZIP), and <strong>Progress history (CSV)</strong>.</li>
+</ul>
+
+<h2>5. Reviewers' expertise</h2>
+<p>On a reviewer's profile (Reviewers by Track &rarr; click the name) administrators can edit the whole expertise list, removing as well
+as adding keywords. It applies to every track the reviewer serves.</p>
+
+<h2>6. History and records</h2>
+<table>
+  <tr><th>Where</th><th>What</th></tr>
+  <tr><td>Activity Logs</td><td>Every change to records (who, when, old and new values), including roles and settings.</td></tr>
+  <tr><td>Paper page &rarr; Progress History; Proceedings &rarr; CSV</td><td>Each step of each paper and who took it.</td></tr>
+  <tr><td>Decision page comments</td><td>Chair / TPC discussion per round.</td></tr>
+  <tr><td>Paper page &rarr; Upload history</td><td>Every manuscript version.</td></tr>
+</table>
+
+<h2>7. Email</h2>
+<div class="warn">Emails are sent by a queue worker. Keep <code>php artisan queue:work</code> running on the server (Supervisor or cron).
+After any change to <code>.env</code> (for example the mail settings) run <code>php artisan queue:restart</code>, or the worker keeps the
+old settings and emails fail. Failed emails are listed in the <code>failed_jobs</code> table; a decision email can be re-sent from
+Final Approval &rarr; Approved &rarr; <strong>Resend email</strong>.</div>
+
+<h2>8. After deploying an update</h2>
+<p><code>git pull</code> &rarr; <code>php artisan migrate --force</code> &rarr; <code>php artisan optimize:clear</code> &rarr; <code>php artisan queue:restart</code>.</p>
+</body>
+</html>

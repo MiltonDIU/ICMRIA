@@ -7,6 +7,15 @@
     </div>
 
     <div class="card-body">
+        {{-- What this setting does (config/settings_help.php). --}}
+        @if($help = config('settings_help.' . $setting->key))
+            <div class="alert alert-info">
+                <span class="badge badge-light border mr-1">{{ $help['group'] }}</span>
+                <strong>{{ $setting->key }}</strong>
+                <div class="mt-1">{{ $help['description'] }}</div>
+                <small>Values: {{ $help['values'] }}</small>
+            </div>
+        @endif
         <form action="{{ route("admin.settings.update", [$setting->id]) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')

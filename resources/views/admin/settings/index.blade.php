@@ -31,6 +31,7 @@
                         <th>
                             {{ trans('cruds.setting.fields.value') }}
                         </th>
+                        <th>What it does</th>
                         <th>
                             &nbsp;
                         </th>
@@ -50,6 +51,16 @@
                             </td>
                             <td>
                                 {{ $setting->value ?? '' }}
+                            </td>
+                            <td>
+                                {{-- config/settings_help.php --}}
+                                @if($help = config('settings_help.' . $setting->key))
+                                    <span class="badge badge-light border">{{ $help['group'] }}</span>
+                                    <small class="d-block">{{ $help['description'] }}</small>
+                                    <small class="text-muted">Values: {{ $help['values'] }}</small>
+                                @else
+                                    <small class="text-muted">—</small>
+                                @endif
                             </td>
                             <td>
                                 @can('setting_show')
