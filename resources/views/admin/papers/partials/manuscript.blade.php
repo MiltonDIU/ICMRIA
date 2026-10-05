@@ -1,18 +1,13 @@
 @php
     $isOwner = (int) auth()->id() === (int) $paper->user_id;
     $canAdminManage = auth()->user()->can('paper_manuscript_manage');
-    $canUpload = ($isOwner && $manuscriptWindowOpen) || $canAdminManage;
+    // Window closed, or (manuscript_locks_on_review) a reviewer already holds the paper.
+    $manuscriptLockReason = $isOwner ? \App\Services\SubmissionRules::manuscriptLockedReason($paper) : null;
+    $canUpload = ($isOwner && $manuscriptLockReason === null) || $canAdminManage;
     // Authors declare their own conflicts only while Settings allows it.
-    $canConflictManage = ($isOwner && \App\Services\ConflictCandidates::authorsMayDeclare())
+    $canConflictManage = ($isOwner && \App\Services\ConflictCandidates::authorsMayDeclare() && !$paper->decision()->exists())
         || auth()->user()->can('paper_conflict_manage');
 @endphp
-
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
-@if(session('error'))
-    <div class="alert alert-danger">{{ session('error') }}</div>
-@endif
 
 <div class="card shadow-sm border-0 rounded-lg mb-4">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
@@ -84,7 +79,7 @@
                 <div class="custom-control custom-checkbox mt-2 mb-2">
                     <input type="checkbox" class="custom-control-input @error('format_confirmed') is-invalid @enderror"
                            id="format_confirmed" name="format_confirmed" value="1" required>
-                    <label class="custom-control-label pl-2" for="format_confirmed">
+                    <label class="custom-control-label pl-4" for="format_confirmed">
                         I confirm the manuscript follows the IEEE conference template (<a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}">download template</a>) and is {{ $minPages }}&ndash;{{ $maxPages }} pages long
                     </label>
                     @error('format_confirmed') <span class="text-danger small d-block">{{ $message }}</span> @enderror
@@ -94,7 +89,7 @@
                     <div class="custom-control custom-checkbox mt-2 mb-2">
                         <input type="checkbox" class="custom-control-input @error('anonymity_confirmed') is-invalid @enderror"
                                id="anonymity_confirmed" name="anonymity_confirmed" value="1" required>
-                        <label class="custom-control-label pl-2" for="anonymity_confirmed">
+                        <label class="custom-control-label pl-4" for="anonymity_confirmed">
                             I confirm the file contains no author names or affiliations
                         </label>
                         @error('anonymity_confirmed') <span class="text-danger small d-block">{{ $message }}</span> @enderror
@@ -111,7 +106,9 @@
             </form>
         @elseif($isOwner)
             <div class="alert alert-secondary mb-0">
-                @if($manuscriptOpensAt && now()->lt($manuscriptOpensAt))
+                @if($manuscriptWindowOpen && $manuscriptLockReason)
+                    <i class="fas fa-lock mr-1"></i> {{ $manuscriptLockReason }}
+                @elseif($manuscriptOpensAt && now()->lt($manuscriptOpensAt))
                     Manuscript submission opens on <strong>{{ $manuscriptOpensAt->format('j M Y') }}</strong>.
                 @elseif($manuscriptClosesAt)
                     Manuscript submission closed on <strong>{{ $manuscriptClosesAt->format('j M Y') }}</strong>.

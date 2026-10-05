@@ -165,6 +165,20 @@ class ProceedingsRules
             && $paper->cameraReady->status !== 'changes_requested';
     }
 
+    /**
+     * Once the fee is paid the author's part is done: the camera-ready files and the
+     * revision stay as they are. The one exception is the administrator asking for changes
+     * to the camera-ready files, which reopens them until the corrected files are in.
+     */
+    public static function filesLockedByPaymentReason(Paper $paper): ?string
+    {
+        if (!self::isPaid($paper) || $paper->cameraReady?->status === 'changes_requested') {
+            return null;
+        }
+
+        return 'The registration fee for this paper has been paid, so its files can no longer be changed. Contact the conference team if something needs correcting.';
+    }
+
     /** What the author has to do next, while a step stands between them and payment. */
     public static function paymentLockedReason(Paper $paper): ?string
     {

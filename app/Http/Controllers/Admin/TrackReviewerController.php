@@ -64,6 +64,10 @@ class TrackReviewerController extends Controller
             'hasNoScope' => $scope->isEmpty(),
             'loads' => $loads,
             'defaultCapacity' => $this->defaultCapacity(),
+            // The "Expertise here" pickers offer what is already in use, as the reviewer's
+            // own Research Areas picker does, so one topic is not typed several ways.
+            'suggestedAreas' => SubmissionRules::suggestedResearchAreas(),
+            'keywordsMax' => SubmissionRules::reviewerKeywordsMax(),
         ]);
     }
 
@@ -119,7 +123,52 @@ class TrackReviewerController extends Controller
             ]),
             'load' => $this->loadsFor([$user->id])[$user->id] ?? ['open' => 0, 'done' => 0, 'declined' => 0, 'total' => 0],
             'defaultCapacity' => $this->defaultCapacity(),
+            'canEditExpertise' => $this->canEditExpertise(),
+            'suggestedAreas' => SubmissionRules::suggestedResearchAreas(),
+            'keywordsMax' => SubmissionRules::reviewerKeywordsMax(),
         ]);
+    }
+
+    /**
+     * Replaces a reviewer's expertise with exactly the keywords given, so an administrator
+     * can remove topics as well as add them (adding a reviewer to a track only ever adds).
+     * The list is the one source the matcher reads: it is written to the reviewer's own
+     * research keywords and to every track they review for.
+     */
+    public function updateExpertise(Request $request, User $user)
+    {
+        abort_unless($this->canEditExpertise(), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        abort_if(!$user->roles->contains('id', self::ROLE_REVIEWER), Response::HTTP_NOT_FOUND,
+            'That person does not hold the Reviewer role.');
+
+        $request->validate([
+            'expertise' => ['nullable', 'array', 'max:' . SubmissionRules::reviewerKeywordsMax()],
+            'expertise.*' => 'string|max:100',
+        ], [
+            'expertise.max' => 'Give at most ' . SubmissionRules::reviewerKeywordsMax() . ' expertise keywords.',
+        ]);
+
+        $topics = SubmissionRules::splitKeywords($request->input('expertise', []));
+
+        DB::transaction(function () use ($user, $topics) {
+            $user->update(['research_keywords' => $topics]);
+            TrackAssignment::where('user_id', $user->id)
+                ->where('role', 'reviewer')
+                ->update(['expertise' => $topics]);
+        });
+
+        \Illuminate\Support\Facades\Cache::forget('suggested_research_areas');
+
+        return back()->with('success', $topics
+            ? 'Expertise updated: ' . implode(', ', $topics) . '.'
+            : 'All expertise removed. Automatic assignment will no longer match this reviewer by keyword.');
+    }
+
+    /** Administrators only: SuperAdmin and Admin, who see every track. */
+    private function canEditExpertise(): bool
+    {
+        return Gate::allows('review_assign')
+            && auth()->user()->roles->whereIn('id', [1, 2])->isNotEmpty();
     }
 
     /**
@@ -255,7 +304,14 @@ class TrackReviewerController extends Controller
             'reviewer_id' => 'nullable|integer|exists:users,id',
             'name' => 'required_without:reviewer_id|nullable|string|max:255',
             'email' => 'required_without:reviewer_id|nullable|email|max:255',
-            'expertise' => 'nullable|string|max:1000',
+            // A list of keywords from the tag picker (a comma-joined string still works).
+            'expertise' => ['nullable', function ($attribute, $value, $fail) {
+                $count = count(SubmissionRules::splitKeywords($value));
+                if ($count > SubmissionRules::reviewerKeywordsMax()) {
+                    $fail('Give at most ' . SubmissionRules::reviewerKeywordsMax() . " expertise keywords. (Current count: {$count})");
+                }
+            }],
+            'expertise.*' => 'nullable|string|max:100',
         ], [
             'name.required_without' => 'Give a name, or choose somebody from the existing reviewers.',
             'email.required_without' => 'Give an email address, or choose somebody from the existing reviewers.',

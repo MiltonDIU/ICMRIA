@@ -58,6 +58,11 @@ class CameraReadyController extends Controller
             return back()->with('error', 'Your paper is already confirmed for the proceedings, so its files can no longer be replaced.');
         }
 
+        // Paid: nothing changes unless the administrator has asked for corrected files.
+        if ($reason = ProceedingsRules::filesLockedByPaymentReason($paper)) {
+            return back()->with('error', $reason);
+        }
+
         if (!ProceedingsRules::cameraReadyWindowIsOpen()) {
             return back()->with('error', 'The camera-ready deadline has passed.');
         }
@@ -138,6 +143,10 @@ class CameraReadyController extends Controller
 
         if ($paper->cameraReady?->revision_status === 'approved') {
             return back()->with('error', 'Your revised manuscript has already been approved by the track chair.');
+        }
+
+        if ($reason = ProceedingsRules::filesLockedByPaymentReason($paper)) {
+            return back()->with('error', $reason);
         }
 
         if (!ProceedingsRules::revisionWindowIsOpen()) {

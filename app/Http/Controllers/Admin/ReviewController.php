@@ -140,8 +140,9 @@ class ReviewController extends Controller
         }
 
         // Only reviewers score. Someone on the committee deciding this paper cannot, even if
-        // they were assigned to it before becoming a chair.
-        if (ChairScope::for(auth()->user())->canSee($assignment->paper)) {
+        // they were assigned to it before becoming a chair, unless Settings lets chairs
+        // review in their own track (the same rule as assignment, ChairScope).
+        if (ChairScope::for(auth()->user())->committeeBarsScoring($assignment->paper)) {
             return back()->with('error', 'You are on the committee that decides this paper, so you cannot score it. Only its reviewers can.');
         }
 
@@ -149,12 +150,16 @@ class ReviewController extends Controller
         $required = $submitting ? 'required' : 'nullable';
         $score = [$required, 'integer', 'between:1,5'];
 
+        // Feedback is required on submission; how long it must be is a setting
+        // (review_feedback_min_chars), 0 by default so a one-line comment is enough.
+        $feedbackMin = SubmissionRules::reviewFeedbackMinChars();
+
         $data = $request->validate([
             'originality' => $score,
             'soundness' => $score,
             'relevance' => $score,
             'recommendation' => [$required, Rule::in(array_keys(PaperEvaluation::RECOMMENDATIONS))],
-            'feedback_for_authors' => array_merge([$required, 'string', 'max:10000'], $submitting ? ['min:50'] : []),
+            'feedback_for_authors' => array_merge([$required, 'string', 'max:10000'], $submitting && $feedbackMin > 0 ? ['min:' . $feedbackMin] : []),
             'confidential_comments' => ['nullable', 'string', 'max:5000'],
         ], [
             'feedback_for_authors.min' => 'Feedback for the authors should be at least :min characters, so they know what to improve.',

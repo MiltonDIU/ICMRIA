@@ -174,9 +174,11 @@ class PaperController extends Controller
                     $viewRoute = route('papers.show', $row->id);
                     $editRoute = route('papers.edit', $row->id);
 
-                    // Show Edit button for authors only if paper is pending and abstract submission is open
+                    // Edit for the author only while the submission is still editable
+                    // (pending, abstract window open, review not begun).
                     $editBtn = '';
-                    if (Auth::user()->roles->contains('id', 3) && $row->user_id === Auth::id() && $row->status === 'pending' && $isSubmissionOpen) {
+                    if (Auth::user()->roles->contains('id', 3) && $row->user_id === Auth::id()
+                        && \App\Services\SubmissionRules::submissionLockedReason($row) === null) {
                         $editBtn = ' <a href="'.$editRoute.'" class="btn btn-sm btn-white border text-info" title="Edit Paper">
                                         <i class="fas fa-edit"></i>
                                     </a>';
@@ -324,19 +326,20 @@ class PaperController extends Controller
                     $subTrackHtml = $row->subTrack ? '<small class="text-muted d-block" style="font-size: 0.7rem; line-height: 1.2;"><i class="fas fa-caret-right mr-1"></i> '.$row->subTrack->name.'</small>' : '';
                     return '<span class="badge badge-light border text-dark px-2 py-1 rounded-pill d-block mb-1 text-truncate" style="max-width: 150px;" title="'.$trackName.'">'.$trackName.'</span>' . $subTrackHtml;
                 })
-                ->editColumn('status', function ($row) {
-                    $statusClass = [
-                        'pending' => 'warning',
-                        'approved' => 'success',
-                        'rejected' => 'danger'
-                    ][$row->status] ?? 'secondary';
+                ->editColumn('status', function ($row) use ($user) {
+                    // Where the paper really stands (review, decision, camera-ready, fee...);
+                    // papers.status only records the abstract screening, shown underneath.
+                    $stage = \App\Services\PaperStage::for($row, (int) $row->user_id === (int) $user->id);
 
-                    $badge = '<span class="badge badge-'.$statusClass.' px-3 py-2 text-uppercase shadow-none border-0" style="font-size: 0.75rem; letter-spacing: 0.5px;">'.$row->status.'</span>';
+                    $badge = '<span class="badge badge-' . $stage['style'] . ' px-2 py-2 shadow-none border" style="font-size: 0.75rem; white-space: normal;">'
+                        . e($stage['label']) . '</span>';
+                    // The abstract screening only matters until the paper is accepted.
+                    if (!\App\Services\ProceedingsRules::isAccepted($row)) {
+                        $badge .= '<small class="d-block text-muted mt-1">Abstract: ' . e($row->status ?: 'pending') . '</small>';
+                    }
 
-                    if ($row->status === 'approved') {
-                        $pStatusClass = $row->payment_status == '1' ? 'success' : 'warning';
-                        $pStatusText = $row->payment_status == '1' ? 'PAID' : 'UNPAID';
-                        $badge .= '<span class="badge badge-'.$pStatusClass.' d-block mt-1" style="font-size: 0.65rem;">'.$pStatusText.'</span>';
+                    if (\App\Services\ProceedingsRules::isPaid($row)) {
+                        $badge .= '<span class="badge badge-success mt-1" style="font-size: 0.65rem;">PAID</span>';
                     }
 
                     return $badge;
@@ -400,11 +403,13 @@ class PaperController extends Controller
 
         try {
             $pricing = \App\Services\PricingService::calculatePaperCost($user->profile, $paper);
-            $authors = $paper->authors->map(function($author) use ($pricing) {
+            $authors = $paper->authors->map(function($author) use ($pricing, $user) {
                 // Null for an author who is not attending: no fee is charged for them.
                 return [
                     'name' => $author->name,
                     'designation' => $author->designation,
+                    // The delegate category the fee is charged at.
+                    'category' => \App\Services\PricingService::priceRowFor($author, $user->profile->country->name ?? null)?->name,
                     'fee' => $pricing['author_fees'][$author->id] ?? null,
                 ];
             });
@@ -460,8 +465,9 @@ class PaperController extends Controller
         $isOwner = (int) $paper->user_id === (int) $user->id;
 
         if ($isOwner) {
-            if (!\App\Services\SubmissionRules::manuscriptWindowIsOpen()) {
-                return back()->with('error', 'The manuscript submission window is closed.');
+            // Closed window, or (setting manuscript_locks_on_review) a reviewer already holds it.
+            if ($reason = \App\Services\SubmissionRules::manuscriptLockedReason($paper)) {
+                return back()->with('error', $reason);
             }
         } else {
             abort_if(Gate::denies('paper_manuscript_manage'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -641,10 +647,19 @@ class PaperController extends Controller
         \App\Services\PaperProgress::record($paper, 'attendance_updated', 'Attending: ' . $names);
 
         if ($profile = $paper->user->profile) {
+            // Saving who attends here confirms the author list, the step payment waits on,
+            // so the author can pay straight from this page.
+            if (!$profile->author_list_confirmed) {
+                $profile->author_list_confirmed = true;
+                $profile->save();
+            }
             \App\Services\PricingService::updateProfileTotalDue($profile->fresh());
         }
 
-        return back()->with('success', 'Attending authors updated. The registration fee now covers: ' . $names . '.');
+        $payable = \App\Services\ProceedingsRules::needsPayment($paper->fresh(['decision', 'cameraReady']));
+
+        return back()->with('success', 'Attending authors saved: ' . $names . '.'
+            . ($payable ? ' You can now pay the registration fee below.' : ''));
     }
 
     public function removeConflict(Paper $paper, \App\Models\PaperConflict $conflict)
@@ -893,8 +908,12 @@ class PaperController extends Controller
      */
     private function mayManageConflicts(Paper $paper): bool
     {
+        // The author's own declarations stop once a decision exists: they can no longer
+        // steer who reviews or decides.
         return Gate::allows('paper_conflict_manage')
-            || ((int) $paper->user_id === (int) Auth::id() && \App\Services\ConflictCandidates::authorsMayDeclare());
+            || ((int) $paper->user_id === (int) Auth::id()
+                && \App\Services\ConflictCandidates::authorsMayDeclare()
+                && !$paper->decision()->exists());
     }
 
     /**
@@ -950,18 +969,14 @@ class PaperController extends Controller
     {
         $user = Auth::user();
 
-        $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
-
-        // Authorization check: Authors can only edit their own pending paper while abstract submission is open
+        // Authors edit only their own paper, while it is pending, the abstract window is open
+        // and no reviewer or decision has touched it (SubmissionRules::submissionLockedReason).
         if ($user->roles->contains('id', 3) && !$user->roles->contains('id', 1)) {
             if ($paper->user_id !== $user->id) {
                 abort(Response::HTTP_FORBIDDEN, '403 Forbidden - You can only edit your own paper.');
             }
-            if ($paper->status === 'approved') {
-                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Approved paper cannot be edited.');
-            }
-            if ($paper->status !== 'pending' || !$isSubmissionOpen) {
-                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Paper is not editable.');
+            if ($reason = \App\Services\SubmissionRules::submissionLockedReason($paper)) {
+                return redirect()->route('papers.show', $paper->id)->with('error', $reason);
             }
         } else {
             abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -990,18 +1005,13 @@ class PaperController extends Controller
     {
         $user = Auth::user();
 
-        $isSubmissionOpen = \App\Services\SubmissionRules::abstractWindowIsOpen();
-
-        // Authorization check: Authors can only edit their own pending paper while abstract submission is open
+        // The same rule as edit(): nothing about the submission changes once review has begun.
         if ($user->roles->contains('id', 3) && !$user->roles->contains('id', 1)) {
             if ($paper->user_id !== $user->id) {
                 abort(Response::HTTP_FORBIDDEN, '403 Forbidden - You can only edit your own paper.');
             }
-            if ($paper->status === 'approved') {
-                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Approved paper cannot be edited.');
-            }
-            if ($paper->status !== 'pending' || !$isSubmissionOpen) {
-                abort(Response::HTTP_FORBIDDEN, '403 Forbidden - Paper is not editable.');
+            if ($reason = \App\Services\SubmissionRules::submissionLockedReason($paper)) {
+                return redirect()->route('papers.show', $paper->id)->with('error', $reason);
             }
         } else {
             abort_if(Gate::denies('paper_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');

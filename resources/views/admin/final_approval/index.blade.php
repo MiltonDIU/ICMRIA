@@ -1,8 +1,6 @@
 @extends('layouts.admin')
 @section('content')
 
-@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 @if(session('skipped'))
     <div class="alert alert-warning">
         <ul class="mb-0">
@@ -133,6 +131,33 @@
                                                 <span class="text-warning">authors not yet notified</span>
                                             @endif
                                         </small>
+                                        @if($decision->notified_at)
+                                            {{-- For an email that never arrived (a mail server failure, say). --}}
+                                            <form action="{{ route('admin.final-approval.resend', $decision->id) }}" method="POST" class="mt-1"
+                                                  onsubmit="return confirm('Send the decision email for {{ $paper->submission_id }} again?');">
+                                                @csrf
+                                                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-redo"></i> Resend email</button>
+                                            </form>
+                                        @endif
+                                    @endif
+
+                                    @if(in_array($tab, ['pending', 'returned'], true) && \App\Services\SubmissionRules::tpcMayOverrideDecision())
+                                        {{-- Settings: tpc_can_override_decision. The TPC Chair sets the decision and approves it. --}}
+                                        <details class="mt-2">
+                                            <summary class="btn btn-sm btn-outline-dark">Change decision</summary>
+                                            <form action="{{ route('admin.final-approval.override', $decision->id) }}" method="POST" class="mt-2">
+                                                @csrf
+                                                <select name="decision" class="form-control form-control-sm mb-1" required>
+                                                    @foreach(\App\Models\PaperDecision::DECISIONS as $value => $label)
+                                                        <option value="{{ $value }}" {{ $decision->decision === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <textarea name="comment" class="form-control form-control-sm mb-1" rows="2" maxlength="2000" required
+                                                          placeholder="Why the TPC Chair is setting this decision"></textarea>
+                                                <button class="btn btn-sm btn-dark"
+                                                        onclick="return confirm('Set this decision and approve it?');">Set &amp; approve</button>
+                                            </form>
+                                        </details>
                                     @endif
                                 </td>
                             </tr>

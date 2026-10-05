@@ -2,8 +2,6 @@
 @section('content')
 @php $bidsByReviewer = $paper->bids->pluck('preference', 'reviewer_id'); @endphp
 
-@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 @if(session('refused'))
     <div class="alert alert-warning">
         <strong>Not assigned:</strong>
@@ -41,6 +39,10 @@
             <a href="{{ route('papers.manuscript.download', $paper->id) }}" class="btn btn-sm btn-outline-primary">
                 <i class="fas fa-download"></i> Read the manuscript
             </a>
+            {{-- e.g. the manuscript deadline has not passed (review_waits_for_manuscript_deadline). --}}
+            @if($assignBlocked = \App\Services\SubmissionRules::assignmentBlockedReason($paper))
+                <div class="alert alert-warning mt-2 mb-0"><i class="fas fa-lock mr-1"></i> {{ $assignBlocked }}</div>
+            @endif
         @else
             <div class="alert alert-warning mb-0">
                 @if(\App\Services\SubmissionRules::reviewRequiresManuscript())

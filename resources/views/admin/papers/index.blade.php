@@ -27,30 +27,7 @@
         </div>
     </div>
 
-    @if(session('message'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="border-radius: 8px;">
-            <i class="fas fa-check-circle mr-2 text-success"></i> {{ session('message') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="border-radius: 8px;">
-            <i class="fas fa-check-circle mr-2 text-success"></i> {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert" style="border-radius: 8px;">
-            <i class="fas fa-exclamation-circle mr-2 text-danger"></i> {{ session('error') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
+    {{-- message / success / error flashes are shown once, by layouts.admin. --}}
 
     @if($myProfile && auth()->user()->roles->contains('id', 3) && $unpaidPapers->count() > 0)
         @if(!$myProfile->author_list_confirmed)
@@ -140,7 +117,7 @@
             <div class="row mb-3">
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="small font-weight-bold text-muted mb-1">
-                        <i class="fas fa-info-circle mr-1 text-primary"></i> Status Filter
+                        <i class="fas fa-info-circle mr-1 text-primary"></i> Abstract Screening Filter
                     </label>
                     <select id="filter_status" class="form-control form-control-sm select2">
                         <option value="">All Statuses</option>
@@ -506,7 +483,9 @@ $(function () {
                     let authorListHtml = '';
                     let fees = [];
                     response.authors.forEach(author => {
-                        let designationText = author.designation ? ` (${author.designation})` : '';
+                        // Designation, then (for those charged) the delegate category the fee is charged at, kept small.
+                        let designationText = (author.designation ? ` (${author.designation})` : '')
+                            + (author.category && author.fee !== null ? ` · ${author.category}` : '');
                         // A null fee is an author who is not attending, so nothing is charged for them.
                         if (author.fee === null) {
                             authorListHtml += `<li>${author.name}<span class="text-muted small">${designationText}</span> - <span class="text-muted">not attending, no fee</span></li>`;

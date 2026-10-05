@@ -69,11 +69,28 @@
 <div class="card mb-4">
     <div class="card-header">Expertise</div>
     <div class="card-body">
-        @forelse($expertise as $topic)
-            <span class="badge badge-light border mr-1 mb-1">{{ $topic }}</span>
-        @empty
-            <p class="text-muted mb-0">Nothing recorded yet. A chair can fill this in when adding them to a track.</p>
-        @endforelse
+        @if($canEditExpertise)
+            {{-- Administrators edit the whole list: × on a keyword removes it, typing adds one. --}}
+            <form action="{{ route('admin.track-reviewers.expertise', $reviewer->id) }}" method="POST">
+                @csrf
+                <select name="expertise[]" id="expertise-editor" multiple class="form-control" style="width: 100%;">
+                    @foreach(\App\Services\SubmissionRules::splitKeywords(array_merge($suggestedAreas, $expertise)) as $area)
+                        <option value="{{ $area }}" {{ in_array(\App\Services\SubmissionRules::normaliseKeyword($area), array_map([\App\Services\SubmissionRules::class, 'normaliseKeyword'], $expertise), true) ? 'selected' : '' }}>{{ $area }}</option>
+                    @endforeach
+                </select>
+                <small class="form-text text-muted mb-2">
+                    Remove a keyword with &times;, or pick or type new ones (comma or semicolon to separate, at most
+                    {{ $keywordsMax }}). Saving replaces this reviewer's expertise in every track they review for.
+                </small>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save"></i> Save expertise</button>
+            </form>
+        @else
+            @forelse($expertise as $topic)
+                <span class="badge badge-light border mr-1 mb-1">{{ $topic }}</span>
+            @empty
+                <p class="text-muted mb-0">Nothing recorded yet. A chair can fill this in when adding them to a track.</p>
+            @endforelse
+        @endif
     </div>
 </div>
 
@@ -172,3 +189,34 @@
 </div>
 
 @endsection
+
+@if($canEditExpertise)
+@push('script')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // The same tag picker as the reviewer's own Research Areas on My Reviews.
+    $('#expertise-editor').select2({
+        tags: true,
+        tokenSeparators: [',', ';'],
+        placeholder: 'Pick or type expertise keywords...',
+        maximumSelectionLength: {{ (int) $keywordsMax }},
+        width: '100%',
+        createTag: function (params) {
+            var term = $.trim(params.term);
+            if (term === '' || term.length < 2 || term.length > 100) {
+                return null;
+            }
+            return { id: term, text: term, newTag: true };
+        },
+        templateResult: function (data) {
+            var $result = $('<span></span>').text(data.text);
+            if (data.newTag) {
+                $result.append(' <span class="badge badge-info ml-1" style="font-size: 0.75rem;">Create new</span>');
+            }
+            return $result;
+        }
+    });
+});
+</script>
+@endpush
+@endif

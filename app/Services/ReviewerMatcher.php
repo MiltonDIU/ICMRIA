@@ -129,7 +129,10 @@ class ReviewerMatcher
     {
         // Only reviewers score. A chair of the paper's track, the TPC Chair or an
         // administrator decides on the paper instead, so cannot be handed it to score.
-        if (ChairScope::for($reviewer)->canSee($paper)) {
+        // Settings may let a Track or Sub-Track Chair (co-chair) review in their own
+        // track when reviewers are short; they then stay out of the decision on that paper
+        // (ChairScope::conflictWith). The TPC Chair and administrators never score.
+        if (ChairScope::for($reviewer)->committeeBarsScoring($paper)) {
             return 'They are on the committee that decides this paper, so they cannot score it.';
         }
 

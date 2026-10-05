@@ -57,11 +57,42 @@
                     @if($paper->pay_amount)({{ $paper->currency }} {{ number_format((float) $paper->pay_amount, 2) }})@endif.
                 </p>
             @elseif($fee)
-                <p class="mb-2">
+                <p class="mb-1">
                     Amount due for this paper: <strong>{{ $fee['currency'] }} {{ number_format((float) $fee['final_price'], 2) }}</strong>
                 </p>
+                {{-- Who it is charged for, at which delegate category. --}}
+                <ul class="list-unstyled small text-muted mb-2">
+                    @foreach($paper->authors as $author)
+                        @if(isset($fee['author_fees'][$author->id]))
+                            <li>
+                                {{ $author->name }}
+                                &middot; {{ \App\Services\PricingService::priceRowFor($author, $paper->user->profile->country->name ?? null)?->name ?? '—' }}
+                                &middot; {{ $fee['currency'] }} {{ number_format((float) $fee['author_fees'][$author->id], 2) }}
+                            </li>
+                        @endif
+                    @endforeach
+                </ul>
+
+                {{-- Pay straight from the paper page once the attending authors are confirmed. --}}
+                @if($isOwner && $needsPayment && \App\Services\ProceedingsRules::paymentWindowIsOpen())
+                    @if($paper->user->profile?->author_list_confirmed)
+                        <form action="{{ route('payNowPapers') }}" method="POST" class="mb-3">
+                            @csrf
+                            <input type="hidden" name="user_id" value="{{ $paper->user_id }}">
+                            <input type="hidden" name="paper_ids[]" value="{{ $paper->id }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-lock mr-1"></i> Pay {{ $fee['currency'] }} {{ number_format((float) $fee['final_price'], 2) }} now
+                            </button>
+                        </form>
+                    @else
+                        <div class="alert alert-info small mb-3">
+                            <i class="fas fa-info-circle mr-1"></i> Save <strong>Who Will Attend</strong> above to confirm the authors; the Pay button appears here.
+                        </div>
+                    @endif
+                @endif
+
                 <p class="small text-muted mb-3">
-                    Pay online with the <strong>Pay</strong> button in your Papers list.
+                    You can also pay from the <strong>Pay</strong> button in your Papers list.
                     @if($manualAllowed)
                         If you paid by bank or mobile transfer, report it below with the receipt so the conference team can verify it.
                     @else

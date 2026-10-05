@@ -300,7 +300,7 @@
                             <table class="table table-sm mb-0">
                                 <tbody>
                                     @foreach($papers as $paper)
-                                        @php [$label, $style] = $statusStyles[$paper->status] ?? ['Under screening', 'warning']; @endphp
+                                        @php ['label' => $label, 'style' => $style] = \App\Services\PaperStage::for($paper, true); @endphp
                                         <tr>
                                             <td style="width: 8rem;">
                                                 <a href="{{ route('papers.show', $paper->id) }}" class="font-weight-bold">{{ $paper->submission_id }}</a>
@@ -309,10 +309,12 @@
                                                 {{ Str::limit($paper->title, 55) }}
                                                 <small class="text-muted d-block">{{ Str::limit($paper->subTrack->name ?? ($paper->track->name ?? ''), 50) }}</small>
                                             </td>
-                                            <td class="text-right" style="width: 9rem;">
-                                                <span class="badge badge-{{ $style }}">{{ $label }}</span>
-                                                @if($paper->status === 'approved')
-                                                    <small class="d-block text-muted">{{ $paper->payment_status == 1 ? 'Fee paid' : 'Fee due' }}</small>
+                                            <td class="text-right" style="width: 13rem;">
+                                                <span class="badge badge-{{ $style }} border" style="white-space: normal;">{{ $label }}</span>
+                                                @if(\App\Services\ProceedingsRules::isPaid($paper))
+                                                    <small class="d-block text-muted">Fee paid</small>
+                                                @elseif(\App\Services\ProceedingsRules::needsPayment($paper))
+                                                    <small class="d-block text-muted">Fee due</small>
                                                 @endif
                                             </td>
                                         </tr>

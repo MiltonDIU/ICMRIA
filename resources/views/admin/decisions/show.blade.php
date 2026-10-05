@@ -1,8 +1,6 @@
 @extends('layouts.admin')
 @section('content')
 
-@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 
 @php
     $averages = $review->averages();
@@ -180,6 +178,20 @@
 
         @if($canDecide)
             <hr>
+            @unless($review->isReady())
+                @php $stillNeeded = $review->minimum() - $review->submittedCount(); @endphp
+                <div class="alert alert-warning d-flex align-items-start">
+                    <i class="fas fa-lock fa-lg mr-2 mt-1"></i>
+                    <div>
+                        <strong>The decision can be entered once {{ $stillNeeded }} more evaluation{{ $stillNeeded === 1 ? ' is' : 's are' }} submitted.</strong>
+                        <br><small>
+                            {{ $review->submittedCount() }} of the {{ $review->minimum() }} evaluations needed are in.
+                            Assign another reviewer, or an administrator can lower the minimum in Settings
+                            (min_reviewers_per_paper, or this track's own minimum). The comments box at the bottom of the page stays open meanwhile.
+                        </small>
+                    </div>
+                </div>
+            @endunless
             <form action="{{ route('admin.decisions.store', $paper->id) }}" method="POST">
                 @csrf
                 <fieldset {{ $review->isReady() ? '' : 'disabled' }}>

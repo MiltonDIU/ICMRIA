@@ -94,11 +94,144 @@ class SubmissionRules
         return Setting::where('key', 'review_requires_manuscript')->value('value') !== 'false';
     }
 
+    /**
+     * Whether a Track or Sub-Track Chair may be assigned as a reviewer in a track they
+     * chair, for when reviewers are short. Setting chairs_can_review_own_track; off unless
+     * set to 'true'. A chair who reviews a paper never decides on it.
+     */
+    public static function chairsMayReviewOwnTrack(): bool
+    {
+        return Setting::where('key', 'chairs_can_review_own_track')->value('value') === 'true';
+    }
+
+    /**
+     * Whether the TPC Chair may set a decision themselves (Accept, Minor Revisions or
+     * Reject) and approve it, instead of only approving or returning the chair's. Setting
+     * tpc_can_override_decision; off unless set to 'true'.
+     */
+    public static function tpcMayOverrideDecision(): bool
+    {
+        return Setting::where('key', 'tpc_can_override_decision')->value('value') === 'true';
+    }
+
+    /**
+     * Whether a chair who reviewed a paper may still decide on it (and act on its revision).
+     * Setting reviewer_chair_can_decide; off unless set to 'true', so by default another
+     * chair decides and nobody rules on their own evaluation.
+     */
+    public static function reviewerChairMayDecide(): bool
+    {
+        return Setting::where('key', 'reviewer_chair_can_decide')->value('value') === 'true';
+    }
+
+    /**
+     * The shortest "feedback for authors" a reviewer may submit. Setting
+     * review_feedback_min_chars; 0 (the default) only requires it not to be empty, so a
+     * one-line comment such as "Accept" is enough.
+     */
+    public static function reviewFeedbackMinChars(): int
+    {
+        return max(0, (int) Setting::where('key', 'review_feedback_min_chars')->value('value'));
+    }
+
+    /**
+     * Whether reviewers wait until the manuscript window has closed, so every reviewer reads
+     * the final version the author could still replace until then. Setting
+     * review_waits_for_manuscript_deadline; on unless set to 'false'.
+     */
+    public static function reviewWaitsForManuscriptDeadline(): bool
+    {
+        return Setting::where('key', 'review_waits_for_manuscript_deadline')->value('value') !== 'false';
+    }
+
+    /**
+     * Whether an author's manuscript is frozen once a reviewer holds the paper, so the file
+     * a reviewer reads cannot change under them. Setting manuscript_locks_on_review; on
+     * unless set to 'false'. Someone with paper_manuscript_manage may still replace it.
+     */
+    public static function manuscriptLocksOnReview(): bool
+    {
+        return Setting::where('key', 'manuscript_locks_on_review')->value('value') !== 'false';
+    }
+
+    /**
+     * Why the author may not edit the submission itself (title, abstract, keywords, track,
+     * authors) now, or null when they may. Open only while the abstract is pending, the
+     * abstract window is open and no reviewer or decision has touched the paper; after
+     * acceptance only the camera-ready files and attendance change, and nothing after paying.
+     */
+    public static function submissionLockedReason(\App\Models\Paper $paper): ?string
+    {
+        // Said in terms of where the paper stands, most advanced first, so an accepted
+        // author is told what they can still do rather than that the paper is "under review".
+        if (ProceedingsRules::isPaid($paper)) {
+            return 'Your paper has been accepted and the registration fee is paid, so it can no longer be changed. Contact the conference team if something needs correcting.';
+        }
+
+        if (ProceedingsRules::isAccepted($paper)) {
+            return 'Your paper has been accepted. You can now only update who will attend, upload the camera-ready manuscript and the signed copyright form, and pay the registration fee.';
+        }
+
+        if (ProceedingsRules::isRejected($paper) || $paper->status === 'rejected') {
+            return 'Your paper was not accepted, so it can no longer be edited.';
+        }
+
+        if (self::reviewHasStarted($paper)) {
+            return 'Your paper is under review, so its title, abstract and authors can no longer be edited.';
+        }
+
+        if ($paper->status === 'approved') {
+            return 'The abstract has been screened, so the submission can no longer be edited.';
+        }
+
+        if (!self::abstractWindowIsOpen()) {
+            return 'Abstract submission is closed, so the submission can no longer be edited.';
+        }
+
+        return null;
+    }
+
+    /** A reviewer holds the paper (one who declined does not count), or a decision exists. */
+    public static function reviewHasStarted(\App\Models\Paper $paper): bool
+    {
+        return $paper->decision()->exists()
+            || $paper->reviewerAssignments()->where('status', '!=', 'declined')->exists();
+    }
+
+    /** Why the author may not replace this paper's manuscript now, or null when they may. */
+    public static function manuscriptLockedReason(\App\Models\Paper $paper): ?string
+    {
+        if (!self::manuscriptWindowIsOpen()) {
+            return 'The manuscript submission window is closed.';
+        }
+
+        // Decided, whatever the settings: later changes go through revision or camera-ready.
+        if ($paper->decision()->exists()) {
+            return 'A decision has been made on your paper, so the review manuscript can no longer be replaced. Changes go through the revised manuscript or the camera-ready version.';
+        }
+
+        // Declined assignments do not count: nobody is reading the file for them.
+        $underReview = self::manuscriptLocksOnReview()
+            && $paper->reviewerAssignments()->where('status', '!=', 'declined')->exists();
+
+        if ($underReview) {
+            return 'Your manuscript is under review, so it can no longer be replaced. Changes after the decision go through the revised manuscript or the camera-ready version.';
+        }
+
+        return null;
+    }
+
     /** Why reviewers cannot be assigned to this paper yet, or null when they can. */
     public static function assignmentBlockedReason(\App\Models\Paper $paper): ?string
     {
         if (self::reviewRequiresManuscript() && !$paper->manuscript_path) {
             return 'The author has not uploaded the full manuscript yet, so reviewers cannot be assigned.';
+        }
+
+        $closes = self::manuscriptWindowClosesAt();
+        if (self::reviewWaitsForManuscriptDeadline() && $closes && Carbon::now()->lte($closes)) {
+            return 'Reviewers can be assigned once the manuscript deadline has passed (' . $closes->format('j M Y, g:i a')
+                . '), so every reviewer reads the final version.';
         }
 
         return null;
@@ -211,9 +344,11 @@ class SubmissionRules
                 }
             });
 
-            // SubTracks & Tracks
-            \App\Models\SubTrack::pluck('name')->each(fn ($name) => $suggested->push(trim($name)));
-            \App\Models\Track::pluck('name')->each(fn ($name) => $suggested->push(trim($name)));
+            // SubTracks & Tracks, as the topics their titles name. A whole title such as
+            // "Sustainable Finance, Banking, Accounting & Fintech Innovations" would be one
+            // keyword no paper ever uses, so it could never produce a match.
+            \App\Models\SubTrack::pluck('name')->each(fn ($name) => $suggested->push(...self::topicsFrom($name)));
+            \App\Models\Track::pluck('name')->each(fn ($name) => $suggested->push(...self::topicsFrom($name)));
 
             // Paper keywords
             \App\Models\Paper::whereNotNull('keywords')->get(['keywords'])->each(function ($p) use (&$suggested) {

@@ -159,6 +159,21 @@ class SettingsTableSeeder extends Seeder
 
             // 'true': reviewers are assigned only once the paper's full manuscript is uploaded.
             ['key' => 'review_requires_manuscript',    'value' => 'true'],
+            // 'true': reviewers are assigned only after manuscript_submission_end.
+            ['key' => 'review_waits_for_manuscript_deadline', 'value' => 'true'],
+            // 'true': once a reviewer holds a paper, its author can no longer replace the manuscript.
+            ['key' => 'manuscript_locks_on_review',    'value' => 'true'],
+
+            // 'true' lets a Track/Sub-Track Chair review in a track they chair when reviewers
+            // are short; they then stay out of the decision on any paper they review.
+            ['key' => 'chairs_can_review_own_track',   'value' => 'false'],
+            // 'true' lets a chair who reviewed a paper still enter its decision.
+            ['key' => 'reviewer_chair_can_decide',     'value' => 'false'],
+            // 'true' lets the TPC Chair set a decision (Accept / Minor / Reject) and approve it.
+            ['key' => 'tpc_can_override_decision',     'value' => 'false'],
+
+            // Shortest feedback for authors a reviewer may submit; 0 = just not empty.
+            ['key' => 'review_feedback_min_chars',     'value' => '0'],
 
             // Paper bidding is optional in the document (Phase 3); 'false' switches it off.
             ['key' => 'bidding_enabled',               'value' => 'true'],

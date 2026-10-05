@@ -326,6 +326,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::post('track-reviewers', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'store'])->name('track-reviewers.store');
     // Any chair may open any reviewer's profile, because the pool they pick from is conference-wide.
     Route::get('track-reviewers/{user}/profile', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'show'])->name('track-reviewers.show');
+    Route::post('track-reviewers/{user}/expertise', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'updateExpertise'])->name('track-reviewers.expertise');
     Route::delete('track-reviewers/{trackAssignment}', [\App\Http\Controllers\Admin\TrackReviewerController::class, 'destroy'])->name('track-reviewers.destroy');
 
     // Paper bidding by reviewers
@@ -354,6 +355,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::post('final-approval/approve', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'approve'])->name('final-approval.approve');
     Route::post('final-approval/notify', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'notify'])->name('final-approval.notify');
     Route::post('final-approval/{decision}/return', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'returnToChair'])->name('final-approval.return');
+    Route::post('final-approval/{decision}/override', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'override'])->name('final-approval.override');
+    Route::post('final-approval/{decision}/resend', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'resend'])->name('final-approval.resend');
     Route::post('final-approval/{decision}/comments', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'comment'])->name('final-approval.comments.store');
 
     // Revised manuscripts of papers accepted with minor revisions (Track, Sub-Track and TPC Chairs)

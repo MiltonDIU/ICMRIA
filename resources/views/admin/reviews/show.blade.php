@@ -185,8 +185,6 @@
 
 @section('content')
 
-@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 
 @php
     $statusLabels = [
@@ -362,7 +360,11 @@
                     <textarea id="feedback_for_authors" name="feedback_for_authors" class="form-control" rows="8"
                               maxlength="10000" placeholder="Provide constructive comments for the authors...">{{ old('feedback_for_authors', $evaluation->feedback_for_authors) }}</textarea>
                     <small class="form-text text-muted">
-                        Sent to the authors with the decision, without your name. Explain what works and what should be improved.
+                        Sent to the authors with the decision, without your name. A short comment is fine; where you can,
+                        say what works and what should be improved.
+                        @if(($feedbackMin = \App\Services\SubmissionRules::reviewFeedbackMinChars()) > 0)
+                            At least {{ $feedbackMin }} characters.
+                        @endif
                     </small>
                 </div>
 

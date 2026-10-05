@@ -122,6 +122,81 @@ class FinalApprovalController extends Controller
         return back()->with('success', 'Decision on ' . $decision->paper->submission_id . ' returned to the chair.');
     }
 
+    /**
+     * The TPC Chair setting the decision themselves and approving it at once, when Settings
+     * allows it (tpc_can_override_decision). The requirement document has the Track Chair
+     * recommend and the TPC Chair approve, so this is off by default; when used, the change
+     * and its reason are kept in the paper's comment history.
+     */
+    public function override(Request $request, PaperDecision $decision)
+    {
+        abort_if(Gate::denies('final_approval'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        abort_unless(\App\Services\SubmissionRules::tpcMayOverrideDecision(), Response::HTTP_FORBIDDEN,
+            'Changing a decision is not enabled in Settings.');
+
+        if ($decision->isApproved()) {
+            return back()->with('error', 'This decision is already approved.');
+        }
+
+        if ($reason = ChairScope::for(auth()->user())->conflictWith($decision->paper)) {
+            return back()->with('error', $reason);
+        }
+
+        $data = $request->validate([
+            'decision' => ['required', \Illuminate\Validation\Rule::in(array_keys(PaperDecision::DECISIONS))],
+            'comment' => 'required|string|max:2000',
+        ], [
+            'decision.required' => 'Choose the decision to set.',
+            'comment.required' => 'Give the reason for changing the decision; the chair and the record keep it.',
+        ]);
+
+        $from = $decision->label();
+
+        DB::transaction(function () use ($decision, $data, $from) {
+            $decision->update([
+                'decision' => $data['decision'],
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+            $this->addComment($decision, 'Decision set by the TPC Chair: ' . $from . ' → '
+                . $decision->fresh()->label() . '. ' . $data['comment'], 'approved');
+        });
+
+        return back()->with('success', $decision->paper->submission_id . ' set to ' . $decision->fresh()->label()
+            . ' and approved. Authors are not told until the decision emails are sent.');
+    }
+
+    /**
+     * Sends the decision email for one approved paper again, for when the first one never
+     * arrived (a mail server failure, say). The decision itself is unchanged.
+     */
+    public function resend(PaperDecision $decision)
+    {
+        abort_if(Gate::denies('final_approval'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        if (!$decision->isApproved()) {
+            return back()->with('error', 'Only an approved decision can be emailed.');
+        }
+
+        $recipients = $decision->paper->notificationRecipients();
+        if (!$recipients) {
+            return back()->with('error', 'There is no address to send the decision for ' . $decision->paper->submission_id . ' to.');
+        }
+
+        try {
+            Mail::to($recipients)->queue(new \App\Mail\DecisionNotification($decision->paper));
+            $decision->update(['notified_at' => now()]);
+            \App\Services\PaperProgress::record($decision->paper_id, 'decision_notified', $decision->label() . ' (sent again)');
+        } catch (\Exception $e) {
+            Log::error('Decision notification resend failed', ['decision' => $decision->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'The decision email could not be queued: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Decision email for ' . $decision->paper->submission_id . ' queued again to ' . implode(', ', $recipients) . '.');
+    }
+
     /** A comment from the TPC Chair on a decision that is not yet approved. */
     public function comment(Request $request, PaperDecision $decision)
     {

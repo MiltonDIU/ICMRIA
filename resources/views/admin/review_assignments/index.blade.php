@@ -1,8 +1,6 @@
 @extends('layouts.admin')
 @section('content')
 
-@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 @if(session('short'))
     <div class="alert alert-warning">
         <strong>Still short of reviewers:</strong> {{ implode(', ', session('short')) }}.
@@ -28,6 +26,9 @@
             A paper below that is marked in red. Papers whose abstract was rejected are not listed.
             @if(\App\Services\SubmissionRules::reviewRequiresManuscript())
                 Reviewers can be assigned only once the paper's manuscript is uploaded; automatic assignment skips the rest.
+            @endif
+            @if(\App\Services\SubmissionRules::reviewWaitsForManuscriptDeadline() && ($closes = \App\Services\SubmissionRules::manuscriptWindowClosesAt()) && now()->lte($closes))
+                <br><strong>Assignment opens after the manuscript deadline, {{ $closes->format('j M Y, g:i a') }}</strong>, so every reviewer reads the final version.
             @endif
         </p>
         @unless($hasNoScope)

@@ -143,6 +143,19 @@ class ChairScope
     }
 
     /**
+     * Whether this person's place on the deciding committee keeps them from scoring the
+     * paper. Admins and the TPC Chair never score. A Track or Sub-Track Chair of the paper
+     * may, when Settings allows chairs to review in their own track
+     * (chairs_can_review_own_track); they then stay out of its decision (conflictWith).
+     * Used both when assigning reviewers and when an evaluation is saved.
+     */
+    public function committeeBarsScoring(\App\Models\Paper $paper): bool
+    {
+        return $this->canSee($paper)
+            && ($this->seesEverything() || !SubmissionRules::chairsMayReviewOwnTrack());
+    }
+
+    /**
      * Why this person has to stay out of decisions on a paper, or null when nothing
      * stands in the way: they wrote it, or its author declared a conflict with them.
      * Scope says where someone may act; this says where they must not, whatever their role.
@@ -162,6 +175,19 @@ class ChairScope
 
         if ($paper->conflicts->pluck('conflicted_user_id')->filter()->contains($this->user->id)) {
             return 'The author declared a conflict of interest with you, so another member of the committee has to handle it.';
+        }
+
+        // A chair allowed to review in their own track (setting chairs_can_review_own_track)
+        // does not decide on a paper they reviewed, since their evaluation is one of those
+        // weighed, unless Settings allows it (reviewer_chair_can_decide).
+        $reviewedIt = !SubmissionRules::reviewerChairMayDecide()
+            && $paper->reviewerAssignments()
+                ->where('reviewer_id', $this->user->id)
+                ->where('status', '!=', 'declined')
+                ->exists();
+
+        if ($reviewedIt) {
+            return 'You are a reviewer of this paper, so another member of the committee has to decide on it.';
         }
 
         return null;

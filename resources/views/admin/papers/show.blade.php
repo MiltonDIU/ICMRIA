@@ -46,15 +46,18 @@
                         Submission ID: {{ $paper->submission_id }}
                     </span>
                     @php
-                        $statusClass = [
-                            'pending' => 'warning',
-                            'approved' => 'success',
-                            'rejected' => 'danger'
-                        ][$paper->status] ?? 'secondary';
+                        // Where the paper really stands; papers.status is only the abstract screening.
+                        $stage = \App\Services\PaperStage::for($paper, (int) auth()->id() === (int) $paper->user_id);
                     @endphp
-                    <span class="badge badge-{{ $statusClass }} px-3 py-1 text-uppercase small">
-                        Status: {{ $paper->status }}
-                    </span>
+                    <div class="text-right">
+                        <span class="badge badge-{{ $stage['style'] }} border px-3 py-2" style="white-space: normal;">
+                            {{ $stage['label'] }}
+                        </span>
+                        {{-- The abstract screening only matters until the paper is accepted. --}}
+                        @unless(\App\Services\ProceedingsRules::isAccepted($paper))
+                            <small class="d-block text-muted mt-1">Abstract screening: {{ $paper->status ?: 'pending' }}</small>
+                        @endunless
+                    </div>
                 </div>
                 <h5 class="font-weight-bold text-dark-blue mt-2 lh-1-4">
                     {{ $paper->title }}

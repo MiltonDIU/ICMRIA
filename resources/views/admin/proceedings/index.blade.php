@@ -1,8 +1,6 @@
 @extends('layouts.admin')
 @section('content')
 
-@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 
 @php
     $tabs = ['camera' => 'Camera-ready', 'payments' => 'Payments to verify', 'confirmed' => 'Confirmed for Proceedings'];

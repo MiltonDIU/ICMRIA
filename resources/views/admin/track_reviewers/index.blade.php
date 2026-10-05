@@ -1,86 +1,6 @@
 @extends('layouts.admin')
 
-@section('styles')
-@parent
-<style>
-    .select2-container .select2-selection--single {
-        height: 33px !important;
-        padding: 3px 8px !important;
-        font-size: 0.875rem !important;
-        line-height: 1.5 !important;
-        border-radius: 0.25rem !important;
-        border: 1px solid #ced4da !important;
-        background-color: #fff;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 25px !important;
-        padding-left: 0 !important;
-        color: #495057 !important;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 31px !important;
-        right: 6px !important;
-    }
-    .select2-container--default.select2-container--focus .select2-selection--single,
-    .select2-container--default.select2-container--open .select2-selection--single {
-        border-color: #80bdff !important;
-        outline: 0 !important;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-    }
-    .select2-dropdown {
-        border-radius: 6px !important;
-        border: 1px solid #ced4da !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
-        z-index: 9999 !important;
-    }
-    .select2-search--dropdown {
-        padding: 8px !important;
-    }
-    .select2-search--dropdown .select2-search__field {
-        padding: 6px 10px !important;
-        border-radius: 4px !important;
-        border: 1px solid #ced4da !important;
-        font-size: 0.875rem !important;
-        outline: none !important;
-    }
-    .select2-results__option {
-        padding: 6px 10px !important;
-        font-size: 0.875rem !important;
-    }
-    .reviewer-option-title {
-        font-weight: 600;
-        color: #212529;
-    }
-    .reviewer-option-email {
-        font-size: 0.8rem;
-        color: #6c757d;
-        margin-left: 6px;
-    }
-    .reviewer-option-meta {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-top: 2px;
-    }
-</style>
-@endsection
-
 @section('content')
-
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
-@if(session('error'))
-    <div class="alert alert-danger">{{ session('error') }}</div>
-@endif
-@if($errors->any())
-    <div class="alert alert-danger">
-        <ul class="mb-0">
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
 
 <div class="card mb-3">
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
@@ -230,8 +150,8 @@
                         </div>
                         <div class="col-md-4 mb-2">
                             <label class="small font-weight-bold mb-1">Expertise here</label>
-                            <input type="text" name="expertise" class="form-control form-control-sm"
-                                   placeholder="blank = carry over what they already cover">
+                            <select name="expertise[]" multiple class="form-control form-control-sm js-expertise-tags"
+                                    data-placeholder="Blank = carry over what they already cover" style="width: 100%;"></select>
                         </div>
                         <div class="col-md-2 mb-2">
                             <button type="submit" class="btn btn-sm btn-primary btn-block">
@@ -264,8 +184,8 @@
                     </div>
                     <div class="col-md-4 mb-2">
                         <label class="small font-weight-bold mb-1">Expertise</label>
-                        <input type="text" name="expertise" class="form-control form-control-sm"
-                               placeholder="{{ $subTrack->name ?? $track->name }}">
+                        <select name="expertise[]" multiple class="form-control form-control-sm js-expertise-tags"
+                                data-placeholder="Blank = this sub-track's topics" style="width: 100%;"></select>
                     </div>
                     <div class="col-md-2 mb-2">
                         <button type="submit" class="btn btn-sm btn-success btn-block">
@@ -301,36 +221,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Custom multi-field search matcher for Select2
-    function reviewerCustomMatcher(params, data) {
-        // If there's no search term, return all data
-        if (!params.term || $.trim(params.term) === '') {
-            return data;
-        }
+    // With nothing typed, only the best few are listed; typing searches everyone.
+    var SHOWN_WITHOUT_SEARCH = 10;
 
-        // Skip placeholder
+    // Custom multi-field search matcher for Select2. The options are a flat list (no
+    // optgroups): an optgroup has no id, so an earlier "skip anything without an id"
+    // check hid every reviewer as soon as something was typed.
+    function reviewerCustomMatcher(params, data) {
+        // The placeholder row is never a result.
         if (!data.id) {
             return null;
         }
 
-        // Check if data is an optgroup
-        if (data.children && data.children.length) {
-            var matchGroup = $.extend(true, {}, data);
-            var filteredChildren = [];
-            for (var c = 0; c < data.children.length; c++) {
-                var childMatch = reviewerCustomMatcher(params, data.children[c]);
-                if (childMatch) {
-                    filteredChildren.push(childMatch);
-                }
-            }
-            if (filteredChildren.length) {
-                matchGroup.children = filteredChildren;
-                return matchGroup;
-            }
-            return null;
+        var $opt = $(data.element);
+
+        if (!params.term || $.trim(params.term) === '') {
+            return (parseInt($opt.data('rank'), 10) || 0) < SHOWN_WITHOUT_SEARCH ? data : null;
         }
 
-        var $opt = $(data.element);
         var name = ($opt.data('name') || data.name || '').toString().toLowerCase();
         var email = ($opt.data('email') || data.email || '').toString().toLowerCase();
         var tracks = ($opt.data('tracks') || data.tracks || '').toString().toLowerCase();
@@ -384,9 +292,10 @@ document.addEventListener('DOMContentLoaded', function () {
         blank.textContent = 'Search or select a reviewer (' + pool.length + ' available in pool)...';
         select.appendChild(blank);
 
-        function createOption(item) {
+        function createOption(item, rank) {
             var option = document.createElement('option');
             option.value = item.person.id;
+            option.dataset.rank = rank;
             option.dataset.name = item.person.name;
             option.dataset.email = item.person.email || '';
             option.dataset.tracks = (item.person.tracks || []).join(', ');
@@ -416,23 +325,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return option;
         }
 
-        if (availableRows.length) {
-            var groupAvailable = document.createElement('optgroup');
-            groupAvailable.label = 'Available Reviewers (' + availableRows.length + ')';
-            availableRows.forEach(function (item) {
-                groupAvailable.appendChild(createOption(item));
-            });
-            select.appendChild(groupAvailable);
-        }
-
-        if (assignedRows.length) {
-            var groupAssigned = document.createElement('optgroup');
-            groupAssigned.label = 'Already in this Track (' + assignedRows.length + ') — Select to update expertise';
-            assignedRows.forEach(function (item) {
-                groupAssigned.appendChild(createOption(item));
-            });
-            select.appendChild(groupAssigned);
-        }
+        // One flat list: the best-matching available reviewers first, then those already in
+        // this track (badged "Already in this track"). rank decides who shows untyped.
+        availableRows.concat(assignedRows).forEach(function (item, rank) {
+            select.appendChild(createOption(item, rank));
+        });
 
         // Initialize Select2
         var $s2 = $(select);
@@ -442,67 +339,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         $s2.select2({
             width: '100%',
-            placeholder: 'Type name, email or expertise to search (' + pool.length + ' reviewers)...',
+            placeholder: pool.length > SHOWN_WITHOUT_SEARCH
+                ? 'Top ' + SHOWN_WITHOUT_SEARCH + ' shown — type a name, email or expertise to search all ' + pool.length + ' reviewers...'
+                : 'Type name, email or expertise to search (' + pool.length + ' reviewers)...',
             allowClear: true,
             matcher: reviewerCustomMatcher,
-            minimumResultsForSearch: 0,
-            templateResult: function (data) {
-                if (!data.id) {
-                    return data.text;
-                }
-                var $opt = $(data.element);
-                var name = $opt.data('name') || data.name || data.text;
-                var email = $opt.data('email') || data.email || '';
-                var tracks = $opt.data('tracks') || data.tracks || '';
-                var expertise = $opt.data('expertise') || data.expertise || '';
-                var hits = ($opt.data('hits') === '1' || $opt.data('hits') === 1);
-                var already = ($opt.data('already') === '1' || $opt.data('already') === 1);
-
-                var $wrapper = $('<div class="py-1"></div>');
-                var $header = $('<div class="d-flex align-items-center justify-content-between flex-wrap"></div>');
-                
-                var $title = $('<span></span>').addClass('reviewer-option-title');
-                if (hits) {
-                    $title.append('<span class="text-warning mr-1">&#9733;</span>');
-                    $title.addClass('text-primary font-weight-bold');
-                }
-                $title.append(document.createTextNode(name));
-                $header.append($title);
-
-                if (email) {
-                    $header.append($('<small></small>').addClass('reviewer-option-email').text(email));
-                }
-                $wrapper.append($header);
-
-                var load = parseInt($opt.data('load'), 10) || 0;
-
-                var metaParts = [];
-                if (already) {
-                    metaParts.push('<span class="badge badge-info mr-1">Already in this track</span>');
-                }
-                metaParts.push('<span class="badge badge-light border mr-1">' + load + ' paper' + (load === 1 ? '' : 's') + ' open</span>');
-                if (tracks) {
-                    metaParts.push('<span class="badge badge-light border mr-1">in ' + tracks + '</span>');
-                }
-                if (expertise) {
-                    metaParts.push('<span class="text-muted small">' + expertise + '</span>');
-                }
-                if (metaParts.length) {
-                    $wrapper.append($('<div class="reviewer-option-meta mt-1"></div>').html(metaParts.join(' ')));
-                }
-
-                return $wrapper;
-            },
-            templateSelection: function (data) {
-                if (!data.id) {
-                    return data.text;
-                }
-                var $opt = $(data.element);
-                var name = $opt.data('name') || data.name || data.text;
-                var email = $opt.data('email') || data.email || '';
-                var already = ($opt.data('already') === '1' || $opt.data('already') === 1);
-                return name + (email ? ' (' + email + ')' : '') + (already ? ' [Already in track]' : '');
-            }
+            minimumResultsForSearch: 0
+            // Plain Select2 look: each option shows its own one-line text (name, email,
+            // tracks, expertise, "[Already in this track]"), built in createOption above.
         });
 
         // Auto-focus the search field upon opening
@@ -513,6 +357,41 @@ document.addEventListener('DOMContentLoaded', function () {
                     search.focus();
                 }
             }, 10);
+        });
+    });
+
+    // "Expertise here" pickers: the same tag picker as the reviewer's own Research Areas,
+    // offering the keywords already in use so one topic is not typed several ways.
+    // Auto-assignment matches whole keywords (SubmissionRules::keywordOverlap), so picking
+    // an existing one is what makes a match.
+    var suggestedAreas = @json(array_values($suggestedAreas));
+    var maxKeywords = {{ (int) $keywordsMax }};
+
+    document.querySelectorAll('.js-expertise-tags').forEach(function (select) {
+        suggestedAreas.forEach(function (area) {
+            select.appendChild(new Option(area, area, false, false));
+        });
+
+        $(select).select2({
+            tags: true,
+            tokenSeparators: [',', ';'],
+            placeholder: select.dataset.placeholder || 'Select existing or type to create new...',
+            maximumSelectionLength: maxKeywords,
+            width: '100%',
+            createTag: function (params) {
+                var term = $.trim(params.term);
+                if (term === '' || term.length < 2 || term.length > 100) {
+                    return null;
+                }
+                return { id: term, text: term, newTag: true };
+            },
+            templateResult: function (data) {
+                var $result = $('<span></span>').text(data.text);
+                if (data.newTag) {
+                    $result.append(' <span class="badge badge-info ml-1" style="font-size: 0.75rem;">Create new</span>');
+                }
+                return $result;
+            }
         });
     });
 });

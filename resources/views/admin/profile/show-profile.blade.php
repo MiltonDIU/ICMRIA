@@ -314,6 +314,10 @@
                                                                              {{ $author->name }}
                                                                              @if($author->designation)<span class="text-muted">({{ $author->designation }})</span>@endif
                                                                              @if($authorFee !== null)
+                                                                                 {{-- The delegate category the fee is charged at. --}}
+                                                                                 <small class="text-muted">&middot; {{ \App\Services\PricingService::priceRowFor($author, $myProfile->country->name ?? null)?->name }}</small>
+                                                                             @endif
+                                                                             @if($authorFee !== null)
                                                                                  - <strong class="text-primary">{{ $pricing['currency'] }} {{ number_format($authorFee, 2) }}</strong>
                                                                              @else
                                                                                  - <span class="text-muted">not attending, no fee</span>

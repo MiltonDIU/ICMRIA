@@ -193,12 +193,13 @@ class ReviewAssignmentController extends Controller
         $assigned = 0;
         $papersFilled = 0;
         $stillShort = [];
-        $withoutManuscript = 0;
+        $notYet = []; // reason => how many papers it held back
 
         foreach ($papers as $paper) {
             // Left for later when the setting requires the manuscript first.
-            if (SubmissionRules::assignmentBlockedReason($paper)) {
-                $withoutManuscript++;
+            // Left for later: no manuscript yet, or the manuscript deadline has not passed.
+            if ($reason = SubmissionRules::assignmentBlockedReason($paper)) {
+                $notYet[$reason] = ($notYet[$reason] ?? 0) + 1;
                 continue;
             }
 
@@ -217,13 +218,13 @@ class ReviewAssignmentController extends Controller
             }
         }
 
-        $skippedNote = $withoutManuscript
-            ? " {$withoutManuscript} paper" . ($withoutManuscript === 1 ? ' was' : 's were') . ' skipped because the manuscript is not uploaded yet.'
-            : '';
+        $skippedNote = collect($notYet)
+            ->map(fn ($count, $reason) => " {$count} paper" . ($count === 1 ? ' was' : 's were') . ' skipped: ' . $reason)
+            ->implode('');
 
         if ($assigned === 0 && !$stillShort) {
-            return back()->with('success', ($withoutManuscript
-                ? 'No paper with a manuscript still needs reviewers.'
+            return back()->with('success', ($notYet
+                ? 'No paper that is ready for review still needs reviewers.'
                 : 'Every paper already has the number of reviewers its track asks for.') . $skippedNote);
         }
 

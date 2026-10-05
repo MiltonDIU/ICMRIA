@@ -490,6 +490,8 @@
                                                                 <li>
                                                                     {{ $author->name }}
                                                                     @if(isset($pricing['author_fees'][$author->id]))
+                                                                        {{-- The delegate category the fee is charged at. --}}
+                                                                        <small>&middot; {{ \App\Services\PricingService::priceRowFor($author, $profile->country->name ?? null)?->name }}</small>
                                                                         — <strong style="color: #0055A0;">
                                                                             {{ $pricing['currency'] }}
                                                                             {{ number_format($pricing['author_fees'][$author->id], 2) }}
@@ -643,14 +645,15 @@
                                     <th>Title</th>
                                     <th>Track</th>
                                     <th style="width: 14rem;">Authors</th>
-                                    <th style="width: 10rem;">Screening</th>
+                                    <th style="width: 13rem;">Stage</th>
                                     <th style="width: 8rem;">Fee</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($papers as $paper)
                                     @php
-                                        [$label, $style] = $statusStyles[$paper->status] ?? ['Under screening', 'warning'];
+                                        // Where the paper really stands, as the author may see it.
+                                        ['label' => $label, 'style' => $style] = \App\Services\PaperStage::for($paper, true);
                                     @endphp
                                     <tr>
                                         <td>
@@ -677,11 +680,11 @@
                                                 </small>
                                             @endif
                                         </td>
-                                        <td><span class="badge badge-{{ $style }}">{{ $label }}</span></td>
+                                        <td><span class="badge badge-{{ $style }} border" style="white-space: normal;">{{ $label }}</span></td>
                                         <td>
-                                            @if($paper->payment_status == 1)
+                                            @if(\App\Services\ProceedingsRules::isPaid($paper))
                                                 <span class="badge badge-success">Paid</span>
-                                            @elseif($paper->status === 'approved')
+                                            @elseif(\App\Services\ProceedingsRules::needsPayment($paper))
                                                 <span class="badge badge-warning">Due</span>
                                             @else
                                                 <small class="text-muted">—</small>

@@ -70,3 +70,23 @@ table.dataTable thead .sorting_desc {
     padding-left: 0px;
     padding-right: 0px;
 }
+
+/*
+ * Custom checkboxes and radios. adminltev3.css carries Bootstrap 4.0's rule placing the
+ * box at left: 0, while Bootstrap 4.2 (loaded first) makes the label the box's positioning
+ * context, so the box landed on top of the label text across the whole admin panel.
+ * These are Bootstrap 4.2's own offsets: the box sits in the control's left padding, clear
+ * of the text.
+ */
+.custom-control-label::before,
+.custom-control-label::after {
+    left: -1.5rem;
+}
+
+.custom-switch .custom-control-label::before {
+    left: -2.25rem;
+}
+
+.custom-switch .custom-control-label::after {
+    left: calc(-2.25rem + 2px);
+}

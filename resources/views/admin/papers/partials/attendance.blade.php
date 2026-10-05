@@ -28,13 +28,16 @@
                     <div class="custom-control custom-checkbox mb-2">
                         <input type="checkbox" class="custom-control-input" id="attending_{{ $author->id }}"
                                name="attending[]" value="{{ $author->id }}" {{ $author->is_attending ? 'checked' : '' }}>
-                        <label class="custom-control-label pl-2" for="attending_{{ $author->id }}">
+                        <label class="custom-control-label pl-4" for="attending_{{ $author->id }}">
                             {{ $author->name }}
                             <small class="text-muted">&middot; {{ $author->price->name ?? 'No category' }}</small>
                         </label>
                     </div>
                 @endforeach
                 <button type="submit" class="btn btn-sm btn-primary mt-2"><i class="fas fa-save"></i> Save attendance</button>
+                @if(\App\Services\ProceedingsRules::needsPayment($paper) && !$paper->user->profile?->author_list_confirmed)
+                    <small class="text-muted ml-2">Saving confirms the authors, and the Pay button appears in Registration Fee below.</small>
+                @endif
             </form>
         </div>
     </div>

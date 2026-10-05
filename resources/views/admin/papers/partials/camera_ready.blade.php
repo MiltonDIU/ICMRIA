@@ -8,7 +8,9 @@
         $isOwner = auth()->id() === $paper->user_id;
         $windowOpen = \App\Services\ProceedingsRules::cameraReadyWindowIsOpen();
         $deadline = \App\Services\ProceedingsRules::cameraReadyDeadline();
-        $locked = $final && $final->isConfirmed();
+        // Confirmed, or paid (unless the administrator has asked for corrected files).
+        $paidLock = \App\Services\ProceedingsRules::filesLockedByPaymentReason($paper);
+        $locked = ($final && $final->isConfirmed()) || $paidLock !== null;
         $statusStyle = ['submitted' => 'info', 'changes_requested' => 'danger', 'confirmed' => 'success'][$final->status ?? ''] ?? 'warning';
     @endphp
 
@@ -26,7 +28,14 @@
                 </div>
             @endif
 
-            @if($locked)
+            @if($paidLock && !$final?->isConfirmed())
+                <div class="alert alert-info">
+                    <i class="fas fa-lock mr-1"></i> The registration fee is paid, so your files are final. The conference team
+                    will now check them and confirm your paper for the proceedings.
+                </div>
+            @endif
+
+            @if($final?->isConfirmed())
                 <div class="alert alert-success">
                     Confirmed for the proceedings on {{ optional($final->confirmed_at)->format('j M Y') }}.
                     @if($final->schedule)
@@ -40,9 +49,13 @@
             @endif
 
             <ul class="list-unstyled mb-3">
-                @foreach($checklist as $item)
+                @foreach($checklist as $key => $item)
                     <li class="mb-1">
                         <i class="fas {{ $item['done'] ? 'fa-check-circle text-success' : 'fa-circle text-muted' }} mr-2"></i>{{ $item['label'] }}
+                        {{-- The fee is the step still open once the files are in: say where to pay. --}}
+                        @if($key === 'payment' && !$item['done'] && $isOwner && \App\Services\ProceedingsRules::needsPayment($paper))
+                            <a href="{{ route('papers.index') }}" class="small ml-2"><i class="fas fa-credit-card"></i> Pay from the Papers list</a>
+                        @endif
                     </li>
                 @endforeach
             </ul>

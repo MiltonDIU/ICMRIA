@@ -49,7 +49,11 @@ $(document).ready(function () {
         $select2.trigger('change')
     })
 
-    $('.select2').select2()
+    // Only real <select> elements. Select2 renders its own <span class="select2 ...">
+    // container, so a bare ".select2" also caught the containers of selects a page had
+    // already initialised (e.g. the reviewer pool on Reviewers by Track), and re-running
+    // Select2 on them hid those fields.
+    $('select.select2').not('.select2-hidden-accessible').select2()
 
     $('.treeview').each(function () {
         var shouldExpand = false
