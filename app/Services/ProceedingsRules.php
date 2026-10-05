@@ -95,6 +95,17 @@ class ProceedingsRules
         return null;
     }
 
+    /**
+     * Whether authors may report a bank or mobile transfer with a receipt for an admin to
+     * verify. Off by default: OneCard takes every payment, foreign ones converted from USD
+     * at the day's rate, so the gateway is the only route unless the organisers switch
+     * this on (setting manual_payment_enabled = 'true').
+     */
+    public static function manualPaymentEnabled(): bool
+    {
+        return Setting::where('key', 'manual_payment_enabled')->value('value') === 'true';
+    }
+
     public static function isPaymentEnabled(): bool
     {
         return Setting::where('key', 'is_payment_enabled')->value('value') !== 'false';

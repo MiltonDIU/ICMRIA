@@ -123,6 +123,9 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'seat_is_full',                  'value' => 'false'],
             ['key' => 'is_payment_enabled',            'value' => 'true'],
             ['key' => 'max_paid_papers_limit',         'value' => '500'],
+            // 'true' lets authors report a bank/mobile transfer with a receipt for admin
+            // verification. Off: OneCard takes every payment, USD converted at the day's rate.
+            ['key' => 'manual_payment_enabled',        'value' => 'false'],
 
             // 'true' sends paper emails (submission, decision, camera-ready...) to every
             // author on the paper; 'false' to the corresponding author only.

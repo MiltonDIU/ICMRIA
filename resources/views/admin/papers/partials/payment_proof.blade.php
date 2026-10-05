@@ -25,7 +25,8 @@
     @php
         $isOwner = auth()->id() === $paper->user_id;
         $pending = $paper->paymentProofs->firstWhere('status', 'submitted');
-        $canReport = $isOwner && $needsPayment && !$pending && \App\Services\ProceedingsRules::paymentWindowIsOpen();
+        $manualAllowed = \App\Services\ProceedingsRules::manualPaymentEnabled();
+        $canReport = $manualAllowed && $isOwner && $needsPayment && !$pending && \App\Services\ProceedingsRules::paymentWindowIsOpen();
         $proofStyles = ['submitted' => 'warning', 'verified' => 'success', 'rejected' => 'danger'];
 
         $fee = null;
@@ -60,8 +61,12 @@
                     Amount due for this paper: <strong>{{ $fee['currency'] }} {{ number_format((float) $fee['final_price'], 2) }}</strong>
                 </p>
                 <p class="small text-muted mb-3">
-                    Pay online with the <strong>Pay</strong> button in your Papers list, or, if you paid by bank or mobile
-                    transfer, report it below with the receipt so the conference team can verify it.
+                    Pay online with the <strong>Pay</strong> button in your Papers list.
+                    @if($manualAllowed)
+                        If you paid by bank or mobile transfer, report it below with the receipt so the conference team can verify it.
+                    @else
+                        Card and mobile payments from any country are accepted; foreign payments are converted from USD at the day's rate.
+                    @endif
                 </p>
             @endif
 

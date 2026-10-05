@@ -210,6 +210,11 @@ class CameraReadyController extends Controller
     public function storePaymentProof(Request $request, Paper $paper)
     {
         abort_unless($paper->user_id === Auth::id(), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        if (!ProceedingsRules::manualPaymentEnabled()) {
+            return back()->with('error', 'Please pay online with the Pay button in your Papers list.');
+        }
+
         $paper->load(['decision', 'cameraReady', 'paymentProofs']);
 
         if (!ProceedingsRules::needsPayment($paper)) {
