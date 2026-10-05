@@ -238,12 +238,8 @@
                 </p>
             </div>
 
-            <div class="footer">
-                <p class="footer-text">Warm regards,</p>
-                <p class="footer-text"><strong>Conference Secretariat</strong></p>
-                <p class="footer-text">ICMRIA 2027</p>
-                <p class="footer-text">Division of Research</p>
-                <p class="footer-text">Daffodil International University</p>
+            <div class="footer" style="background:#F8FAFC; padding:16px 24px; border-top:1px solid #E2E8F0;">
+                <p class="footer-text" style="font-size:12px; color:#64748B; margin:0;">Daffodil International University, Daffodil Smart City, Birulia, Savar, Dhaka</p>
             </div>
         </div>
     </div>
