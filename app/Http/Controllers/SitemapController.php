@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
-use App\Models\Schedule;
 use App\Models\Speaker;
 
 /**
@@ -52,9 +51,6 @@ class SitemapController extends Controller
 
         Speaker::whereNotNull('slug')->where('slug', '!=', '')->get(['slug', 'updated_at'])
             ->each(fn ($s) => $add(route('speaker', ['slug' => $s->slug]), $s->updated_at));
-
-        Schedule::where('is_active', '1')->get(['id', 'title', 'updated_at'])
-            ->each(fn ($s) => $add(route('scheduleDetails', [$s->id, $s->title]), $s->updated_at, '0.5'));
 
         Post::where('is_active', '1')->get(['id', 'slug', 'updated_at'])
             ->each(fn ($p) => $add(route('blogDetails', [$p->id, $p->slug]), $p->updated_at, '0.5'));
