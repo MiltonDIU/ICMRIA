@@ -93,6 +93,8 @@ class SettingsTableSeeder extends Seeder
             //   ASSUMPTIONS - not given in the doc; confirm with organisers.
             // ---------------------------------------------------------------
             ['key' => 'registration_start_date',       'value' => '2026-09-01 00:00:00'], // ASSUMED
+            // Early-bird rates apply from this date until early_registration_last_date.
+            ['key' => 'early_registration_start_date', 'value' => '2026-09-01 00:00:00'],
             ['key' => 'abstract_submission_deadline',  'value' => '2026-10-30 23:59:00'],
             ['key' => 'manuscript_submission_start',   'value' => '2026-11-15 00:00:00'],
             ['key' => 'manuscript_submission_end',     'value' => '2026-11-30 23:59:00'],
@@ -122,6 +124,14 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'is_payment_enabled',            'value' => 'true'],
             ['key' => 'max_paid_papers_limit',         'value' => '500'],
 
+            // 'true' sends paper emails (submission, decision, camera-ready...) to every
+            // author on the paper; 'false' to the corresponding author only.
+            ['key' => 'email_all_authors',             'value' => 'false'],
+
+            // 'false' stops authors declaring conflicts of interest themselves; those already
+            // declared still apply.
+            ['key' => 'author_conflict_declaration_enabled', 'value' => 'true'],
+
             // Requirement document, "Author Guidelines": abstracts of 200-250 words
             // and 4-6 keywords. Read through App\Services\SubmissionRules so the
             // forms and the validators can never drift apart.
@@ -141,6 +151,9 @@ class SettingsTableSeeder extends Seeder
             ['key' => 'reviewers_per_paper',           'value' => '3'],
             ['key' => 'min_reviewers_per_paper',       'value' => '2'],
             ['key' => 'max_papers_per_reviewer',       'value' => '10'],
+
+            // 'true': reviewers are assigned only once the paper's full manuscript is uploaded.
+            ['key' => 'review_requires_manuscript',    'value' => 'true'],
 
             // Paper bidding is optional in the document (Phase 3); 'false' switches it off.
             ['key' => 'bidding_enabled',               'value' => 'true'],

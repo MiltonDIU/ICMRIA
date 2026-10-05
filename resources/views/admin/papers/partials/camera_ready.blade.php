@@ -61,12 +61,23 @@
                     </div>
                     <p class="small text-muted mb-2">
                         Your paper was accepted with minor revisions. Upload the revised manuscript that addresses the reviewers'
-                        comments and summarise what you changed. The camera-ready version and copyright form come next.
+                        comments and summarise what you changed. Your track chair checks it; the paper is confirmed for the
+                        proceedings only once the revision is approved.
                     </p>
                     @if($final?->revised_path)
+                        @if($final->revision_status === 'changes_requested')
+                            <div class="alert alert-danger small mb-2">
+                                <strong>The chair asked for further changes:</strong> {{ $final->revision_note }}
+                            </div>
+                        @endif
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
                             <div>
                                 <strong>Revised:</strong> {{ $final->revised_name }}
+                                @if($final->revision_status)
+                                    <span class="badge badge-{{ ['pending' => 'warning', 'approved' => 'success', 'changes_requested' => 'danger'][$final->revision_status] ?? 'light' }} ml-1">
+                                        {{ \App\Models\PaperCameraReady::REVISION_STATUSES[$final->revision_status] }}
+                                    </span>
+                                @endif
                                 <br><small class="text-muted">Uploaded {{ optional($final->revised_uploaded_at)->format('j M Y, g:i a') }}</small>
                             </div>
                             <a href="{{ route('papers.camera-ready.download', [$paper->id, 'revised']) }}" class="btn btn-sm btn-outline-primary">
@@ -74,7 +85,7 @@
                             </a>
                         </div>
                     @endif
-                    @if($isOwner && !$locked)
+                    @if($isOwner && !$locked && $final?->revision_status !== 'approved')
                         @if($revisionOpen)
                             <form action="{{ route('papers.revision.upload', $paper->id) }}" method="POST" enctype="multipart/form-data">
                                 @csrf
@@ -128,8 +139,13 @@
                 </div>
             @endif
 
-            @if($isOwner && !$locked)
+            @if($isOwner && !$locked && !\App\Services\ProceedingsRules::revisionCleared($paper))
+                <div class="alert alert-info mb-0 small">
+                    <i class="fas fa-lock mr-1"></i> The camera-ready upload opens once the track chair approves your revised manuscript.
+                </div>
+            @elseif($isOwner && !$locked)
                 @if($windowOpen)
+                    {{-- One step at a time: the copyright form appears once the camera-ready manuscript is in. --}}
                     <form action="{{ route('papers.camera-ready.upload', $paper->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
@@ -146,6 +162,9 @@
                                 The camera-ready manuscript carries every author name and affiliation and follows the <a href="{{ \App\Services\ConferenceDocuments::templateUrl() }}" download="{{ \App\Services\ConferenceDocuments::templateFilename() }}">conference template</a>.
                             </label>
                         </div>
+                        @if(!$final?->camera_ready_path)
+                            <p class="small text-muted"><i class="fas fa-lock mr-1"></i> Next step: the signed copyright transfer form, once the camera-ready manuscript is uploaded. The registration fee comes after that.</p>
+                        @else
                         <div class="form-group">
                             <label for="copyright_form" class="font-weight-bold">Signed copyright transfer form</label>
                             <input type="file" id="copyright_form" name="copyright_form" class="form-control-file" accept=".pdf,.jpg,.jpeg,.png">
@@ -158,6 +177,7 @@
                                 @endif
                             </small>
                         </div>
+                        @endif
                         <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload</button>
                         @if($deadline)
                             <small class="text-muted ml-2">Deadline: {{ $deadline->format('j M Y, g:i a') }}</small>

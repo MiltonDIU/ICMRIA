@@ -165,7 +165,7 @@
             </div>
 
             <div class="content">
-                <p class="greeting">Dear {{ $paper->user?->profile?->first_name ?? '' }} {{ $paper->user?->profile?->last_name ?? '' }},</p>
+                <p class="greeting">Dear {{ $paper->notificationGreeting() }},</p>
 
                 <p class="message-intro">
                     Thank you for submitting your abstract to the international conference

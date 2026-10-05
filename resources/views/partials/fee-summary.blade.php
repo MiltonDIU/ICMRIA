@@ -64,6 +64,10 @@
                 }
 
                 entries.forEach((entry, index) => {
+                    // Only attending authors are charged (PricingService::billableAuthors).
+                    const attending = entry.querySelector('.co-author-attending');
+                    if (attending && !attending.checked) return;
+
                     const author = priceAmount(entry.querySelector('.delegate-category-select')?.value);
                     if (!author) return;
 
@@ -115,7 +119,7 @@
 
                 noteEl.textContent = result.rows.some(r => r.adjusted)
                     ? 'One or more co-authors are billed at the registrant\'s rate: a paper is invoiced in a single currency.'
-                    : (result.rows.length > 1 ? 'Every listed author is charged a registration fee.' : '');
+                    : 'Only the authors marked as attending are charged a registration fee.';
             }
 
             document.addEventListener('change', renderFeeSummary);

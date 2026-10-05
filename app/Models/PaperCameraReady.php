@@ -23,6 +23,13 @@ class PaperCameraReady extends Model
         'confirmed' => 'Confirmed for Proceedings',
     ];
 
+    /** Where a revised manuscript (Accept with Minor Revisions) stands with the chairs. */
+    public const REVISION_STATUSES = [
+        'pending' => 'Awaiting chair check',
+        'approved' => 'Approved by chair',
+        'changes_requested' => 'Changes requested by chair',
+    ];
+
     protected $fillable = [
         'paper_id',
         'camera_ready_path',
@@ -32,6 +39,10 @@ class PaperCameraReady extends Model
         'revised_name',
         'revised_uploaded_at',
         'revision_summary',
+        'revision_status',
+        'revision_note',
+        'revision_reviewed_by',
+        'revision_reviewed_at',
         'copyright_path',
         'copyright_name',
         'copyright_uploaded_at',
@@ -46,6 +57,7 @@ class PaperCameraReady extends Model
     protected $casts = [
         'camera_ready_uploaded_at' => 'datetime',
         'revised_uploaded_at' => 'datetime',
+        'revision_reviewed_at' => 'datetime',
         'copyright_uploaded_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'presentation_order' => 'integer',
@@ -71,10 +83,15 @@ class PaperCameraReady extends Model
         return $this->belongsTo(User::class, 'confirmed_by');
     }
 
+    public function revisionReviewedBy()
+    {
+        return $this->belongsTo(User::class, 'revision_reviewed_by');
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['paper_id', 'status', 'schedule_id', 'presentation_order'])
+            ->logOnly(['paper_id', 'status', 'revision_status', 'schedule_id', 'presentation_order'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }

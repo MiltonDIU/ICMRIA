@@ -121,8 +121,10 @@ class PaymentController extends Controller
         }
 
         $user = User::findOrFail($request->input('user_id'));
-        if ($user->profile && $user->profile->is_author && !$user->profile->author_list_confirmed) {
-            return redirect()->back()->with('error', 'Please confirm your author list and student status first.');
+        // This is the participant checkout. Authors pay per paper (payNowPapers) once each
+        // paper has reached the payment step.
+        if ($user->profile && $user->profile->is_author) {
+            return redirect()->back()->with('error', 'Authors pay the registration fee per paper, from the Papers page, once the camera-ready step is complete.');
         }
         //$this->setPayment($user);
         $randomNum= rand(100,999).'-'."ICMRIA2027-".strtotime(now());  //substr(str_shuffle
@@ -141,16 +143,27 @@ class PaymentController extends Controller
         }
 
         $request->validate(['paper_ids' => 'required|array']);
-        $user = User::findOrFail($request->input('user_id'));
+        // The signed-in author pays for their own papers; a user_id in the form is not trusted.
+        $user = auth()->user();
         if ($user->profile && $user->profile->is_author && !$user->profile->author_list_confirmed) {
             return redirect()->back()->with('error', 'Please confirm your author list and student status first.');
         }
-        $paperIds = $request->input('paper_ids');
 
-        $papers = \App\Models\Paper::whereIn('id', $paperIds)->where('user_id', $user->id)->get();
+        $papers = \App\Models\Paper::whereIn('id', (array) $request->input('paper_ids'))
+            ->where('user_id', $user->id)
+            ->with(['decision', 'cameraReady', 'authors'])
+            ->get();
         if ($papers->count() == 0) {
             return back()->with('error', 'No authentic papers found for checkout.');
         }
+
+        // Each paper must have reached the payment step of the chain, and not be paid already.
+        $notDue = $papers->reject(fn ($paper) => \App\Services\ProceedingsRules::needsPayment($paper));
+        if ($notDue->isNotEmpty()) {
+            return back()->with('error', 'The registration fee is not due yet for ' . $notDue->pluck('submission_id')->implode(', ')
+                . '. ' . (\App\Services\ProceedingsRules::paymentLockedReason($notDue->first()) ?? 'It has already been paid.'));
+        }
+        $paperIds = $papers->pluck('id')->all();
 
         $totalAmount = 0;
         $currencyCode = 'USD';

@@ -92,6 +92,49 @@ class Paper extends Model
         return $this->correspondingAuthor?->name ?: $this->user?->name;
     }
 
+    /**
+     * Whether paper emails go to every author (setting email_all_authors = 'true') or to
+     * the corresponding author only, the default. Sending to all of them multiplies the
+     * mail for one paper, so the organisers switch it on deliberately.
+     */
+    public static function emailsAllAuthors(): bool
+    {
+        return Setting::where('key', 'email_all_authors')->value('value') === 'true';
+    }
+
+    /**
+     * Everyone a paper email goes to: each author when the setting is on, otherwise the
+     * corresponding author (the submitting account where no author row is marked).
+     *
+     * @return array<int, string>
+     */
+    public function notificationRecipients(): array
+    {
+        if (self::emailsAllAuthors()) {
+            $emails = $this->authors()->pluck('email')->push($this->user?->email);
+        } else {
+            $emails = collect([$this->notificationEmail()]);
+        }
+
+        return $emails->filter()
+            ->map(fn ($email) => strtolower(trim($email)))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /** The salutation for a paper email: "Authors" when it goes to all of them. */
+    public function notificationGreeting(): string
+    {
+        return self::emailsAllAuthors() ? 'Authors' : ($this->notificationName() ?: 'Author');
+    }
+
+    /** The authors the registration fee is charged for. */
+    public function attendingAuthors()
+    {
+        return $this->authors()->where('is_attending', 1);
+    }
+
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
@@ -120,6 +163,12 @@ class Paper extends Model
     public function cameraReady()
     {
         return $this->hasOne(PaperCameraReady::class);
+    }
+
+    /** Each step along the chain and who took it, oldest first. */
+    public function progressEvents()
+    {
+        return $this->hasMany(PaperProgressEvent::class)->orderBy('created_at')->orderBy('id');
     }
 
     public function paymentProofs()

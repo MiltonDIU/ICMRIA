@@ -235,7 +235,7 @@
             </div>
 
             <div class="content">
-                <p class="greeting">Dear {{ $paper->user?->profile?->first_name ?? '' }} {{ $paper->user?->profile?->last_name ?? '' }},</p>
+                <p class="greeting">Dear {{ $paper->notificationGreeting() }},</p>
 
                 <span class="badge">✓ Abstract Accepted</span>
 

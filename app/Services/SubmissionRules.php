@@ -86,6 +86,25 @@ class SubmissionRules
     }
 
     /**
+     * Whether a paper needs its full manuscript before reviewers can be assigned to it.
+     * Setting review_requires_manuscript; on unless set to 'false'.
+     */
+    public static function reviewRequiresManuscript(): bool
+    {
+        return Setting::where('key', 'review_requires_manuscript')->value('value') !== 'false';
+    }
+
+    /** Why reviewers cannot be assigned to this paper yet, or null when they can. */
+    public static function assignmentBlockedReason(\App\Models\Paper $paper): ?string
+    {
+        if (self::reviewRequiresManuscript() && !$paper->manuscript_path) {
+            return 'The author has not uploaded the full manuscript yet, so reviewers cannot be assigned.';
+        }
+
+        return null;
+    }
+
+    /**
      * Whether reviewers may bid on papers. Bidding is optional in the document, so the
      * organisers can switch it off; a missing setting leaves it on.
      */

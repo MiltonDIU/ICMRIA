@@ -255,6 +255,9 @@ class SslCommerzPaymentController extends Controller
                             'pay_amount' => $amount / count($pIds),
                             'currency' => $currency
                         ]);
+                        foreach ($pIds as $pId) {
+                            \App\Services\PaperProgress::record((int) $pId, 'payment_online', $currency . ' ' . round($amount / count($pIds), 2) . ' (SSLCommerz)', $orderPayment->user_id, $tran_id);
+                        }
                     }
                 } else {
                     $newId = \App\Services\IdGeneratorService::generateRegistrationId();
@@ -434,6 +437,9 @@ class SslCommerzPaymentController extends Controller
                             'pay_amount' => $order_details->amount / count($pIds),
                             'currency' => $order_details->currency
                         ]);
+                        foreach ($pIds as $pId) {
+                            \App\Services\PaperProgress::record((int) $pId, 'payment_online', $order_details->currency . ' ' . round($order_details->amount / count($pIds), 2) . ' (SSLCommerz)', $orderPayment->user_id, $tran_id);
+                        }
                     }
                 } else {
                     DB::table('profiles')

@@ -21,9 +21,33 @@
 
                 <tr>
                     <td style="padding:28px 24px;">
-                        <p style="margin:0 0 16px; font-size:15px;">Dear {{ $paper->user->name ?? 'Author' }},</p>
+                        <p style="margin:0 0 16px; font-size:15px;">Dear {{ $paper->notificationGreeting() }},</p>
 
-                        @if($kind === 'confirmed')
+                        @if($kind === 'revision_approved')
+                            <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
+                                The chair has checked the revised manuscript for <strong>{{ $paper->submission_id }}</strong>,
+                                &ldquo;{{ $paper->title }}&rdquo;, and <strong style="color:#15803D;">approved</strong> it.
+                            </p>
+                            <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
+                                Next, upload the camera-ready version and the signed copyright transfer form from your paper page.
+                            </p>
+                        @elseif($kind === 'revision_changes')
+                            <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
+                                The chair has checked the revised manuscript for <strong>{{ $paper->submission_id }}</strong>,
+                                &ldquo;{{ $paper->title }}&rdquo;, and needs a few more changes:
+                            </p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                   style="background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; margin:0 0 20px;">
+                                <tr>
+                                    <td style="padding:14px 16px; font-size:14px; line-height:1.6;">
+                                        {!! nl2br(e($paper->cameraReady->revision_note ?? '')) !!}
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
+                                Please upload the corrected revised manuscript from your paper page.
+                            </p>
+                        @elseif($kind === 'confirmed')
                             <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
                                 Your paper <strong>{{ $paper->submission_id }}</strong>, &ldquo;{{ $paper->title }}&rdquo;, is now
                                 <strong style="color:#15803D;">Confirmed for Proceedings</strong>. We have your camera-ready

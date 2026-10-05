@@ -37,6 +37,8 @@ class PermissionRoleTableSeeder extends Seeder
             'review_assign',
             'decision_access',
             'decision_make',
+            // Checks the revised manuscript of a paper accepted with minor revisions.
+            'revision_review',
         ];
 
         $role_permissions = [
@@ -89,6 +91,7 @@ class PermissionRoleTableSeeder extends Seeder
                 'review_access',
                 'decision_access',
                 'final_approval',
+                'revision_review',
             ],
         ];
 

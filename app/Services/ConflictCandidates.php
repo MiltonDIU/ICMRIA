@@ -22,6 +22,17 @@ use App\Models\TrackAssignment;
 class ConflictCandidates
 {
     /**
+     * Whether authors may name conflicts themselves: on the submission forms and their
+     * paper page. Setting author_conflict_declaration_enabled = 'false' switches that off;
+     * declarations already made still apply, and someone holding paper_conflict_manage can
+     * still record one on an author's behalf.
+     */
+    public static function authorsMayDeclare(): bool
+    {
+        return \App\Models\Setting::where('key', 'author_conflict_declaration_enabled')->value('value') !== 'false';
+    }
+
+    /**
      * The chairs and reviewers of every track, for the form to offer once a track is
      * chosen. A person who both chairs and reviews in a track is listed once, as chair.
      *
@@ -66,7 +77,7 @@ class ConflictCandidates
      */
     public static function record(Paper $paper, int $declaredBy, array $input): int
     {
-        if (!$paper->track_id) {
+        if (!$paper->track_id || !self::authorsMayDeclare()) {
             return 0;
         }
 

@@ -356,10 +356,16 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::post('final-approval/{decision}/return', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'returnToChair'])->name('final-approval.return');
     Route::post('final-approval/{decision}/comments', [\App\Http\Controllers\Admin\FinalApprovalController::class, 'comment'])->name('final-approval.comments.store');
 
+    // Revised manuscripts of papers accepted with minor revisions (Track, Sub-Track and TPC Chairs)
+    Route::get('revisions', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'index'])->name('revisions.index');
+    Route::post('revisions/{paper}/approve', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'approve'])->name('revisions.approve');
+    Route::post('revisions/{paper}/changes', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'requestChanges'])->name('revisions.changes');
+
     // Payment verification, confirmation for proceedings, programme and export (administrators)
     Route::get('proceedings', [\App\Http\Controllers\Admin\ProceedingsController::class, 'index'])->name('proceedings.index');
     Route::post('proceedings/copyright-form', [\App\Http\Controllers\Admin\CopyrightFormController::class, 'upload'])->name('proceedings.copyright-form.upload');
     Route::delete('proceedings/copyright-form', [\App\Http\Controllers\Admin\CopyrightFormController::class, 'remove'])->name('proceedings.copyright-form.remove');
+    Route::get('proceedings/progress-report', [\App\Http\Controllers\Admin\ProceedingsController::class, 'progressReport'])->name('proceedings.progress-report');
     Route::get('proceedings/export/{format}', [\App\Http\Controllers\Admin\ProceedingsController::class, 'export'])->where('format', 'json|xml|abstracts|program|files')->name('proceedings.export');
     Route::post('proceedings/payments/{proof}/verify', [\App\Http\Controllers\Admin\ProceedingsController::class, 'verifyPayment'])->name('proceedings.payments.verify');
     Route::post('proceedings/payments/{proof}/reject', [\App\Http\Controllers\Admin\ProceedingsController::class, 'rejectPayment'])->name('proceedings.payments.reject');

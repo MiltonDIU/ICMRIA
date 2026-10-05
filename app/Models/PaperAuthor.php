@@ -26,6 +26,7 @@ class PaperAuthor extends Model
         'is_corresponding_author',
         'author_order',
         'is_student',
+        'is_attending',
         'price_id',
     ];
 
@@ -33,6 +34,8 @@ class PaperAuthor extends Model
         'is_presenting_author' => 'boolean',
         'is_corresponding_author' => 'boolean',
         'is_student' => 'boolean',
+        // Only attending authors are charged the registration fee (PricingService).
+        'is_attending' => 'boolean',
     ];
 
     public function paper()
@@ -53,7 +56,7 @@ class PaperAuthor extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['paper_id', 'name', 'email', 'institution', 'is_corresponding_author', 'is_presenting_author'])
+            ->logOnly(['paper_id', 'name', 'email', 'institution', 'is_corresponding_author', 'is_presenting_author', 'is_attending'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }

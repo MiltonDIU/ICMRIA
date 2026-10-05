@@ -216,6 +216,15 @@
                     'id' => 'author_student_{index}',
                 ])
             </div>
+            <div class="col-md-6 mb-2 d-flex align-items-center">
+                @include('partials.student-checkbox', [
+                    'name' => 'co_authors[{index}][is_attending]',
+                    'id' => 'author_attending_{index}',
+                    'inputClass' => 'co-author-attending',
+                    'label' => 'This author will attend the conference',
+                    'sub' => 'Registration fee is charged only for attending authors',
+                ])
+            </div>
         </div>
     </div>
 </template>
@@ -345,6 +354,10 @@
         if (coAuthorIndex === 0) {
             const radioBtn = div.querySelector(`input[name="presenting_author_index"]`);
             if (radioBtn) radioBtn.checked = true;
+
+            // The submitter attends by default; every paper needs one registered author.
+            const attending = div.querySelector('input.co-author-attending');
+            if (attending) attending.checked = true;
 
             const corrRadio = div.querySelector(`input[name="corresponding_author_index"]`);
             const topCorrCheckbox = document.getElementById('is_corresponding_author');

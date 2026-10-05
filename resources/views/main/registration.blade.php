@@ -639,6 +639,15 @@
                         'label' => 'This co-author is a student',
                     ])
                 </div>
+                <div class="col-md-6 mb-2 d-flex align-items-center">
+                    @include('partials.student-checkbox', [
+                        'name' => 'co_authors[{index}][is_attending]',
+                        'id' => 'co_attending_{index}',
+                        'inputClass' => 'co-author-attending',
+                        'label' => 'This co-author will attend the conference',
+                        'sub' => 'Registration fee is charged only for attending authors',
+                    ])
+                </div>
             </div>
             <label class="presenting-author-card mt-2" for="corresponding_{index}">
                 <input class="corresponding-author-radio" type="radio" name="corresponding_author_index" id="corresponding_{index}" value="{index}">
@@ -837,6 +846,11 @@
                 const studentCheckbox = entry.querySelector('.co-author-student');
                 if (studentCheckbox) {
                     studentCheckbox.checked = String(data.is_student) === '1';
+                }
+
+                const attendingCheckbox = entry.querySelector('.co-author-attending');
+                if (attendingCheckbox) {
+                    attendingCheckbox.checked = String(data.is_attending) === '1';
                 }
             }
 

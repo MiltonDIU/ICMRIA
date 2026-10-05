@@ -1,8 +1,10 @@
 {{--
     Conflict-of-interest fields for a new submission or editing an existing submission,
     used on registration form, paper submission form, and paper edit form.
-    Lists the chairs and reviewers of the track chosen in #track_id.
+    Lists the chairs and reviewers of the track chosen in #track_id. Renders nothing when
+    author declarations are switched off in Settings (author_conflict_declaration_enabled).
 --}}
+@if(\App\Services\ConflictCandidates::authorsMayDeclare())
 @php
     $conflictCandidates = $conflictCandidates ?? \App\Services\ConflictCandidates::byTrack();
     $oldConflictIds = array_map('intval', (array) old('conflict_user_ids', $existingConflictUserIds ?? []));
@@ -158,3 +160,4 @@
         </script>
     @endpush
 @endonce
+@endif

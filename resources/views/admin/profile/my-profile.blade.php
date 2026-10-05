@@ -478,7 +478,7 @@
                                                 <td class="font-weight-bold">
                                                     {{ $up->submission_id }}
                                                     <small class="text-muted d-block">
-                                                        {{ $pricing['authors_count'] }} author{{ $pricing['authors_count'] > 1 ? 's' : '' }}
+                                                        {{ $pricing['authors_count'] }} attending author{{ $pricing['authors_count'] > 1 ? 's' : '' }}
                                                     </small>
                                                 </td>
                                                 <td>
@@ -491,17 +491,21 @@
                                                 </td>
                                                 <td class="text-right">{{ $pricing['currency'] }} {{ number_format($pricing['final_price'], 2) }}</td>
                                             </tr>
-                                            @if($pricing['authors_count'] > 1)
+                                            @if($up->authors->count() > 1)
                                                 <tr>
                                                     <td colspan="3" class="pt-0 pb-3">
                                                         <ul class="mb-0 small pl-3 text-muted">
                                                             @foreach($up->authors as $author)
                                                                 <li>
                                                                     {{ $author->name }}
-                                                                    — <strong style="color: #0055A0;">
-                                                                        {{ $pricing['currency'] }}
-                                                                        {{ number_format($pricing['author_fees'][$author->id] ?? $pricing['individual_final_price'], 2) }}
-                                                                    </strong>
+                                                                    @if(isset($pricing['author_fees'][$author->id]))
+                                                                        — <strong style="color: #0055A0;">
+                                                                            {{ $pricing['currency'] }}
+                                                                            {{ number_format($pricing['author_fees'][$author->id], 2) }}
+                                                                        </strong>
+                                                                    @else
+                                                                        — not attending, no fee
+                                                                    @endif
                                                                 </li>
                                                             @endforeach
                                                         </ul>

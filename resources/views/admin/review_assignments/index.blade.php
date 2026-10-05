@@ -26,6 +26,9 @@
         <p class="text-muted mb-2 mr-3">
             The conference asks for at least {{ $minimum }} independent reviewers per paper.
             A paper below that is marked in red. Papers whose abstract was rejected are not listed.
+            @if(\App\Services\SubmissionRules::reviewRequiresManuscript())
+                Reviewers can be assigned only once the paper's manuscript is uploaded; automatic assignment skips the rest.
+            @endif
         </p>
         @unless($hasNoScope)
             <form action="{{ route('admin.review-assignments.auto-all') }}" method="POST" class="mb-2"

@@ -39,6 +39,9 @@
             <a href="{{ route('admin.proceedings.export', ['format' => 'json', 'scope' => 'accepted']) }}" class="btn btn-sm btn-link mb-1">
                 Every accepted paper (JSON)
             </a>
+            <a href="{{ route('admin.proceedings.progress-report') }}" class="btn btn-sm btn-outline-secondary mb-1" title="Every step each paper took, who took it and when">
+                <i class="fas fa-history"></i> Progress history (CSV)
+            </a>
         </div>
 
         @can('camera_ready_review')

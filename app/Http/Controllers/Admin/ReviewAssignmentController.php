@@ -9,6 +9,7 @@ use App\Models\PaperReviewerAssignment;
 use App\Models\User;
 use App\Services\ChairScope;
 use App\Services\ReviewerMatcher;
+use App\Services\SubmissionRules;
 use Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -97,6 +98,10 @@ class ReviewAssignmentController extends Controller
             return back()->with('error', 'The abstract was rejected, so this paper is not sent for review.');
         }
 
+        if ($reason = SubmissionRules::assignmentBlockedReason($paper)) {
+            return back()->with('error', $reason);
+        }
+
         $data = $request->validate([
             'reviewer_ids' => 'required|array|min:1',
             'reviewer_ids.*' => 'integer|exists:users,id',
@@ -143,6 +148,10 @@ class ReviewAssignmentController extends Controller
             return back()->with('error', 'The abstract was rejected, so this paper is not sent for review.');
         }
 
+        if ($reason = SubmissionRules::assignmentBlockedReason($paper)) {
+            return back()->with('error', $reason);
+        }
+
         $paper->load(['track', 'authors', 'conflicts', 'bids', 'reviewerAssignments']);
 
         $shortfall = $this->matcher->reviewersWanted($paper) - $paper->reviewerAssignments->where('status', '!=', 'declined')->count();
@@ -184,8 +193,15 @@ class ReviewAssignmentController extends Controller
         $assigned = 0;
         $papersFilled = 0;
         $stillShort = [];
+        $withoutManuscript = 0;
 
         foreach ($papers as $paper) {
+            // Left for later when the setting requires the manuscript first.
+            if (SubmissionRules::assignmentBlockedReason($paper)) {
+                $withoutManuscript++;
+                continue;
+            }
+
             $shortfall = $this->matcher->reviewersWanted($paper) - $paper->reviewerAssignments->where('status', '!=', 'declined')->count();
 
             if ($shortfall <= 0) {
@@ -201,14 +217,20 @@ class ReviewAssignmentController extends Controller
             }
         }
 
+        $skippedNote = $withoutManuscript
+            ? " {$withoutManuscript} paper" . ($withoutManuscript === 1 ? ' was' : 's were') . ' skipped because the manuscript is not uploaded yet.'
+            : '';
+
         if ($assigned === 0 && !$stillShort) {
-            return back()->with('success', 'Every paper already has the number of reviewers its track asks for.');
+            return back()->with('success', ($withoutManuscript
+                ? 'No paper with a manuscript still needs reviewers.'
+                : 'Every paper already has the number of reviewers its track asks for.') . $skippedNote);
         }
 
         return back()
-            ->with($assigned ? 'success' : 'error', $assigned
+            ->with($assigned ? 'success' : 'error', ($assigned
                 ? "{$assigned} reviewer" . ($assigned === 1 ? '' : 's') . " assigned across {$papersFilled} paper" . ($papersFilled === 1 ? '' : 's') . '.'
-                : 'Nobody could be assigned.')
+                : 'Nobody could be assigned.') . $skippedNote)
             ->with('short', $stillShort);
     }
 

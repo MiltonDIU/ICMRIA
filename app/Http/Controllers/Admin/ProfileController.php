@@ -130,12 +130,12 @@ class ProfileController extends Controller
         $settings = Setting::pluck('value', 'key');
 
         $papers = Paper::where('user_id', $user->id)
-            ->with(['track', 'subTrack', 'authors', 'decision'])
+            ->with(['track', 'subTrack', 'authors', 'decision', 'cameraReady'])
             ->orderByDesc('id')
             ->get();
 
         $unpaidPapers = $papers
-            ->filter(fn (Paper $paper) => $paper->status === 'approved' && $paper->payment_status != 1)
+            ->filter(fn (Paper $paper) => \App\Services\ProceedingsRules::needsPayment($paper))
             ->values();
 
         $paymentLastDate = isset($settings['payment_last_date'])
@@ -150,11 +150,12 @@ class ProfileController extends Controller
             'payments' => \App\Models\Payment::where('user_id', $user->id)->latest()->get(),
             'settings' => $settings,
             'paymentLastDate' => $paymentLastDate,
-            'isPaymentOpen' => !$paymentLastDate || Carbon::now()->lte($paymentLastDate),
+            // The same rule the payment routes enforce: switch, deadline and capacity.
+            'isPaymentOpen' => \App\Services\ProceedingsRules::paymentWindowIsOpen(),
             'todo' => \App\Services\DelegateChecklist::for(
                 $profile,
                 $unpaidPapers,
-                !$paymentLastDate || Carbon::now()->lte($paymentLastDate)
+                \App\Services\ProceedingsRules::paymentWindowIsOpen()
             ),
         ]);
     }
@@ -568,8 +569,29 @@ class ProfileController extends Controller
         $request->validate([
             'authors' => 'required|array',
             'authors.*.id' => 'required|exists:paper_authors,id',
-            'authors.*.is_student' => 'required|in:0,1'
+            'authors.*.is_student' => 'required|in:0,1',
+            // Only attending authors are charged; see PricingService::billableAuthors.
+            'authors.*.is_attending' => 'required|in:0,1',
         ]);
+
+        // Every paper needs at least one registered author (Author Guidelines).
+        $attendingByPaper = [];
+        $titles = [];
+        foreach ($request->authors as $authorData) {
+            $author = \App\Models\PaperAuthor::with('paper')->find($authorData['id']);
+            if (!$author || !$author->paper || $author->paper->user_id !== $user->id) {
+                continue;
+            }
+            $paperId = $author->paper_id;
+            $titles[$paperId] = $author->paper->submission_id;
+            $attendingByPaper[$paperId] = ($attendingByPaper[$paperId] ?? false) || $authorData['is_attending'] == '1';
+        }
+
+        $noneAttending = array_keys(array_filter($attendingByPaper, fn ($attending) => !$attending));
+        if ($noneAttending) {
+            return redirect()->back()->with('error', 'Mark at least one author who will attend for paper '
+                . implode(', ', array_map(fn ($id) => $titles[$id], $noneAttending)) . '.');
+        }
 
         try {
             \Illuminate\Support\Facades\DB::beginTransaction();
@@ -582,6 +604,7 @@ class ProfileController extends Controller
 
                 if ($author) {
                     $author->is_student = (bool)$authorData['is_student'];
+                    $author->is_attending = (bool)$authorData['is_attending'];
                     $author->save();
                 }
             }
@@ -594,7 +617,7 @@ class ProfileController extends Controller
 
             \Illuminate\Support\Facades\DB::commit();
 
-            return redirect()->back()->with('message', 'Author list and student status confirmed successfully. Your registration fee has been updated.');
+            return redirect()->back()->with('message', 'Author list, attendance and student status confirmed. Your registration fee has been updated.');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Confirm Student Status Error: ' . $e->getMessage());

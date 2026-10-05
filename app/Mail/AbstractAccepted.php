@@ -29,10 +29,10 @@ class AbstractAccepted extends Mailable implements ShouldQueue
      *
      * @return $this
      */
+    /** Recipients come from the sender: Paper::notificationRecipients(). */
     public function build()
     {
-        return $this->to($this->paper->user->email)
-                    ->subject('Abstract Accepted – ICMRIA 2027')
+        return $this->subject('Abstract Accepted – ICMRIA 2027')
                     ->view('mail.abstract_accepted');
     }
 }

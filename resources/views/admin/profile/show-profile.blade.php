@@ -74,7 +74,7 @@
             @php
                 $myProfile = $profiles->where('user_id', auth()->id())->first();
                 $paymentLastDate = isset($settings['payment_last_date']) ? \Illuminate\Support\Carbon::parse($settings['payment_last_date']) : null;
-                $isPaymentOpen = !$paymentLastDate || \Illuminate\Support\Carbon::now()->lte($paymentLastDate);
+                $isPaymentOpen = \App\Services\ProceedingsRules::paymentWindowIsOpen();
             @endphp
 
             @if($myProfile && $myProfile->payment_status != '1' && !$myProfile->is_author)
@@ -165,24 +165,22 @@
             @endif
 
             @php
-                $unpaidPapers = \App\Models\Paper::where('user_id', auth()->id())
-                    ->where('status', 'approved')
-                    ->where(function($q) {
-                        $q->whereNull('payment_status')
-                          ->orWhere('payment_status', '!=', '1');
-                    })->get();
+                // Papers whose fee is due now: accepted, through the camera-ready step, unpaid.
+                $unpaidPapers = \App\Services\ProceedingsRules::payablePapersFor(auth()->id());
             @endphp
             @if($unpaidPapers->count() > 0)
                 @if(!$myProfile->author_list_confirmed)
                     <div class="card mb-4 border-warning shadow-sm" style="border-width: 2px; border-radius: 12px; overflow: hidden;">
                         <div class="card-header bg-warning text-dark py-3">
                             <h5 class="card-title font-weight-bold mb-0">
-                                <i class="fas fa-id-card mr-2"></i> Confirm Author List & Student Status
+                                <i class="fas fa-id-card mr-2"></i> Confirm Author List, Attendance & Student Status
                             </h5>
                         </div>
                         <div class="card-body bg-white p-4">
                             <p class="text-muted mb-4">
-                                Please select your student status (yes/no) very carefully, as this option can be chosen only once and cannot be changed later.   </p>
+                                Choose which authors will attend the conference: the registration fee is charged only for them, each at
+                                their own rate, and at least one author of every paper must attend. Select the student status (yes/no)
+                                very carefully, as these choices can be made only once and cannot be changed later.   </p>
 
                             <form action="{{ route('profile.confirm-student-status') }}" method="POST">
                                 @csrf
@@ -200,6 +198,7 @@
                                                     <th>Email</th>
                                                     <th>Designation</th>
                                                     <th>Country</th>
+                                                    <th style="width: 180px;" class="text-center">Will Attend?</th>
                                                     <th style="width: 180px;" class="text-center">Is Student?</th>
                                                 </tr>
                                             </thead>
@@ -210,6 +209,15 @@
                                                         <td class="align-middle">{{ $author->email }}</td>
                                                         <td class="align-middle">{{ $author->designation }}</td>
                                                         <td class="align-middle">{{ $author->country->name ?? 'N/A' }}</td>
+                                                        <td class="align-middle text-center">
+                                                            <div class="student-status-toggle">
+                                                                <input type="radio" id="attend_yes_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="1" {{ $author->is_attending ? 'checked' : '' }} required>
+                                                                <label for="attend_yes_{{ $author->id }}" class="toggle-btn toggle-yes">Yes</label>
+
+                                                                <input type="radio" id="attend_no_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="0" {{ !$author->is_attending ? 'checked' : '' }} required>
+                                                                <label for="attend_no_{{ $author->id }}" class="toggle-btn toggle-no">No</label>
+                                                            </div>
+                                                        </td>
                                                         <td class="align-middle text-center">
                                                             <input type="hidden" name="authors[{{ $author->id }}][id]" value="{{ $author->id }}">
                                                             <div class="student-status-toggle">
@@ -293,11 +301,11 @@
                                                         $pricing = \App\Services\PricingService::calculatePaperCost(auth()->user()->profile, $up);
                                                     @endphp
                                                     <tr>
-                                                        <td class="font-weight-bold">{{ $up->submission_id }} <small class="text-muted">({{ $pricing['authors_count'] }} author{{ $pricing['authors_count'] > 1 ? 's' : '' }})</small></td>
+                                                        <td class="font-weight-bold">{{ $up->submission_id }} <small class="text-muted">({{ $pricing['authors_count'] }} attending author{{ $pricing['authors_count'] > 1 ? 's' : '' }})</small></td>
                                                         <td>{{ ucwords(str_replace('_', ' ', $pricing['stage'])) }} Price @if($pricing['discount'] > 0)<br><small class="text-success">-{{ $pricing['currency'] }} {{ number_format($pricing['individual_discount'], 2) }} discount per author</small>@endif</td>
                                                         <td class="text-right">{{ $pricing['currency'] }} {{ number_format($pricing['final_price'], 2) }}</td>
                                                     </tr>
-                                                    @if($pricing['authors_count'] > 1)
+                                                    @if($up->authors->count() > 1)
                                                      <tr class="bg-light">
                                                          <td colspan="3" class="py-2 px-4 shadow-sm border-0" style="border-radius: 8px;">
                                                              <div class="mb-2">
@@ -305,12 +313,16 @@
                                                                  <ul class="mb-0 small text-dark pl-3" style="line-height: 1.4;">
                                                                      @foreach($up->authors as $author)
                                                                          @php
-                                                                             $authorFee = $pricing['author_fees'][$author->id] ?? $pricing['individual_final_price'];
+                                                                             $authorFee = $pricing['author_fees'][$author->id] ?? null;
                                                                          @endphp
                                                                          <li>
-                                                                             {{ $author->name }} 
-                                                                             @if($author->designation)<span class="text-muted">({{ $author->designation }})</span>@endif 
-                                                                             - <strong class="text-primary">{{ $pricing['currency'] }} {{ number_format($authorFee, 2) }}</strong>
+                                                                             {{ $author->name }}
+                                                                             @if($author->designation)<span class="text-muted">({{ $author->designation }})</span>@endif
+                                                                             @if($authorFee !== null)
+                                                                                 - <strong class="text-primary">{{ $pricing['currency'] }} {{ number_format($authorFee, 2) }}</strong>
+                                                                             @else
+                                                                                 - <span class="text-muted">not attending, no fee</span>
+                                                                             @endif
                                                                          </li>
                                                                      @endforeach
                                                                  </ul>

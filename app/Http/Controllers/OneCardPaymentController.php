@@ -339,6 +339,10 @@ class OneCardPaymentController extends Controller
                         'pay_amount' => $amount / count($pIds),
                         'currency' => $currency
                     ]);
+                    // The gateway may confirm twice; the transaction id keeps it to one record.
+                    foreach ($pIds as $pId) {
+                        \App\Services\PaperProgress::record((int) $pId, 'payment_online', $currency . ' ' . round($amount / count($pIds), 2) . ' (OneCard)', $user?->id, $tran_id);
+                    }
                 }
             }
         }

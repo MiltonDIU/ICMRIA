@@ -5,9 +5,23 @@
 @php
     $paid = \App\Services\ProceedingsRules::isPaid($paper);
     $needsPayment = \App\Services\ProceedingsRules::needsPayment($paper);
+    // An accepted paper still working through the camera-ready step: say what comes first.
+    $lockedReason = !$paid && !$needsPayment && \App\Services\ProceedingsRules::isAccepted($paper)
+        ? \App\Services\ProceedingsRules::paymentLockedReason($paper)
+        : null;
 @endphp
 
-@if($paid || $needsPayment || $paper->paymentProofs->isNotEmpty())
+@if($lockedReason && auth()->id() === $paper->user_id && $paper->paymentProofs->isEmpty())
+    <div class="card shadow-sm border-0 mb-4 rounded-lg">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
+            <span class="font-weight-bold"><i class="fas fa-receipt mr-2 text-primary"></i> Registration Fee</span>
+            <span class="badge badge-secondary px-3 py-2"><i class="fas fa-lock mr-1"></i> Not yet open</span>
+        </div>
+        <div class="card-body">
+            <p class="mb-0 small text-muted">{{ $lockedReason }}</p>
+        </div>
+    </div>
+@elseif($paid || $needsPayment || $paper->paymentProofs->isNotEmpty())
     @php
         $isOwner = auth()->id() === $paper->user_id;
         $pending = $paper->paymentProofs->firstWhere('status', 'submitted');

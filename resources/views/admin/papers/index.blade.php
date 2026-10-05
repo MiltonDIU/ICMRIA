@@ -57,13 +57,14 @@
             <div class="card mb-4 border-warning shadow-sm" style="border-width: 2px; border-radius: 12px; overflow: hidden;">
                 <div class="card-header bg-warning text-dark py-3">
                     <h5 class="card-title font-weight-bold mb-0">
-                        <i class="fas fa-id-card mr-2"></i> Confirm Author List & Student Status
+                        <i class="fas fa-id-card mr-2"></i> Confirm Author List, Attendance & Student Status
                     </h5>
                 </div>
                 <div class="card-body bg-white p-4">
                     <p class="text-muted mb-4">
-                        Before proceeding to payment, please confirm the student status of all authors for your approved abstract(s). 
-                        <strong>Bangladeshi student authors qualify for a flat registration fee of 2,000 BDT.</strong>
+                        Before proceeding to payment, please confirm which authors will attend the conference and the student status of each.
+                        <strong>The registration fee is charged only for attending authors, each at their own rate.</strong>
+                        At least one author of every paper must attend.
                     </p>
                     
                     <form action="{{ route('profile.confirm-student-status') }}" method="POST">
@@ -82,6 +83,7 @@
                                             <th>Email</th>
                                             <th>Designation</th>
                                             <th>Country</th>
+                                            <th style="width: 180px;" class="text-center">Will Attend?</th>
                                             <th style="width: 180px;" class="text-center">Is Student?</th>
                                         </tr>
                                     </thead>
@@ -92,6 +94,15 @@
                                                 <td class="align-middle">{{ $author->email }}</td>
                                                 <td class="align-middle">{{ $author->designation }}</td>
                                                 <td class="align-middle">{{ $author->country->name ?? 'N/A' }}</td>
+                                                <td class="align-middle text-center">
+                                                    <div class="student-status-toggle">
+                                                        <input type="radio" id="attend_yes_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="1" {{ $author->is_attending ? 'checked' : '' }} required>
+                                                        <label for="attend_yes_{{ $author->id }}" class="toggle-btn toggle-yes">Yes</label>
+
+                                                        <input type="radio" id="attend_no_{{ $author->id }}" name="authors[{{ $author->id }}][is_attending]" value="0" {{ !$author->is_attending ? 'checked' : '' }} required>
+                                                        <label for="attend_no_{{ $author->id }}" class="toggle-btn toggle-no">No</label>
+                                                    </div>
+                                                </td>
                                                 <td class="align-middle text-center">
                                                     <input type="hidden" name="authors[{{ $author->id }}][id]" value="{{ $author->id }}">
                                                     <div class="student-status-toggle">
@@ -131,7 +142,7 @@
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body p-4">
             <div class="row mb-3">
-                <div class="col-md-4 mb-3 mb-md-0">
+                <div class="col-md-3 mb-3 mb-md-0">
                     <label class="small font-weight-bold text-muted mb-1">
                         <i class="fas fa-info-circle mr-1 text-primary"></i> Status Filter
                     </label>
@@ -142,7 +153,7 @@
                         <option value="rejected">Rejected</option>
                     </select>
                 </div>
-                <div class="col-md-4 mb-3 mb-md-0">
+                <div class="col-md-3 mb-3 mb-md-0">
                     <label class="small font-weight-bold text-muted mb-1">
                         <i class="fas fa-road mr-1 text-primary"></i> Track Filter
                     </label>
@@ -153,7 +164,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4 mb-3 mb-md-0">
+                <div class="col-md-3 mb-3 mb-md-0">
                     <label class="small font-weight-bold text-muted mb-1">
                         <i class="fas fa-credit-card mr-1 text-primary"></i> Payment Filter
                     </label>
@@ -161,6 +172,16 @@
                         <option value="">All Payment Status</option>
                         <option value="paid">Paid</option>
                         <option value="unpaid">Unpaid</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="small font-weight-bold text-muted mb-1">
+                        <i class="fas fa-file-upload mr-1 text-primary"></i> Manuscript Filter
+                    </label>
+                    <select id="filter_manuscript" class="form-control form-control-sm select2">
+                        <option value="">All</option>
+                        <option value="submitted">Manuscript submitted</option>
+                        <option value="missing">No manuscript yet</option>
                     </select>
                 </div>
             </div>
@@ -218,6 +239,7 @@
                             <th>Currency</th>
                             <th>Track</th>
                             <th class="text-center">Status</th>
+                            <th class="text-center">Manuscript</th>
                             <th class="text-center">Date</th>
                             <th>Abstract</th>
                             <th class="text-right">Actions</th>
@@ -406,6 +428,7 @@ $(function () {
                 d.status = $('#filter_status').val();
                 d.track_id = $('#filter_track').val();
                 d.payment_status = $('#filter_payment').val();
+                d.manuscript = $('#filter_manuscript').val();
                 d.department = $('#filter_department').val();
                 d.institution = $('#filter_institution').val();
                 d.country_id = $('#filter_country').val();
@@ -427,6 +450,7 @@ $(function () {
             { data: 'currency', name: 'currency', class: 'text-center', searchable: true, orderable: false },
             { data: 'track', name: 'track.name' },
             { data: 'status', name: 'status', class: 'text-center' },
+            { data: 'manuscript', name: 'manuscript_uploaded_at', class: 'text-center', searchable: false },
             { data: 'created_at', name: 'created_at', class: 'text-center' },
             { data: 'abstract', name: 'abstract', visible: false, searchable: false, orderable: false },
             { data: 'actions', name: '{{ trans('global.actions') }}', orderable: false, searchable: false, class: 'text-right' }
@@ -440,7 +464,7 @@ $(function () {
     });
 
     // Filter Change Listeners
-    $('#filter_status, #filter_track, #filter_payment, #filter_country').on('change', function() {
+    $('#filter_status, #filter_track, #filter_payment, #filter_manuscript, #filter_country').on('change', function() {
         table.draw();
     });
     $('#filter_department, #filter_institution').on('keyup', function() {
@@ -449,7 +473,7 @@ $(function () {
 
     // Reset Filters
     $('#reset_filters').on('click', function() {
-        $('#filter_status, #filter_track, #filter_payment, #filter_country').val('').trigger('change');
+        $('#filter_status, #filter_track, #filter_payment, #filter_manuscript, #filter_country').val('').trigger('change');
         $('#filter_department, #filter_institution').val('');
         table.draw();
     });
@@ -487,6 +511,11 @@ $(function () {
                     let fees = [];
                     response.authors.forEach(author => {
                         let designationText = author.designation ? ` (${author.designation})` : '';
+                        // A null fee is an author who is not attending, so nothing is charged for them.
+                        if (author.fee === null) {
+                            authorListHtml += `<li>${author.name}<span class="text-muted small">${designationText}</span> - <span class="text-muted">not attending, no fee</span></li>`;
+                            return;
+                        }
                         let feeFormatted = Number(author.fee).toLocaleString(undefined, {minimumFractionDigits: 2});
                         authorListHtml += `<li>${author.name}<span class="text-muted small">${designationText}</span> - <strong class="text-primary">${pricing.currency} ${feeFormatted}</strong></li>`;
                         fees.push(author.fee);
@@ -501,7 +530,7 @@ $(function () {
                     } else {
                         let formattedPrice = Number(pricing.individual_final_price).toLocaleString(undefined, {minimumFractionDigits: 2});
                         $('#modal-per-person-alert').removeClass('alert-info').addClass('alert-success')
-                            .html(`<i class="fas fa-check-circle mr-1 text-success"></i> Rate is <strong>${pricing.currency} ${formattedPrice}</strong> per person. The total payment covers all authors securely.`);
+                            .html(`<i class="fas fa-check-circle mr-1 text-success"></i> Rate is <strong>${pricing.currency} ${formattedPrice}</strong> per person. The total payment covers every attending author.`);
                     }
                 } else {
                     $('#modal-authors-section').hide();

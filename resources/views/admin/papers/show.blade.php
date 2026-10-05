@@ -35,6 +35,7 @@
         @include('admin.papers.partials.decision')
         @include('admin.papers.partials.camera_ready')
         @include('admin.papers.partials.payment_proof')
+        @include('admin.papers.partials.progress_history')
 
         <!-- Abstract Content Card -->
         <div class="card shadow-sm border-0 mb-4 rounded-lg">
@@ -152,6 +153,9 @@
                                         <span class="badge badge-success px-2 py-1 small rounded shadow-none">Presenting</span>
                                     @elseif(!$author->is_corresponding_author)
                                         <span class="badge badge-light border px-2 py-1 small rounded text-muted">Co-Author</span>
+                                    @endif
+                                    @if($author->is_attending)
+                                        <span class="badge badge-info px-2 py-1 small rounded shadow-none ml-1" title="The registration fee is charged for this author">Attending</span>
                                     @endif
                                 </td>
                             </tr>

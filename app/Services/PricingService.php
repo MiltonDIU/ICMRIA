@@ -50,22 +50,40 @@ class PricingService
     }
 
     /**
-     * Whether early-bird or regular rates currently apply.
+     * Whether early-bird or regular rates currently apply. Early-bird runs from
+     * early_registration_start_date to early_registration_last_date, both set under
+     * Settings. A missing start date leaves the window open from the beginning; a
+     * missing or invalid end date means there is no early-bird rate at all.
      *
      * @return string 'early_bird' or 'regular'
      */
     public static function currentStage()
     {
-        $configured = Setting::where('key', 'early_registration_last_date')->value('value');
+        $now = Carbon::now();
+        $starts = self::dateSetting('early_registration_start_date');
+        $ends = self::dateSetting('early_registration_last_date');
 
-        try {
-            $earlyBirdDateLimit = $configured ? Carbon::parse($configured) : Carbon::parse('2000-01-01');
-        } catch (\Exception $e) {
-            \Log::warning("PricingService: Invalid early_registration_last_date format: '{$configured}'. Falling back to regular price.");
-            $earlyBirdDateLimit = Carbon::parse('2000-01-01');
+        if (!$ends || $now->gt($ends)) {
+            return 'regular';
         }
 
-        return $earlyBirdDateLimit->gt(Carbon::now()) ? 'early_bird' : 'regular';
+        return (!$starts || $now->gte($starts)) ? 'early_bird' : 'regular';
+    }
+
+    private static function dateSetting(string $key): ?Carbon
+    {
+        $configured = Setting::where('key', $key)->value('value');
+
+        if (!$configured) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($configured);
+        } catch (\Exception $e) {
+            \Log::warning("PricingService: Invalid {$key} format: '{$configured}'.");
+            return null;
+        }
     }
 
     /**
@@ -129,11 +147,33 @@ class PricingService
     }
 
     /**
-     * Calculate the cost for a single abstract
+     * The authors a paper is charged for: those marked as attending, each at their own
+     * tier (organisers, 2026-10-05). A paper always has at least one registered author,
+     * so one with nobody marked falls back to its presenting author, then its first.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\PaperAuthor>
+     */
+    public static function billableAuthors(\App\Models\Paper $paper)
+    {
+        $authors = $paper->relationLoaded('authors') ? $paper->authors : $paper->authors()->get();
+        $attending = $authors->where('is_attending', true)->values();
+
+        if ($attending->isNotEmpty()) {
+            return $attending;
+        }
+
+        $fallback = $authors->firstWhere('is_presenting_author', true) ?? $authors->first();
+
+        return collect($fallback ? [$fallback] : []);
+    }
+
+    /**
+     * Calculate the cost for a single abstract: the sum over its attending authors.
      *
      * @param Profile $profile The user's profile
      * @param \App\Models\Paper|null $paper The paper being checked out
      * @return array Contains base_price, discount, final_price, currency, stage, authors_count
+     *               (attending authors), author_fees (keyed by author id, attending only)
      */
     public static function calculatePaperCost(Profile $profile, ?\App\Models\Paper $paper = null)
     {
@@ -151,7 +191,7 @@ class PricingService
         $authorFees = [];
 
         if ($paper !== null) {
-            $authors = $paper->authors()->get();
+            $authors = self::billableAuthors($paper);
             $authorCount = max(1, $authors->count());
 
             foreach ($authors as $author) {

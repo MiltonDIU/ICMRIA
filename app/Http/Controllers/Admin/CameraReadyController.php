@@ -7,10 +7,14 @@ use App\Models\Paper;
 use App\Models\PaperCameraReady;
 use App\Models\PaperPaymentProof;
 use App\Services\ChairScope;
+use App\Services\PaperProgress;
 use App\Services\ProceedingsRules;
+use App\Services\RevisionReviewers;
 use Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,7 +42,17 @@ class CameraReadyController extends Controller
             return back()->with('error', 'Camera-ready files can be uploaded once your paper has been accepted.');
         }
 
+        // The chain: a revision asked for must be approved before the camera-ready step opens.
+        if (!ProceedingsRules::revisionCleared($paper)) {
+            return back()->with('error', 'Your revised manuscript must be approved by the track chair before you upload the camera-ready version.');
+        }
+
         $final = $paper->cameraReady;
+
+        // ...and the copyright form follows the camera-ready manuscript, never the other way round.
+        if ($request->hasFile('copyright_form') && !$request->hasFile('camera_ready') && !$final?->camera_ready_path) {
+            return back()->with('error', 'Upload the camera-ready manuscript first. The copyright form comes after it.');
+        }
 
         if ($final?->isConfirmed()) {
             return back()->with('error', 'Your paper is already confirmed for the proceedings, so its files can no longer be replaced.');
@@ -92,7 +106,16 @@ class CameraReadyController extends Controller
         $final->status = 'submitted';
         $final->save();
 
-        return back()->with('success', 'Uploaded. The conference team will confirm your paper once every item on the checklist is complete.');
+        if ($hasCameraReady) {
+            PaperProgress::record($paper, 'camera_ready_uploaded', $final->camera_ready_name);
+        }
+        if ($request->hasFile('copyright_form')) {
+            PaperProgress::record($paper, 'copyright_uploaded', $final->copyright_name);
+        }
+
+        return back()->with('success', $final->copyright_path
+            ? 'Uploaded. You can now pay the registration fee for this paper.'
+            : 'Camera-ready manuscript uploaded. Next, upload the signed copyright transfer form.');
     }
 
     /**
@@ -111,6 +134,10 @@ class CameraReadyController extends Controller
 
         if ($paper->cameraReady?->isConfirmed()) {
             return back()->with('error', 'Your paper is already confirmed for the proceedings, so its files can no longer be replaced.');
+        }
+
+        if ($paper->cameraReady?->revision_status === 'approved') {
+            return back()->with('error', 'Your revised manuscript has already been approved by the track chair.');
         }
 
         if (!ProceedingsRules::revisionWindowIsOpen()) {
@@ -134,6 +161,10 @@ class CameraReadyController extends Controller
             'revised_name' => $file->getClientOriginalName(),
             'revised_uploaded_at' => now(),
             'revision_summary' => $request->input('revision_summary'),
+            // Every upload, a replacement included, goes back to the chairs to check.
+            'revision_status' => 'pending',
+            'revision_reviewed_by' => null,
+            'revision_reviewed_at' => null,
         ]);
 
         // A new revision answers a request for changes.
@@ -143,7 +174,17 @@ class CameraReadyController extends Controller
 
         $final->save();
 
-        return back()->with('success', 'Revised manuscript received. Next, upload the camera-ready version and the copyright form.');
+        PaperProgress::record($paper, 'revision_uploaded', $final->revised_name);
+
+        foreach (RevisionReviewers::toNotify($paper) as $chair) {
+            try {
+                Mail::to($chair->email)->queue(new \App\Mail\RevisionSubmitted($paper, $chair));
+            } catch (\Exception $e) {
+                Log::error('Revision notification failed', ['paper' => $paper->id, 'chair' => $chair->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        return back()->with('success', 'Revised manuscript received. Once the track chair approves it, you can upload the camera-ready version.');
     }
 
     /** $file is "camera-ready", "copyright" or "revised". */
@@ -169,12 +210,12 @@ class CameraReadyController extends Controller
     public function storePaymentProof(Request $request, Paper $paper)
     {
         abort_unless($paper->user_id === Auth::id(), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        $paper->load(['decision', 'paymentProofs']);
+        $paper->load(['decision', 'cameraReady', 'paymentProofs']);
 
         if (!ProceedingsRules::needsPayment($paper)) {
             return back()->with('error', ProceedingsRules::isPaid($paper)
                 ? 'The registration fee for this paper has already been paid.'
-                : 'No registration fee is due for this paper yet.');
+                : (ProceedingsRules::paymentLockedReason($paper) ?? 'No registration fee is due for this paper yet.'));
         }
 
         if ($reason = ProceedingsRules::paymentBlockReason()) {
@@ -203,7 +244,7 @@ class CameraReadyController extends Controller
 
         $file = $request->file('proof');
 
-        PaperPaymentProof::create([
+        $proof = PaperPaymentProof::create([
             'paper_id' => $paper->id,
             'user_id' => Auth::id(),
             'method' => $data['method'],
@@ -216,6 +257,8 @@ class CameraReadyController extends Controller
             'status' => 'submitted',
         ]);
 
+        PaperProgress::record($paper, 'payment_reported', $proof->currency . ' ' . $proof->amount . ' via ' . $proof->method, null, $proof->transaction_id);
+
         return back()->with('success', 'Payment details received. You will see the fee marked as paid once it has been verified.');
     }
 
@@ -227,7 +270,10 @@ class CameraReadyController extends Controller
         return Storage::download($proof->proof_path, $proof->proof_name);
     }
 
-    /** The author, the conference administrators, and the chairs of the paper's track. */
+    /**
+     * The author, the conference administrators, the chairs of the paper's track, and
+     * whoever checks revised manuscripts for it.
+     */
     private function authoriseReading(Paper $paper): void
     {
         $user = Auth::user();
@@ -236,7 +282,8 @@ class CameraReadyController extends Controller
         $allowed = $paper->user_id === $user->id
             || Gate::allows('camera_ready_access')
             || (Gate::allows('decision_access') && $paper->track_id
-                && ChairScope::for($user)->canManage($paper->track_id, $paper->sub_track_id));
+                && ChairScope::for($user)->canManage($paper->track_id, $paper->sub_track_id))
+            || (Gate::allows('revision_review') && RevisionReviewers::canReview($user, $paper));
 
         abort_unless($allowed, Response::HTTP_FORBIDDEN, '403 Forbidden');
     }

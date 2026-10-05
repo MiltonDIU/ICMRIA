@@ -2,7 +2,9 @@
     $isOwner = (int) auth()->id() === (int) $paper->user_id;
     $canAdminManage = auth()->user()->can('paper_manuscript_manage');
     $canUpload = ($isOwner && $manuscriptWindowOpen) || $canAdminManage;
-    $canConflictManage = $isOwner || auth()->user()->can('paper_conflict_manage');
+    // Authors declare their own conflicts only while Settings allows it.
+    $canConflictManage = ($isOwner && \App\Services\ConflictCandidates::authorsMayDeclare())
+        || auth()->user()->can('paper_conflict_manage');
 @endphp
 
 @if(session('success'))
@@ -168,8 +170,13 @@
 
     <div class="card-body">
         <p class="text-muted small">
-            Name anyone who should not review this paper — a former supervisor, a co-author, a colleague at your
-            own institution. Reviewer assignment will steer around them.
+            @if($canConflictManage)
+                Name anyone who should not review this paper — a former supervisor, a co-author, a colleague at your
+                own institution. Reviewer assignment will steer around them.
+            @else
+                Conflict-of-interest declarations are handled by the conference team. Reviewer assignment still
+                steers around any listed here.
+            @endif
         </p>
 
         @if($paper->conflicts->isEmpty())

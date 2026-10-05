@@ -46,7 +46,7 @@ class PaperController extends Controller
             // sees their own submissions, so a chair who is an author still finds theirs.
             $scope = \App\Services\ChairScope::for($user);
             $query = Paper::select('papers.*')
-                ->with('user.papers', 'user.profile.country', 'track', 'subTrack', 'authors.country')
+                ->with('user.papers', 'user.profile.country', 'track', 'subTrack', 'authors.country', 'decision', 'cameraReady')
                 ->when(!$scope->seesEverything(), function ($query) use ($scope, $user) {
                     $query->where(function ($visible) use ($scope, $user) {
                         $visible->where('papers.user_id', $user->id);
@@ -70,6 +70,11 @@ class PaperController extends Controller
                 if ($paymentStatus !== null) {
                     $query->where('payment_status', $paymentStatus);
                 }
+            }
+            if ($request->input('manuscript') === 'submitted') {
+                $query->whereNotNull('papers.manuscript_path');
+            } elseif ($request->input('manuscript') === 'missing') {
+                $query->whereNull('papers.manuscript_path');
             }
             if ($request->filled('department')) {
                 $dept = $request->department;
@@ -173,7 +178,8 @@ class PaperController extends Controller
                     }
 
                     $payBtn = '';
-                    if ($row->status === 'approved' && $row->payment_status != '1' && Auth::user()->roles->contains('id', 3) && $isPaymentOpen) {
+                    // Payment is the step after the camera-ready manuscript and copyright form.
+                    if ($row->user_id === $user->id && \App\Services\ProceedingsRules::needsPayment($row) && $isPaymentOpen) {
                         if ($user->profile && !$user->profile->author_list_confirmed) {
                             $payBtn = ' <a href="'.route('show-profile').'" class="btn btn-sm btn-warning ml-1" title="Confirm Authors First">
                                             <i class="fas fa-id-card mr-1"></i> Confirm Authors
@@ -325,10 +331,20 @@ class PaperController extends Controller
 
                     return $badge;
                 })
+                ->addColumn('manuscript', function ($row) {
+                    if (!$row->manuscript_path) {
+                        return '<span class="badge badge-light border text-muted px-2 py-1">Not yet</span>';
+                    }
+
+                    $label = $row->manuscript_status === 'revised' ? 'Replaced' : 'Submitted';
+
+                    return '<span class="badge badge-success px-2 py-1">' . $label . '</span>'
+                        . '<small class="d-block text-muted mt-1">' . optional($row->manuscript_uploaded_at)->format('M d, Y') . '</small>';
+                })
                 ->editColumn('created_at', function ($row) {
                     return $row->created_at ? $row->created_at->format('M d, Y') : '';
                 })
-                ->rawColumns(['actions', 'submission_id', 'submitted_by', 'title', 'authors', 'total_member', 'track', 'status'])
+                ->rawColumns(['actions', 'submission_id', 'submitted_by', 'title', 'authors', 'total_member', 'track', 'status', 'manuscript'])
                 ->make(true);
         }
 
@@ -338,12 +354,8 @@ class PaperController extends Controller
         if ($user) {
             $myProfile = Profile::where('user_id', $user->id)->first();
             if ($user->roles->contains('id', 3)) {
-                $unpaidPapers = Paper::where('user_id', $user->id)
-                    ->where('status', 'approved')
-                    ->where(function($q) {
-                        $q->whereNull('payment_status')
-                          ->orWhere('payment_status', '!=', '1');
-                    })->with('authors.country')->get();
+                // Papers whose fee is due now: accepted, through the camera-ready step, unpaid.
+                $unpaidPapers = \App\Services\ProceedingsRules::payablePapersFor($user->id)->load('authors.country');
             }
         }
 
@@ -379,10 +391,11 @@ class PaperController extends Controller
         try {
             $pricing = \App\Services\PricingService::calculatePaperCost($user->profile, $paper);
             $authors = $paper->authors->map(function($author) use ($pricing) {
+                // Null for an author who is not attending: no fee is charged for them.
                 return [
                     'name' => $author->name,
                     'designation' => $author->designation,
-                    'fee' => $pricing['author_fees'][$author->id] ?? $pricing['individual_final_price']
+                    'fee' => $pricing['author_fees'][$author->id] ?? null,
                 ];
             });
 
@@ -488,8 +501,10 @@ class PaperController extends Controller
             'anonymity_confirmed' => (bool) $request->boolean('anonymity_confirmed'),
         ]);
 
+        \App\Services\PaperProgress::record($paper, 'manuscript_uploaded', $file->getClientOriginalName());
+
         try {
-            Mail::to($paper->user->email)->queue(new \App\Mail\ManuscriptReceived($paper->fresh()));
+            Mail::to($paper->notificationRecipients())->queue(new \App\Mail\ManuscriptReceived($paper->fresh()));
         } catch (\Exception $e) {
             Log::error('Manuscript confirmation mail failed', ['paper' => $paper->id, 'error' => $e->getMessage()]);
         }
@@ -553,11 +568,7 @@ class PaperController extends Controller
     public function declareConflict(Request $request, Paper $paper)
     {
         $user = Auth::user();
-        $isOwner = (int) $paper->user_id === (int) $user->id;
-
-        if (!$isOwner) {
-            abort_if(Gate::denies('paper_conflict_manage'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        }
+        abort_unless($this->mayManageConflicts($paper), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $data = $request->validate([
             'conflicted_user_id' => 'required|exists:users,id',
@@ -579,12 +590,7 @@ class PaperController extends Controller
 
     public function removeConflict(Paper $paper, \App\Models\PaperConflict $conflict)
     {
-        $user = Auth::user();
-        $isOwner = (int) $paper->user_id === (int) $user->id;
-
-        if (!$isOwner) {
-            abort_if(Gate::denies('paper_conflict_manage'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        }
+        abort_unless($this->mayManageConflicts($paper), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         abort_if($conflict->paper_id !== $paper->id, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -703,6 +709,7 @@ class PaperController extends Controller
             'co_authors.*.institution' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.country_id' => ['required', 'exists:countries,id'],
             'co_authors.*.is_student' => ['nullable', 'in:0,1'],
+            'co_authors.*.is_attending' => ['nullable', 'in:0,1'],
         ];
 
         // The category rule needs that row's country, so it cannot use a wildcard.
@@ -717,6 +724,10 @@ class PaperController extends Controller
         $request->validate($rules, [
             'regex' => 'The :attribute contains forbidden characters (PHP tags are not allowed).',
         ]);
+
+        if ($error = $this->attendanceError($request)) {
+            return back()->withInput()->with('error', $error);
+        }
 
         try {
             DB::beginTransaction();
@@ -760,6 +771,7 @@ class PaperController extends Controller
                         'country_id' => $authorData['country_id'],
                         'price_id' => $authorData['price_id'] ?? null,
                         'is_student' => ($authorData['is_student'] ?? '0') == '1',
+                        'is_attending' => ($authorData['is_attending'] ?? '0') == '1',
                         'author_order' => $index + 1,
                         'is_presenting_author' => ($index == $presentingAuthorIndex) ? 1 : 0,
                         'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$index) ? 1 : 0,
@@ -779,6 +791,7 @@ class PaperController extends Controller
                     'author_order' => 1,
                     'is_presenting_author' => 1,
                     'is_corresponding_author' => 1,
+                    'is_attending' => 1,
                 ]);
             }
 
@@ -790,12 +803,14 @@ class PaperController extends Controller
 
             DB::commit();
 
+            \App\Services\PaperProgress::record($paper, 'abstract_submitted');
+
             // Recalculate and sync the total due amount on the profile
             \App\Services\PricingService::updateProfileTotalDue($profile->fresh());
 
             // Send submission confirmation email
             try {
-                Mail::to($user->email)->queue(new AbstractSubmitted($paper));
+                Mail::to($paper->notificationRecipients())->queue(new AbstractSubmitted($paper));
             } catch (\Exception $e) {
                 Log::error('Abstract submission email failed: ' . $e->getMessage(), [
                     'user_id' => $user->id,
@@ -813,6 +828,37 @@ class PaperController extends Controller
             ]);
             return back()->withInput()->with('error', 'Error submitting abstract. Please try again or contact support. Details: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Anyone holding paper_conflict_manage; the paper's own author only while author
+     * declarations are switched on in Settings.
+     */
+    private function mayManageConflicts(Paper $paper): bool
+    {
+        return Gate::allows('paper_conflict_manage')
+            || ((int) $paper->user_id === (int) Auth::id() && \App\Services\ConflictCandidates::authorsMayDeclare());
+    }
+
+    /**
+     * Every paper needs at least one registered author (Author Guidelines), and only
+     * attending authors are charged, so at least one row must be marked as attending.
+     */
+    private function attendanceError(Request $request): ?string
+    {
+        $rows = (array) $request->input('co_authors', []);
+
+        if (!$rows) {
+            return null; // store() then adds the submitter alone, attending.
+        }
+
+        foreach ($rows as $row) {
+            if (($row['is_attending'] ?? '0') == '1') {
+                return null;
+            }
+        }
+
+        return 'Mark at least one author who will attend the conference. The registration fee is charged only for attending authors.';
     }
 
     /**
@@ -924,6 +970,7 @@ class PaperController extends Controller
             'co_authors.*.institution' => 'required|string|max:255',
             'co_authors.*.country_id' => 'required|exists:countries,id',
             'co_authors.*.is_student' => 'nullable|in:0,1',
+            'co_authors.*.is_attending' => 'nullable|in:0,1',
         ];
 
         // The category rule needs that row's country, so it cannot use a wildcard.
@@ -938,6 +985,10 @@ class PaperController extends Controller
         $request->validate($rules, [
             'regex' => 'The :attribute contains forbidden characters (PHP tags are not allowed).',
         ]);
+
+        if ($error = $this->attendanceError($request)) {
+            return back()->withInput()->with('error', $error);
+        }
 
         try {
             DB::beginTransaction();
@@ -997,6 +1048,7 @@ class PaperController extends Controller
                 'is_presenting_author' => ($presentingAuthorIndex == $primaryAuthorIndexInForm) ? 1 : 0,
                 'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$primaryAuthorIndexInForm) ? 1 : 0,
                 'is_student' => isset($primaryAuthorFromForm['is_student']) && $primaryAuthorFromForm['is_student'] !== '' ? (bool)$primaryAuthorFromForm['is_student'] : ($primaryAuthorModel?->is_student ?? null),
+                'is_attending' => isset($primaryAuthorFromForm['is_attending']) ? $primaryAuthorFromForm['is_attending'] == '1' : ($primaryAuthorModel?->is_attending ?? true),
             ];
 
             if ($primaryAuthorModel) {
@@ -1032,6 +1084,7 @@ class PaperController extends Controller
                         'is_presenting_author' => ($presentingAuthorIndex == $index) ? 1 : 0,
                         'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$index) ? 1 : 0,
                         'is_student' => isset($authorData['is_student']) && $authorData['is_student'] !== '' ? (bool)$authorData['is_student'] : ($existingAuthor?->is_student ?? null),
+                        'is_attending' => isset($authorData['is_attending']) ? $authorData['is_attending'] == '1' : ($existingAuthor?->is_attending ?? false),
                     ];
 
                     if ($existingAuthor) {
@@ -1054,9 +1107,12 @@ class PaperController extends Controller
                 $paper->authors()->first()?->update(['is_corresponding_author' => 1]);
             }
 
-            // 4. Sync conflicts of interest
-            $paper->conflicts()->where('declared_by_user_id', $user->id)->delete();
-            \App\Services\ConflictCandidates::record($paper, $user->id, $request->all());
+            // 4. Sync conflicts of interest. With author declarations switched off the form
+            // has no conflict field, so the ones already on record are left as they are.
+            if (\App\Services\ConflictCandidates::authorsMayDeclare()) {
+                $paper->conflicts()->where('declared_by_user_id', $user->id)->delete();
+                \App\Services\ConflictCandidates::record($paper, $user->id, $request->all());
+            }
 
             DB::commit();
 
@@ -1096,16 +1152,18 @@ class PaperController extends Controller
             'review_note' => $request->review_note,
         ]);
 
+        \App\Services\PaperProgress::record($paper, $request->status === 'approved' ? 'abstract_approved' : 'abstract_rejected', $request->review_note);
+
         // Reload the paper with the reviewer relations
         $paper->load('reviewer');
 
         // Send Email Notification (queued)
         try {
             if ($request->status == 'approved') {
-                Mail::to($paper->user->email)->queue(new AbstractAccepted($paper));
+                Mail::to($paper->notificationRecipients())->queue(new AbstractAccepted($paper));
                 $message = 'Abstract approved and notification email queued for author.';
             } else {
-                Mail::to($paper->user->email)->queue(new AbstractRejected($paper));
+                Mail::to($paper->notificationRecipients())->queue(new AbstractRejected($paper));
                 $message = 'Abstract rejected and notification email queued for author.';
             }
         } catch (\Exception $e) {

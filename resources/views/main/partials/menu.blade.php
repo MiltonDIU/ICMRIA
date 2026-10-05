@@ -428,6 +428,18 @@
                     </a>
                 </li>
                 @endcan
+                @can('revision_review')
+                <li class="nav-item">
+                    <a href="{{ route("admin.revisions.index") }}" class="nav-link {{ request()->is('admin/revisions*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-redo">
+
+                        </i>
+                        <p>
+                            <span>Revised Manuscripts</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
                 @can('camera_ready_access')
                 <li class="nav-item">
                     <a href="{{ route("admin.proceedings.index") }}" class="nav-link {{ request()->is('admin/proceedings*') ? 'active' : '' }}">

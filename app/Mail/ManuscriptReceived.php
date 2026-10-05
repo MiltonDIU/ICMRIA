@@ -23,8 +23,8 @@ class ManuscriptReceived extends Mailable implements ShouldQueue
     {
         $replaced = $this->paper->manuscript_status === 'revised';
 
-        return $this->to($this->paper->user->email)
-                    ->subject(($replaced ? 'Revised Manuscript Received' : 'Manuscript Received')
+        // Recipients come from the sender: Paper::notificationRecipients().
+        return $this->subject(($replaced ? 'Revised Manuscript Received' : 'Manuscript Received')
                         . ' – ICMRIA 2027')
                     ->view('mail.manuscript_received');
     }

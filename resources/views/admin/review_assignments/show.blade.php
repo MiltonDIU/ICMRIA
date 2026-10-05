@@ -43,7 +43,11 @@
             </a>
         @else
             <div class="alert alert-warning mb-0">
-                No manuscript has been uploaded yet. Reviewers can be lined up now, but there is nothing for them to read.
+                @if(\App\Services\SubmissionRules::reviewRequiresManuscript())
+                    No manuscript has been uploaded yet, so reviewers cannot be assigned to this paper until the author uploads it.
+                @else
+                    No manuscript has been uploaded yet. Reviewers can be lined up now, but there is nothing for them to read.
+                @endif
             </div>
         @endif
 

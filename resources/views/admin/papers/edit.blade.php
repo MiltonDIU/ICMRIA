@@ -207,6 +207,16 @@
                                     'checked' => in_array($author->is_student, [true, 1, '1'], true),
                                 ])
                             </div>
+                            <div class="col-md-6 mb-2 d-flex align-items-center">
+                                @include('partials.student-checkbox', [
+                                    'name' => 'co_authors[' . $coAuthorIndex . '][is_attending]',
+                                    'id' => 'author_attending_' . $coAuthorIndex,
+                                    'checked' => (bool) $author->is_attending,
+                                    'inputClass' => 'co-author-attending',
+                                    'label' => 'This author will attend the conference',
+                                    'sub' => 'Registration fee is charged only for attending authors',
+                                ])
+                            </div>
                         </div>
                     </div>
                     @php $coAuthorIndex++; @endphp
@@ -271,6 +281,16 @@
                                     'name' => 'co_authors[' . $coAuthorIndex . '][is_student]',
                                     'id' => 'author_student_' . $coAuthorIndex,
                                     'checked' => (bool) ($paper->user->profile?->is_student ?? false),
+                                ])
+                            </div>
+                            <div class="col-md-6 mb-2 d-flex align-items-center">
+                                @include('partials.student-checkbox', [
+                                    'name' => 'co_authors[' . $coAuthorIndex . '][is_attending]',
+                                    'id' => 'author_attending_' . $coAuthorIndex,
+                                    'checked' => true,
+                                    'inputClass' => 'co-author-attending',
+                                    'label' => 'This author will attend the conference',
+                                    'sub' => 'Registration fee is charged only for attending authors',
                                 ])
                             </div>
                         </div>
@@ -345,6 +365,15 @@
                 @include('partials.student-checkbox', [
                     'name' => 'co_authors[{index}][is_student]',
                     'id' => 'author_student_{index}',
+                ])
+            </div>
+            <div class="col-md-6 mb-2 d-flex align-items-center">
+                @include('partials.student-checkbox', [
+                    'name' => 'co_authors[{index}][is_attending]',
+                    'id' => 'author_attending_{index}',
+                    'inputClass' => 'co-author-attending',
+                    'label' => 'This author will attend the conference',
+                    'sub' => 'Registration fee is charged only for attending authors',
                 ])
             </div>
         </div>
@@ -533,6 +562,13 @@
                 const studentCheck = div.querySelector(`input.co-author-student`);
                 if (studentCheck) {
                     studentCheck.checked = (data.is_student === true || data.is_student == 1 || data.is_student === '1');
+                }
+            }
+
+            if (data.is_attending !== undefined && data.is_attending !== null) {
+                const attendingCheck = div.querySelector(`input.co-author-attending`);
+                if (attendingCheck) {
+                    attendingCheck.checked = (data.is_attending === true || data.is_attending == 1 || data.is_attending === '1');
                 }
             }
         }

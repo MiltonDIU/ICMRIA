@@ -197,16 +197,16 @@ class DashboardController extends Controller
         }
 
         $papers = Paper::where('user_id', $user->id)
-            ->with(['track', 'subTrack', 'authors'])
+            ->with(['track', 'subTrack', 'authors', 'decision', 'cameraReady'])
             ->orderByDesc('id')
             ->get();
 
         $unpaidPapers = $papers
-            ->filter(fn (Paper $paper) => $paper->status === 'approved' && $paper->payment_status != 1)
+            ->filter(fn (Paper $paper) => \App\Services\ProceedingsRules::needsPayment($paper))
             ->values();
 
-        $paymentLastDate = $this->asDate($settings['payment_last_date'] ?? null);
-        $isPaymentOpen = !$paymentLastDate || Carbon::now()->lte($paymentLastDate);
+        // The same rule the payment routes enforce: switch, deadline and capacity.
+        $isPaymentOpen = \App\Services\ProceedingsRules::paymentWindowIsOpen();
 
         return view('admin.author_dashboard', [
             'user' => $user,
@@ -257,7 +257,8 @@ class DashboardController extends Controller
             ['label' => 'Full manuscript window', 'icon' => 'fa-file-upload',
              'from' => $this->asDate($settings['manuscript_submission_start'] ?? null),
              'to' => $this->asDate($settings['manuscript_submission_end'] ?? null)],
-            ['label' => 'Early bird registration ends', 'icon' => 'fa-tags',
+            ['label' => 'Early bird registration', 'icon' => 'fa-tags',
+             'from' => $this->asDate($settings['early_registration_start_date'] ?? null),
              'to' => $this->asDate($settings['early_registration_last_date'] ?? null)],
             ['label' => 'Camera-ready & copyright form', 'icon' => 'fa-stamp',
              'to' => $this->asDate($settings['camera_ready_deadline'] ?? null)],

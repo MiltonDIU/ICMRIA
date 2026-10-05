@@ -112,16 +112,69 @@ class ProceedingsRules
         return ($limit !== null && $limit !== '' && (int) $limit > 0) ? (int) $limit : null;
     }
 
-    /**
-     * Whether the registration fee for this paper is still to be settled. The online
-     * Pay button already offers payment once the abstract is approved, so a reported
-     * transfer is accepted from the same point.
+    /*
+     * The chain (requirement document, Phase 6; organisers, 2026-10-05). Each step opens
+     * only once the one before it is done, and nothing can be skipped:
+     *
+     *   accepted -> revision approved by a chair (minor revisions only) -> camera-ready
+     *   manuscript -> signed copyright form -> registration fee -> confirmed by admin
      */
+
+    /** Nothing owed on the revision: none was asked for, or a chair approved it. */
+    public static function revisionCleared(Paper $paper): bool
+    {
+        return !self::needsRevision($paper) || $paper->cameraReady?->revision_status === 'approved';
+    }
+
+    public static function cameraReadyUnlocked(Paper $paper): bool
+    {
+        return self::isAccepted($paper) && self::revisionCleared($paper);
+    }
+
+    public static function copyrightUnlocked(Paper $paper): bool
+    {
+        return self::cameraReadyUnlocked($paper) && (bool) $paper->cameraReady?->camera_ready_path;
+    }
+
+    /** Both files are in, and the administrator has not sent them back. */
+    public static function paymentUnlocked(Paper $paper): bool
+    {
+        return self::copyrightUnlocked($paper)
+            && (bool) $paper->cameraReady?->copyright_path
+            && $paper->cameraReady->status !== 'changes_requested';
+    }
+
+    /** What the author has to do next, while a step stands between them and payment. */
+    public static function paymentLockedReason(Paper $paper): ?string
+    {
+        return match (true) {
+            self::paymentUnlocked($paper) => null,
+            !self::isAccepted($paper) => 'The registration fee is paid once your paper is accepted and the camera-ready step is complete.',
+            !self::revisionCleared($paper) => 'Your revised manuscript must be approved by the track chair first.',
+            !$paper->cameraReady?->camera_ready_path => 'Upload the camera-ready manuscript first.',
+            !$paper->cameraReady?->copyright_path => 'Upload the signed copyright transfer form first.',
+            default => 'The conference team has asked for changes to your camera-ready files. Upload the corrected files first.',
+        };
+    }
+
+    /** Whether the registration fee for this paper is due now: the chain has reached it. */
     public static function needsPayment(Paper $paper): bool
     {
-        return !self::isPaid($paper)
-            && !self::isRejected($paper)
-            && ($paper->status === 'approved' || self::isAccepted($paper));
+        return !self::isPaid($paper) && self::paymentUnlocked($paper);
+    }
+
+    /**
+     * The author's papers whose fee is due now, with what the chain checks loaded.
+     *
+     * @return \Illuminate\Support\Collection<int, Paper>
+     */
+    public static function payablePapersFor(int $userId)
+    {
+        return Paper::where('user_id', $userId)
+            ->with(['decision', 'cameraReady', 'authors'])
+            ->get()
+            ->filter(fn (Paper $paper) => self::needsPayment($paper))
+            ->values();
     }
 
     /** @return array<string, array{label: string, done: bool}> */
@@ -133,15 +186,20 @@ class ProceedingsRules
             'accepted' => ['label' => 'Paper accepted and authors notified', 'done' => self::isAccepted($paper)],
         ];
 
-        // Accepted on condition: the revised manuscript comes before the camera-ready one.
+        // Accepted on condition: the revised manuscript comes before the camera-ready one,
+        // and counts once a chair has approved it (RevisionReviewController).
         if (self::needsRevision($paper)) {
-            $items['revision'] = ['label' => 'Revised manuscript uploaded (minor revisions)', 'done' => (bool) $final?->revised_path];
+            $items['revision'] = [
+                'label' => 'Revised manuscript approved by the track chair (minor revisions)',
+                'done' => $final?->revised_path && $final->revision_status === 'approved',
+            ];
         }
 
+        // In chain order; each item counts only once everything above it is done.
         return $items + [
-            'camera_ready' => ['label' => 'Camera-ready manuscript uploaded', 'done' => (bool) $final?->camera_ready_path],
-            'copyright' => ['label' => 'Signed copyright transfer form uploaded', 'done' => (bool) $final?->copyright_path],
-            'payment' => ['label' => 'Registration fee verified', 'done' => self::isPaid($paper)],
+            'camera_ready' => ['label' => 'Camera-ready manuscript uploaded', 'done' => self::cameraReadyUnlocked($paper) && (bool) $final?->camera_ready_path],
+            'copyright' => ['label' => 'Signed copyright transfer form uploaded', 'done' => self::copyrightUnlocked($paper) && (bool) $final?->copyright_path],
+            'payment' => ['label' => 'Registration fee paid', 'done' => self::isPaid($paper)],
         ];
     }
 

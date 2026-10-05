@@ -21,7 +21,8 @@ use Illuminate\Support\Collection;
 class DelegateChecklist
 {
     /**
-     * @param Collection<int, Paper> $unpaidPapers approved abstracts still awaiting payment
+     * @param Collection<int, Paper> $unpaidPapers papers whose fee is due now: accepted, through
+     *                                           the camera-ready step, still unpaid
      * @return array<int, array{title: string, body: string, url: string|null, action: string|null, tone: string}>
      */
     public static function for(?Profile $profile, Collection $unpaidPapers, bool $isPaymentOpen): array
@@ -53,8 +54,8 @@ class DelegateChecklist
         if ($unpaidPapers->isNotEmpty() && !$profile->author_list_confirmed) {
             $todo[] = [
                 'tone' => 'warning',
-                'title' => 'Confirm the author list and student status',
-                'body' => 'Before you can pay for your approved abstract(s) we need the student status of every listed author. It can only be set once, so check it carefully.',
+                'title' => 'Confirm the author list, attendance and student status',
+                'body' => 'Before you can pay for your accepted paper(s) we need to know which authors will attend and the student status of each. It can only be set once, so check it carefully.',
                 'url' => route('papers.index'),
                 'action' => 'Confirm on the Abstracts page',
             ];
@@ -62,9 +63,9 @@ class DelegateChecklist
             $count = $unpaidPapers->count();
             $todo[] = [
                 'tone' => $isPaymentOpen ? 'primary' : 'danger',
-                'title' => $count === 1 ? 'One approved abstract is awaiting payment' : "{$count} approved abstracts are awaiting payment",
+                'title' => $count === 1 ? 'One accepted paper is awaiting payment' : "{$count} accepted papers are awaiting payment",
                 'body' => $isPaymentOpen
-                    ? 'Every listed author pays a registration fee. You can settle them all in a single transaction.'
+                    ? 'The camera-ready step is complete. The fee covers each attending author, and you can settle them all in a single transaction.'
                     : 'The payment window has closed. Contact the organising committee to settle this.',
                 'url' => $isPaymentOpen ? route('my-profile') : null,
                 'action' => $isPaymentOpen ? 'Review & pay all' : null,

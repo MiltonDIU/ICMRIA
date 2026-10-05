@@ -10,17 +10,20 @@
     $checked  whether it starts ticked (default false)
     $label    caption; co-authors on the public form read "This co-author is a student"
     $sub      the small grey line under the caption
+    $inputClass  the checkbox's class (default co-author-student). The "will attend" tick
+                 reuses this card with co-author-attending, which the fee summary reads.
 --}}
 @php
     $checked = $checked ?? false;
     $label = $label ?? 'This author is a student';
     $sub = $sub ?? 'The student delegate rate applies to them';
+    $inputClass = $inputClass ?? 'co-author-student';
 @endphp
 
 <label class="custom-check-card" for="{{ $id }}">
     <input type="hidden" name="{{ $name }}" value="0">
     {{-- co-author-student is what the forms' JavaScript reads when it restores a row. --}}
-    <input type="checkbox" class="co-author-student" id="{{ $id }}" name="{{ $name }}" value="1"
+    <input type="checkbox" class="{{ $inputClass }}" id="{{ $id }}" name="{{ $name }}" value="1"
            {{ $checked ? 'checked' : '' }}>
     <span class="custom-check-box"></span>
     <span class="custom-check-content">

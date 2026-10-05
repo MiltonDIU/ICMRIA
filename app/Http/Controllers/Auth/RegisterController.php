@@ -147,6 +147,7 @@ class RegisterController extends Controller
                         $rules["co_authors.$index.country_id"] = ['required', 'exists:countries,id'];
                         $rules["co_authors.$index.price_id"] = ['required', 'exists:prices,id', new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
                         $rules["co_authors.$index.is_student"] = ['nullable', 'in:0,1'];
+                        $rules["co_authors.$index.is_attending"] = ['nullable', 'in:0,1'];
                     }
                 }
             }
@@ -246,6 +247,8 @@ class RegisterController extends Controller
                     'price_id' => $profile->price_id,
                     'is_presenting_author' => $submitterIsPresenting,
                     'is_corresponding_author' => $submitterIsCorresponding,
+                    // The registrant is registering to take part, so they attend.
+                    'is_attending' => true,
                     'author_order' => 1,
                 ]);
 
@@ -261,6 +264,7 @@ class RegisterController extends Controller
                             'country_id' => $co_author['country_id'],
                             'price_id' => $co_author['price_id'] ?? null,
                             'is_student' => ($co_author['is_student'] ?? '0') == '1',
+                            'is_attending' => ($co_author['is_attending'] ?? '0') == '1',
                             'is_presenting_author' => (string) $presentingAuthorIndex === (string) $index,
                             'is_corresponding_author' => (string) $correspondingAuthorIndex === (string) $index,
                             'author_order' => $index + 2,
@@ -288,8 +292,10 @@ class RegisterController extends Controller
 
             // Notify if paper submitted
             if ($paper) {
+                \App\Services\PaperProgress::record($paper, 'abstract_submitted', null, $user->id);
+
                 try {
-                    Mail::to($user->email)->queue(new AbstractSubmitted($paper));
+                    Mail::to($paper->notificationRecipients())->queue(new AbstractSubmitted($paper));
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error('Mail Error (Registration Submission): ' . $e->getMessage());
                 }

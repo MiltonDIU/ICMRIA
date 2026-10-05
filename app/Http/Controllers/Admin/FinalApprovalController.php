@@ -188,17 +188,18 @@ class FinalApprovalController extends Controller
         $failed = [];
 
         foreach ($decisions as $decision) {
-            // The corresponding author, not whoever happened to key the submission in.
-            $email = $decision->paper->notificationEmail();
+            // The corresponding author, or every author when email_all_authors is on.
+            $recipients = $decision->paper->notificationRecipients();
 
-            if (!$email) {
+            if (!$recipients) {
                 $failed[] = $decision->paper->submission_id;
                 continue;
             }
 
             try {
-                Mail::to($email)->queue(new \App\Mail\DecisionNotification($decision->paper));
+                Mail::to($recipients)->queue(new \App\Mail\DecisionNotification($decision->paper));
                 $decision->update(['notified_at' => now()]);
+                \App\Services\PaperProgress::record($decision->paper_id, 'decision_notified', $decision->label());
                 $sent++;
             } catch (\Exception $e) {
                 Log::error('Decision notification failed', ['decision' => $decision->id, 'error' => $e->getMessage()]);

@@ -8,6 +8,7 @@ use App\Mail\RegistrationConfirmed;
 use App\Models\Paper;
 use App\Models\PaperPaymentProof;
 use App\Models\Schedule;
+use App\Services\PaperProgress;
 use App\Services\PaymentSync;
 use App\Services\ProceedingsExport;
 use App\Services\ProceedingsRules;
@@ -93,6 +94,8 @@ class ProceedingsController extends Controller
             PaymentSync::refreshProfile($paper->user);
         });
 
+        PaperProgress::record($paper, 'payment_verified', $proof->currency . ' ' . $proof->amount, null, $proof->transaction_id);
+
         $profile = $paper->user->profile()->first();
 
         try {
@@ -121,6 +124,7 @@ class ProceedingsController extends Controller
 
         if ($autoConfirmed) {
             $paper->cameraReady->update(['status' => 'confirmed', 'confirmed_by' => auth()->id(), 'confirmed_at' => now()]);
+            PaperProgress::record($paper, 'confirmed', 'Automatically, on payment verification');
             $this->tellAuthor($paper, 'confirmed');
         }
 
@@ -149,6 +153,8 @@ class ProceedingsController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        PaperProgress::record($proof->paper_id, 'payment_rejected', $data['review_note'], null, $proof->transaction_id);
+
         return back()->with('success', 'Payment for ' . $proof->paper->submission_id . ' rejected. The author can report a corrected one.');
     }
 
@@ -168,6 +174,7 @@ class ProceedingsController extends Controller
 
         $paper->cameraReady->update(['status' => 'confirmed', 'confirmed_by' => auth()->id(), 'confirmed_at' => now()]);
 
+        PaperProgress::record($paper, 'confirmed');
         $this->tellAuthor($paper, 'confirmed');
 
         return back()->with('success', $paper->submission_id . ' is confirmed for the proceedings.');
@@ -198,6 +205,7 @@ class ProceedingsController extends Controller
             'presentation_order' => null,
         ]);
 
+        PaperProgress::record($paper, 'camera_ready_changes_requested', $data['admin_note']);
         $this->tellAuthor($paper, 'changes');
 
         return back()->with('success', 'Changes requested from the author of ' . $paper->submission_id . '.');
@@ -266,6 +274,45 @@ class ProceedingsController extends Controller
         abort(Response::HTTP_NOT_FOUND);
     }
 
+    /**
+     * Every step every paper took, who took it and when (PaperProgressEvent), as CSV for
+     * the organisers' reports. One row per step, oldest first.
+     */
+    public function progressReport()
+    {
+        abort_if(Gate::denies('camera_ready_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        $name = 'icmria-2027-progress-history-' . now()->format('Ymd-His') . '.csv';
+
+        return response()->streamDownload(function () {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // so Excel reads the names as UTF-8
+            fputcsv($out, ['Paper ID', 'Title', 'Track', 'Step', 'Done by', 'Email', 'Date & time', 'Detail', 'Reference']);
+
+            \App\Models\PaperProgressEvent::with(['paper.track', 'user'])
+                ->whereHas('paper')
+                ->orderBy('created_at')
+                ->orderBy('id')
+                ->chunk(500, function ($events) use ($out) {
+                    foreach ($events as $event) {
+                        fputcsv($out, [
+                            $event->paper->submission_id,
+                            $event->paper->title,
+                            $event->paper->track->name ?? '',
+                            $event->label(),
+                            $event->user->name ?? 'System',
+                            $event->user->email ?? '',
+                            $event->created_at->format('Y-m-d H:i:s'),
+                            $event->note,
+                            $event->reference,
+                        ]);
+                    }
+                });
+
+            fclose($out);
+        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     /** Every camera-ready manuscript and copyright form, named by paper ID, with the JSON alongside. */
     private function filesArchive(ProceedingsExport $export, string $name)
     {
@@ -298,7 +345,7 @@ class ProceedingsController extends Controller
     private function tellAuthor(Paper $paper, string $kind): void
     {
         try {
-            Mail::to($paper->user->email)->queue(new CameraReadyUpdate($paper, $kind));
+            Mail::to($paper->notificationRecipients())->queue(new CameraReadyUpdate($paper, $kind));
         } catch (\Exception $e) {
             Log::error('Camera-ready update mail failed', ['paper' => $paper->id, 'kind' => $kind, 'error' => $e->getMessage()]);
         }
