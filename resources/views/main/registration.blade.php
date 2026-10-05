@@ -634,13 +634,6 @@
                 </div>
                 <div class="col-md-6 mb-2 d-flex align-items-center">
                     @include('partials.student-checkbox', [
-                        'name' => 'co_authors[{index}][is_student]',
-                        'id' => 'co_student_{index}',
-                        'label' => 'This co-author is a student',
-                    ])
-                </div>
-                <div class="col-md-6 mb-2 d-flex align-items-center">
-                    @include('partials.student-checkbox', [
                         'name' => 'co_authors[{index}][is_attending]',
                         'id' => 'co_attending_{index}',
                         'inputClass' => 'co-author-attending',
@@ -841,11 +834,6 @@
                     if (data.price_id) {
                         priceSelect.value = data.price_id;
                     }
-                }
-
-                const studentCheckbox = entry.querySelector('.co-author-student');
-                if (studentCheckbox) {
-                    studentCheckbox.checked = String(data.is_student) === '1';
                 }
 
                 const attendingCheckbox = entry.querySelector('.co-author-attending');

@@ -566,13 +566,22 @@ class ProfileController extends Controller
             return redirect()->back()->with('error', 'Profile not found.');
         }
 
-        $request->validate([
+        $rules = [
             'authors' => 'required|array',
             'authors.*.id' => 'required|exists:paper_authors,id',
-            'authors.*.is_student' => 'required|in:0,1',
             // Only attending authors are charged; see PricingService::billableAuthors.
             'authors.*.is_attending' => 'required|in:0,1',
-        ]);
+        ];
+
+        // The delegate category sets the fee, and the Student category marks the author as
+        // a student (PaperAuthor::booted). It must be one the author's country qualifies for.
+        foreach ((array) $request->input('authors', []) as $key => $authorData) {
+            $countryId = \App\Models\PaperAuthor::where('id', $authorData['id'] ?? 0)->value('country_id');
+            $rules["authors.$key.price_id"] = ['required', 'exists:prices,id',
+                new \App\Rules\DelegateCategoryMatchesCountry($countryId)];
+        }
+
+        $request->validate($rules);
 
         // Every paper needs at least one registered author (Author Guidelines).
         $attendingByPaper = [];
@@ -603,7 +612,7 @@ class ProfileController extends Controller
                     })->first();
 
                 if ($author) {
-                    $author->is_student = (bool)$authorData['is_student'];
+                    $author->price_id = $authorData['price_id'];
                     $author->is_attending = (bool)$authorData['is_attending'];
                     $author->save();
                 }
@@ -612,7 +621,7 @@ class ProfileController extends Controller
             $profile->author_list_confirmed = true;
             $profile->save();
 
-            // Recalculate total due based on the new student status
+            // Recalculate total due based on the confirmed categories and attendance
             \App\Services\PricingService::updateProfileTotalDue($profile);
 
             \Illuminate\Support\Facades\DB::commit();

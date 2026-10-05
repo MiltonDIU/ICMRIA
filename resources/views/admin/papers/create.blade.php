@@ -212,12 +212,6 @@
             </div>
             <div class="col-md-6 mb-2 d-flex align-items-center">
                 @include('partials.student-checkbox', [
-                    'name' => 'co_authors[{index}][is_student]',
-                    'id' => 'author_student_{index}',
-                ])
-            </div>
-            <div class="col-md-6 mb-2 d-flex align-items-center">
-                @include('partials.student-checkbox', [
                     'name' => 'co_authors[{index}][is_attending]',
                     'id' => 'author_attending_{index}',
                     'inputClass' => 'co-author-attending',

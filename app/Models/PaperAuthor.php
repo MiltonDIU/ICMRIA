@@ -38,6 +38,20 @@ class PaperAuthor extends Model
         'is_attending' => 'boolean',
     ];
 
+    /**
+     * is_student follows the delegate category: choosing the Student tier marks the author
+     * as a student, any other tier clears it. The category is what the fee is charged on,
+     * so the two can never disagree and no separate student tick is needed.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (PaperAuthor $author) {
+            if ($author->price_id) {
+                $author->is_student = Price::where('id', $author->price_id)->value('category') === 'student';
+            }
+        });
+    }
+
     public function paper()
     {
         return $this->belongsTo(Paper::class);

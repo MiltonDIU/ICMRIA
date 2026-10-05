@@ -1,5 +1,7 @@
 {{--
-    "This author is a student" — the delegate-category tick shown against each author.
+    A tick card shown against each author. Now used for "This author will attend"; the
+    student tick it was written for was retired, since choosing the Student delegate
+    category marks an author as a student (PaperAuthor::booted).
 
     Shared by the registration form and by Papers > Submit / Edit so the three forms
     cannot drift apart in wording or appearance. The card styling below is the same

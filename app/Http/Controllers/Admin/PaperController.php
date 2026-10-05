@@ -708,7 +708,6 @@ class PaperController extends Controller
             'co_authors.*.department' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.institution' => ['required', 'string', 'max:255', $noPhpTags],
             'co_authors.*.country_id' => ['required', 'exists:countries,id'],
-            'co_authors.*.is_student' => ['nullable', 'in:0,1'],
             'co_authors.*.is_attending' => ['nullable', 'in:0,1'],
         ];
 
@@ -770,7 +769,6 @@ class PaperController extends Controller
                         'institution' => $authorData['institution'],
                         'country_id' => $authorData['country_id'],
                         'price_id' => $authorData['price_id'] ?? null,
-                        'is_student' => ($authorData['is_student'] ?? '0') == '1',
                         'is_attending' => ($authorData['is_attending'] ?? '0') == '1',
                         'author_order' => $index + 1,
                         'is_presenting_author' => ($index == $presentingAuthorIndex) ? 1 : 0,
@@ -969,7 +967,6 @@ class PaperController extends Controller
             'co_authors.*.department' => 'required|string|max:255',
             'co_authors.*.institution' => 'required|string|max:255',
             'co_authors.*.country_id' => 'required|exists:countries,id',
-            'co_authors.*.is_student' => 'nullable|in:0,1',
             'co_authors.*.is_attending' => 'nullable|in:0,1',
         ];
 
@@ -1047,7 +1044,6 @@ class PaperController extends Controller
                 'author_order' => $orderOffset++,
                 'is_presenting_author' => ($presentingAuthorIndex == $primaryAuthorIndexInForm) ? 1 : 0,
                 'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$primaryAuthorIndexInForm) ? 1 : 0,
-                'is_student' => isset($primaryAuthorFromForm['is_student']) && $primaryAuthorFromForm['is_student'] !== '' ? (bool)$primaryAuthorFromForm['is_student'] : ($primaryAuthorModel?->is_student ?? null),
                 'is_attending' => isset($primaryAuthorFromForm['is_attending']) ? $primaryAuthorFromForm['is_attending'] == '1' : ($primaryAuthorModel?->is_attending ?? true),
             ];
 
@@ -1083,7 +1079,6 @@ class PaperController extends Controller
                         'author_order' => $orderOffset++,
                         'is_presenting_author' => ($presentingAuthorIndex == $index) ? 1 : 0,
                         'is_corresponding_author' => ($correspondingAuthorIndex !== null && (int)$correspondingAuthorIndex === (int)$index) ? 1 : 0,
-                        'is_student' => isset($authorData['is_student']) && $authorData['is_student'] !== '' ? (bool)$authorData['is_student'] : ($existingAuthor?->is_student ?? null),
                         'is_attending' => isset($authorData['is_attending']) ? $authorData['is_attending'] == '1' : ($existingAuthor?->is_attending ?? false),
                     ];
 

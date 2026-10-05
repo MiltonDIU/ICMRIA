@@ -57,12 +57,13 @@
             <div class="card mb-4 border-warning shadow-sm" style="border-width: 2px; border-radius: 12px; overflow: hidden;">
                 <div class="card-header bg-warning text-dark py-3">
                     <h5 class="card-title font-weight-bold mb-0">
-                        <i class="fas fa-id-card mr-2"></i> Confirm Author List, Attendance & Student Status
+                        <i class="fas fa-id-card mr-2"></i> Confirm Author List, Attendance & Delegate Category
                     </h5>
                 </div>
                 <div class="card-body bg-white p-4">
                     <p class="text-muted mb-4">
-                        Before proceeding to payment, please confirm which authors will attend the conference and the student status of each.
+                        Before proceeding to payment, please confirm which authors will attend the conference and the delegate category
+                        of each (choose the Student category for a student author).
                         <strong>The registration fee is charged only for attending authors, each at their own rate.</strong>
                         At least one author of every paper must attend.
                     </p>
@@ -84,7 +85,7 @@
                                             <th>Designation</th>
                                             <th>Country</th>
                                             <th style="width: 180px;" class="text-center">Will Attend?</th>
-                                            <th style="width: 180px;" class="text-center">Is Student?</th>
+                                            <th style="width: 240px;">Delegate Category</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -103,15 +104,8 @@
                                                         <label for="attend_no_{{ $author->id }}" class="toggle-btn toggle-no">No</label>
                                                     </div>
                                                 </td>
-                                                <td class="align-middle text-center">
-                                                    <input type="hidden" name="authors[{{ $author->id }}][id]" value="{{ $author->id }}">
-                                                    <div class="student-status-toggle">
-                                                        <input type="radio" id="student_yes_{{ $author->id }}" name="authors[{{ $author->id }}][is_student]" value="1" {{ $author->is_student ? 'checked' : '' }} required>
-                                                        <label for="student_yes_{{ $author->id }}" class="toggle-btn toggle-yes">Yes</label>
-                                                        
-                                                        <input type="radio" id="student_no_{{ $author->id }}" name="authors[{{ $author->id }}][is_student]" value="0" {{ !$author->is_student ? 'checked' : '' }} required>
-                                                        <label for="student_no_{{ $author->id }}" class="toggle-btn toggle-no">No</label>
-                                                    </div>
+                                                <td class="align-middle">
+                                                    @include('partials.author-category-select', ['author' => $author])
                                                 </td>
                                             </tr>
                                         @endforeach

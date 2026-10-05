@@ -146,7 +146,6 @@ class RegisterController extends Controller
                         $rules["co_authors.$index.institution"] = ['required', 'string', 'max:255', $noPhpTags];
                         $rules["co_authors.$index.country_id"] = ['required', 'exists:countries,id'];
                         $rules["co_authors.$index.price_id"] = ['required', 'exists:prices,id', new \App\Rules\DelegateCategoryMatchesCountry($author['country_id'] ?? null)];
-                        $rules["co_authors.$index.is_student"] = ['nullable', 'in:0,1'];
                         $rules["co_authors.$index.is_attending"] = ['nullable', 'in:0,1'];
                     }
                 }
@@ -263,7 +262,6 @@ class RegisterController extends Controller
                             'institution' => $co_author['institution'],
                             'country_id' => $co_author['country_id'],
                             'price_id' => $co_author['price_id'] ?? null,
-                            'is_student' => ($co_author['is_student'] ?? '0') == '1',
                             'is_attending' => ($co_author['is_attending'] ?? '0') == '1',
                             'is_presenting_author' => (string) $presentingAuthorIndex === (string) $index,
                             'is_corresponding_author' => (string) $correspondingAuthorIndex === (string) $index,
