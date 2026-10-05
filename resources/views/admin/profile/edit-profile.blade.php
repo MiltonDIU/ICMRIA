@@ -240,27 +240,7 @@
                 </div>
                 @endunless
 
-                <!-- Section 4: Workshops -->
-                <h5 class="text-primary mt-4 mb-3 border-bottom pb-2"><i class="fas fa-laptop-code mr-2"></i> Workshops / Selected Sessions</h5>
-                <div class="row">
-                    @foreach ($schedules as $dayKey => $daySchedules)
-                        <div class="col-md-4 mb-4">
-                            <div class="p-3 bg-light rounded border h-100">
-                                <h6 class="font-weight-bold mb-3"><i class="calendar-day mr-2"></i> {{ "Day - " . $dayKey }}</h6>
-                                @foreach ($daySchedules as $schedule)
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" class="custom-control-input" id="schedule_{{ $schedule->id }}" name="schedule_ids[]" value="{{ $schedule->id }}" {{ in_array($schedule->id, $workshops) ? 'checked' : '' }}>
-                                        <label class="custom-control-label small" for="schedule_{{ $schedule->id }}">
-                                            <strong>{{ $schedule->title }}</strong>
-                                            <br>
-                                            <span class="text-muted"><i class="far fa-clock mr-1"></i> {{ \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') }}</span>
-                                        </label>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+                {{-- Workshop selection removed: the conference does not offer it (2026-10-05). --}}
 
                 <div class="mt-4 pt-3 border-top">
                     <button class="btn btn-primary px-5 shadow-sm" type="submit">

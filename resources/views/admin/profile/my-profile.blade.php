@@ -284,15 +284,6 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-xl mb-3">
-                <div class="mp-tile">
-                    <div class="mp-tile-label">Workshops</div>
-                    <div class="mp-tile-value">{{ $user->schedules->count() }}</div>
-                    <div class="mp-tile-note">
-                        {{ $user->schedules->isEmpty() ? 'No session selected' : 'Sessions you have chosen' }}
-                    </div>
-                </div>
-            </div>
         </div>
 
         {{-- What is actually waiting on the delegate. --}}
@@ -723,31 +714,6 @@
             </div>
         </div>
         @endunless
-
-        {{-- Workshops. --}}
-        <div class="mp-card">
-            <div class="mp-card-head">
-                <h5><i class="fas fa-chalkboard-teacher mr-2"></i> Workshops you have chosen</h5>
-            </div>
-            <div class="mp-card-body">
-                @forelse($user->schedules as $schedule)
-                    <div class="mp-field">
-                        <dt>{{ $schedule->title }}</dt>
-                        <dd>
-                            Day {{ $schedule->day_number }}
-                            @if($schedule->start_time)
-                                · {{ \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') }}
-                            @endif
-                        </dd>
-                    </div>
-                @empty
-                    <p class="text-muted mb-0">
-                        You have not selected a workshop.
-                        Pick one from <a href="{{ route('edit-profile', ['id' => $profile->id]) }}">your details</a>.
-                    </p>
-                @endforelse
-            </div>
-        </div>
 
         {{-- Payment attempts, so a failed transaction is visible rather than silent. --}}
         <div class="mp-card">

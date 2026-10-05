@@ -465,7 +465,11 @@ class ProfileController extends Controller
             $profile->save();
         }
 
-        $user->schedules()->sync($userSchedule);
+        // Workshop selection is no longer offered on the form, so the field is normally absent;
+        // only sync when it is sent, or saving a profile would wipe sessions already on file.
+        if ($request->has('schedule_ids')) {
+            $user->schedules()->sync($userSchedule);
+        }
 
         return redirect()->route($isDelegate ? 'my-profile' : 'show-profile')
             ->with('message', 'Profile updated successfully');
