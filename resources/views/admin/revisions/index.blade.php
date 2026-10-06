@@ -18,14 +18,15 @@
             reviewers' comments, then approve it or send it back with a note. The paper can be confirmed for the proceedings
             only once its revision is approved.
         </p>
-        <div class="d-flex flex-wrap">
+        <div class="d-flex flex-wrap mb-2">
             @foreach($filters as $key => $label)
-                <a href="{{ route('admin.revisions.index', ['filter' => $key]) }}"
+                <a href="{{ route('admin.revisions.index', ['filter' => $key] + $listFilters->query()) }}"
                    class="btn btn-sm mr-1 mb-1 btn-{{ $filter === $key ? 'primary' : 'outline-secondary' }}">
                     {{ $label }} <span class="badge badge-light ml-1">{{ $counts[$key] }}</span>
                 </a>
             @endforeach
         </div>
+        @include('admin.partials.list-toolbar', ['route' => 'admin.revisions.index', 'tabParam' => 'filter', 'tabValue' => $filter, 'allTracksLabel' => $allTracks ? 'All tracks' : 'All my tracks'])
     </div>
 </div>
 
@@ -43,7 +44,7 @@
             </span>
         </div>
         <div class="card-body">
-            <p class="text-muted small mb-2">{{ $paper->subTrack->name ?? ($paper->track->name ?? '') }}</p>
+            <p class="text-muted small mb-2">{{ $paper->track->name ?? '' }}@if($paper->subTrack) &rsaquo; {{ $paper->subTrack->name }}@endif</p>
 
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <div>
@@ -101,5 +102,11 @@
 @empty
     <div class="card"><div class="card-body text-center text-muted">No revised manuscripts here.</div></div>
 @endforelse
+
+@if($papers->total() > 0)
+    <div class="card">
+        @include('admin.partials.list-pagination', ['paginator' => $papers])
+    </div>
+@endif
 
 @endsection

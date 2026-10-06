@@ -5,6 +5,7 @@
 @php
     $filters = [
         '' => 'All',
+        'pending' => 'Pending',
         'ready' => 'Ready to decide',
         'conflict' => 'Reviewers disagree',
         'awaiting' => 'Awaiting TPC approval',
@@ -22,14 +23,16 @@
             Each paper in your tracks with its evaluations brought together. A decision can be entered once at least
             {{ $minimum }} evaluations are in; the TPC Chair then approves it before the authors are told.
         </p>
-        <div class="d-flex flex-wrap">
+        <div class="d-flex flex-wrap mb-2">
             @foreach($filters as $key => $label)
-                <a href="{{ route('admin.decisions.index', $key ? ['filter' => $key] : []) }}"
+                <a href="{{ route('admin.decisions.index', ($key ? ['filter' => $key] : []) + $listFilters->query()) }}"
+                   @if($key === 'pending') title="No decision entered yet, whether or not enough evaluations are in" @endif
                    class="btn btn-sm mr-1 mb-1 btn-{{ $filter === $key ? 'primary' : 'outline-secondary' }}">
                     {{ $label }} <span class="badge badge-light ml-1">{{ $counts[$key ?: 'all'] }}</span>
                 </a>
             @endforeach
         </div>
+        @include('admin.partials.list-toolbar', ['route' => 'admin.decisions.index', 'tabParam' => 'filter', 'tabValue' => $filter, 'allTracksLabel' => $allTracks ? 'All tracks' : 'All my tracks'])
     </div>
 </div>
 
@@ -64,7 +67,7 @@
                             <td><small class="text-muted">{{ $paper->submission_id }}</small></td>
                             <td>
                                 {{ Str::limit($paper->title, 70) }}
-                                <br><small class="text-muted">{{ Str::limit($paper->subTrack->name ?? ($paper->track->name ?? ''), 50) }}</small>
+                                <br><small class="text-muted">{{ Str::limit($paper->track->name ?? '', 45) }}@if($paper->subTrack) &rsaquo; {{ Str::limit($paper->subTrack->name, 45) }}@endif</small>
                                 @if($review->hasConflict())
                                     <br><span class="badge badge-danger">reviewers disagree</span>
                                 @endif
@@ -109,6 +112,7 @@
             </table>
         </div>
     </div>
+    @include('admin.partials.list-pagination', ['paginator' => $rows])
 </div>
 
 @endsection

@@ -19,7 +19,7 @@
         <span>Final Approval</span>
         <div class="d-flex flex-wrap">
             @foreach($tabs as $key => $label)
-                <a href="{{ route('admin.final-approval.index', ['tab' => $key]) }}"
+                <a href="{{ route('admin.final-approval.index', ['tab' => $key] + $listFilters->query()) }}"
                    class="btn btn-sm ml-1 mb-1 btn-{{ $tab === $key ? 'primary' : 'outline-secondary' }}">
                     {{ $label }} <span class="badge badge-light ml-1">{{ $counts[$key] }}</span>
                 </a>
@@ -40,6 +40,9 @@
                 </button>
             </form>
         @endif
+        <div class="w-100">
+            @include('admin.partials.list-toolbar', ['route' => 'admin.final-approval.index', 'tabParam' => 'tab', 'tabValue' => $tab])
+        </div>
     </div>
 </div>
 
@@ -57,7 +60,7 @@
                     <thead>
                         <tr>
                             @if($tab === 'pending')
-                                <th style="width: 2rem;"><input type="checkbox" id="select-all" aria-label="Select all"></th>
+                                <th style="width: 2rem;"><input type="checkbox" id="select-all" aria-label="Select all on this page" title="Select all on this page"></th>
                             @endif
                             <th style="width: 8rem;">Paper</th>
                             <th>Title</th>
@@ -65,7 +68,7 @@
                             <th class="text-center" style="width: 8rem;">Evaluations</th>
                             <th style="width: 11rem;">Chair</th>
                             <th style="width: 15rem;">
-                                {{ $tab === 'pending' ? 'Return to chair' : ($tab === 'returned' ? 'Returned because' : 'Approval') }}
+                                {{ $tab === 'pending' ? 'Approve or return' : ($tab === 'returned' ? 'Returned because' : 'Approval') }}
                             </th>
                         </tr>
                     </thead>
@@ -84,7 +87,7 @@
                                 <td><small class="text-muted">{{ $paper->submission_id }}</small></td>
                                 <td>
                                     <a href="{{ route('admin.decisions.show', $paper->id) }}">{{ Str::limit($paper->title, 70) }}</a>
-                                    <br><small class="text-muted">{{ Str::limit($paper->track->name ?? '', 50) }}</small>
+                                    <br><small class="text-muted">{{ Str::limit($paper->track->name ?? '', 45) }}@if($paper->subTrack) &rsaquo; {{ Str::limit($paper->subTrack->name, 45) }}@endif</small>
                                     @if($review->hasConflict())
                                         <br><span class="badge badge-danger">reviewers disagreed</span>
                                     @endif
@@ -110,7 +113,14 @@
                                 </td>
                                 <td>
                                     @if($tab === 'pending')
-                                        <details>
+                                        {{-- Approve just this one; the ticked boxes below approve several at once. --}}
+                                        <form action="{{ route('admin.final-approval.approve') }}" method="POST" class="d-inline-block align-top mb-1"
+                                              onsubmit="return confirm('Approve the decision for {{ $paper->submission_id }}?');">
+                                            @csrf
+                                            <input type="hidden" name="decision_ids[]" value="{{ $decision->id }}">
+                                            <button class="btn btn-sm btn-success"><i class="fas fa-check"></i> Approve</button>
+                                        </form>
+                                        <details class="d-inline-block align-top">
                                             <summary class="btn btn-sm btn-outline-danger">Return</summary>
                                             <form action="{{ route('admin.final-approval.return', $decision->id) }}" method="POST" class="mt-2">
                                                 @csrf
@@ -181,6 +191,7 @@
             @endif
         @endif
     </div>
+    @include('admin.partials.list-pagination', ['paginator' => $decisions])
 </div>
 
 @endsection

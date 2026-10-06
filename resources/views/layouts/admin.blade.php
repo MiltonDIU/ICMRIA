@@ -128,7 +128,7 @@
 
         <footer class="main-footer">
             <div class="float-right d-none d-sm-block">
-                <b>Version</b> 3.0.0-alpha
+                ICMRIA 2027 Portal &middot; <b>Version</b> {{ config('app.version') }}
             </div>
             <strong> &copy;</strong> {{ trans('global.allRightsReserved') }}
         </footer>

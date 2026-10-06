@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\CameraReadyUpdate;
 use App\Models\Paper;
 use App\Services\ChairScope;
+use App\Services\PaperListFilters;
 use App\Services\PaperProgress;
 use App\Services\RevisionReviewers;
 use Gate;
@@ -24,36 +25,76 @@ class RevisionReviewController extends Controller
 {
     private const FILTERS = ['pending', 'changes_requested', 'approved'];
 
+    public const SORTS = [
+        'waiting' => 'Waiting longest first',
+        'recent' => 'Most recent upload first',
+        'checked' => 'Checked most recently',
+        'id' => 'Paper ID (ascending)',
+        'id_desc' => 'Paper ID (descending)',
+        'title' => 'Title (A–Z)',
+        'track' => 'Track, then sub-track',
+    ];
+
     public function index(Request $request)
     {
         abort_if(Gate::denies('revision_review'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $scope = ChairScope::for(auth()->user());
+        $user = auth()->user();
+        $scope = ChairScope::for($user);
+        $list = PaperListFilters::from($request, self::SORTS);
         $filter = in_array($request->string('filter')->toString(), self::FILTERS, true)
             ? $request->string('filter')->toString()
             : 'pending';
 
-        $papers = $scope->constrainPapers(Paper::accepted())
-            ->whereHas('decision', fn ($q) => $q->where('decision', 'minor_revisions'))
-            ->whereHas('cameraReady', fn ($q) => $q->whereNotNull('revised_path'))
-            ->with(['track', 'subTrack', 'cameraReady.revisionReviewedBy', 'authors', 'conflicts', 'user'])
-            ->orderBy('id')
-            ->get()
-            // A chair who wrote the paper, or with whom a conflict was declared, stays out.
-            ->filter(fn ($paper) => $scope->conflictWith($paper) === null)
-            ->values();
-
         $counts = [];
         foreach (self::FILTERS as $key) {
-            $counts[$key] = $papers->filter(fn ($paper) => $paper->cameraReady->revision_status === $key)->count();
+            $counts[$key] = $this->listQuery($user, $key, $list)->count();
         }
 
+        $papers = $this->sorted($this->listQuery($user, $filter, $list), $list->sort)
+            ->with(['track', 'subTrack', 'cameraReady.revisionReviewedBy'])
+            ->paginate($list->perPage)
+            ->withQueryString();
+
         return view('admin.revisions.index', [
-            'papers' => $papers->filter(fn ($paper) => $paper->cameraReady->revision_status === $filter)->values(),
+            'papers' => $papers,
             'counts' => $counts,
             'filter' => $filter,
+            'listFilters' => $list,
+            'tracks' => PaperListFilters::tracksFor($user, false),
+            'allTracks' => $scope->seesEverything(),
             'hasNoScope' => $scope->isEmpty(),
         ]);
+    }
+
+    /**
+     * Papers accepted with minor revisions whose revision is in, in one tab, within this
+     * person's tracks; a chair who wrote the paper, or with whom a conflict was declared,
+     * stays out.
+     */
+    private function listQuery($user, string $filter, PaperListFilters $list)
+    {
+        $query = ChairScope::for($user)->constrainPapers(Paper::accepted())
+            ->join('paper_camera_ready as cr', 'cr.paper_id', '=', 'papers.id')
+            ->select('papers.*')
+            ->whereHas('decision', fn ($q) => $q->where('decision', 'minor_revisions'))
+            ->whereNotNull('cr.revised_path')
+            ->where('cr.revision_status', $filter);
+
+        return $list->apply(PaperListFilters::excludeConflicts($query, $user));
+    }
+
+    private function sorted($query, string $sort)
+    {
+        return (match ($sort) {
+            'recent' => $query->orderByDesc('cr.revised_uploaded_at'),
+            'checked' => $query->orderByRaw('cr.revision_reviewed_at IS NULL')->orderByDesc('cr.revision_reviewed_at'),
+            'id' => $query->orderBy('papers.id'),
+            'id_desc' => $query->orderByDesc('papers.id'),
+            'title' => $query->orderBy('papers.title'),
+            'track' => $query->orderBy('papers.track_id')->orderBy('papers.sub_track_id'),
+            default => $query->orderBy('cr.revised_uploaded_at'),
+        })->orderBy('papers.id');
     }
 
     public function approve(Paper $paper)

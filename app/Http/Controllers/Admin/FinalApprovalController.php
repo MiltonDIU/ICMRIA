@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PaperDecision;
 use App\Models\PaperDecisionComment;
 use App\Services\ChairScope;
+use App\Services\PaperListFilters;
 use Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,32 +30,69 @@ class FinalApprovalController extends Controller
         'approved' => 'approved',
     ];
 
+    public const SORTS = [
+        'decided' => 'Decided earliest first',
+        'decided_desc' => 'Decided most recently',
+        'approved_desc' => 'Approved most recently',
+        'id' => 'Paper ID (ascending)',
+        'id_desc' => 'Paper ID (descending)',
+        'title' => 'Title (A–Z)',
+        'track' => 'Track, then sub-track',
+        'decision' => 'Decision (Accept, Minor revisions, Reject)',
+    ];
+
     public function index(Request $request)
     {
         abort_if(Gate::denies('final_approval'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
+        $list = PaperListFilters::from($request, self::SORTS);
         $tab = array_key_exists($request->string('tab')->toString(), self::TABS)
             ? $request->string('tab')->toString()
             : 'pending';
 
-        $decisions = PaperDecision::with(['paper.track', 'paper.subTrack', 'paper.reviewerAssignments.evaluation', 'paper.decisionComments.user',
-                                          'decidedBy', 'approvedBy'])
-            ->whereHas('paper')
-            ->where('status', self::TABS[$tab])
-            ->orderBy('decided_at')
-            ->get();
+        // Tab counts follow the track filter and search, so they match what a tab shows.
+        $counts = collect(self::TABS)->map(fn ($status) => $this->listQuery($status, $list)->count())->all();
 
-        $byStatus = PaperDecision::whereHas('paper')
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        $decisions = $this->sorted($this->listQuery(self::TABS[$tab], $list), $list->sort)
+            ->with(['paper.track', 'paper.subTrack', 'paper.reviewerAssignments.evaluation', 'paper.decisionComments.user',
+                    'decidedBy', 'approvedBy'])
+            ->paginate($list->perPage)
+            ->withQueryString();
 
         return view('admin.final_approval.index', [
             'decisions' => $decisions,
             'tab' => $tab,
-            'counts' => collect(self::TABS)->map(fn ($status) => (int) ($byStatus[$status] ?? 0))->all(),
+            'counts' => $counts,
+            'listFilters' => $list,
+            'tracks' => PaperListFilters::tracksFor(auth()->user(), true),
+            // "Send decision emails" covers every track, whatever the filter.
             'unnotified' => PaperDecision::whereHas('paper')->where('status', 'approved')->whereNull('notified_at')->count(),
         ]);
+    }
+
+    private function listQuery(string $status, PaperListFilters $list)
+    {
+        $query = PaperDecision::query()
+            ->join('papers', 'papers.id', '=', 'paper_decisions.paper_id')
+            ->select('paper_decisions.*')
+            ->whereHas('paper')
+            ->where('paper_decisions.status', $status);
+
+        return $list->applyThroughPaper($query);
+    }
+
+    private function sorted($query, string $sort)
+    {
+        return (match ($sort) {
+            'decided_desc' => $query->orderByDesc('paper_decisions.decided_at'),
+            'approved_desc' => $query->orderByRaw('paper_decisions.approved_at IS NULL')->orderByDesc('paper_decisions.approved_at'),
+            'id' => $query->orderBy('papers.id'),
+            'id_desc' => $query->orderByDesc('papers.id'),
+            'title' => $query->orderBy('papers.title'),
+            'track' => $query->orderBy('papers.track_id')->orderBy('papers.sub_track_id'),
+            'decision' => $query->orderByRaw("FIELD(paper_decisions.decision, 'accept', 'minor_revisions', 'reject')"),
+            default => $query->orderBy('paper_decisions.decided_at'),
+        })->orderBy('papers.id');
     }
 
     /** Approves the ticked decisions, across any tracks, leaving out any the approver is conflicted on. */

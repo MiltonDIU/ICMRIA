@@ -9,8 +9,6 @@
         'approved' => 'Approved',
     ];
     $statusStyles = ['submitted' => 'warning', 'changes_requested' => 'danger', 'approved' => 'info', 'confirmed' => 'success'];
-    // Query string kept when switching tabs.
-    $keep = array_filter(['track' => $trackFilter, 'q' => $search, 'sort' => $sort !== 'waiting' ? $sort : null]);
 @endphp
 
 <div class="card mb-3">
@@ -24,59 +22,14 @@
 
         <div class="d-flex flex-wrap mb-2">
             @foreach($tabs as $key => $label)
-                <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $key] + $keep) }}"
+                <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $key] + $listFilters->query()) }}"
                    class="btn btn-sm mr-1 mb-1 btn-{{ $filter === $key ? 'primary' : 'outline-secondary' }}">
                     {{ $label }} <span class="badge badge-light ml-1">{{ $counts[$key] }}</span>
                 </a>
             @endforeach
         </div>
 
-        <form method="GET" action="{{ route('admin.camera-ready-checks.index') }}" class="form-row align-items-end">
-            <input type="hidden" name="filter" value="{{ $filter }}">
-            <div class="col-md-3 mb-2">
-                <label for="crc-q" class="small text-muted mb-1">Search</label>
-                <input type="search" id="crc-q" name="q" value="{{ $search }}" class="form-control form-control-sm"
-                       placeholder="Paper ID, title or author">
-            </div>
-            @if($tracks->isNotEmpty())
-                <div class="col-md-3 mb-2">
-                    <label for="crc-track" class="small text-muted mb-1">Track</label>
-                    <select id="crc-track" name="track" class="form-control form-control-sm" onchange="this.form.submit()">
-                        <option value="">{{ $allTracks ? 'All tracks' : 'All my tracks' }}</option>
-                        @foreach($tracks as $track)
-                            <optgroup label="{{ Str::limit($track->name, 60) }}">
-                                <option value="t{{ $track->id }}" @selected($trackFilter === 't' . $track->id)>Whole track</option>
-                                @foreach($track->subTracks as $subTrack)
-                                    <option value="s{{ $subTrack->id }}" @selected($trackFilter === 's' . $subTrack->id)>{{ Str::limit($subTrack->name, 60) }}</option>
-                                @endforeach
-                            </optgroup>
-                        @endforeach
-                    </select>
-                </div>
-            @endif
-            <div class="col-md-2 mb-2">
-                <label for="crc-sort" class="small text-muted mb-1">Sort</label>
-                <select id="crc-sort" name="sort" class="form-control form-control-sm" onchange="this.form.submit()">
-                    @foreach(\App\Http\Controllers\Admin\CameraReadyCheckController::SORTS as $key => $label)
-                        <option value="{{ $key }}" @selected($sort === $key)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-1 mb-2">
-                <label for="crc-per" class="small text-muted mb-1">Per page</label>
-                <select id="crc-per" name="per_page" class="form-control form-control-sm" onchange="this.form.submit()">
-                    @foreach($perPageOptions as $n)
-                        <option value="{{ $n }}" @selected($perPage === $n)>{{ $n }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3 mb-2 d-flex flex-wrap align-items-center">
-                <button class="btn btn-sm btn-primary mr-1"><i class="fas fa-search"></i> Apply</button>
-                @if($search !== '' || $trackFilter !== '' || $sort !== 'waiting')
-                    <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $filter]) }}" class="btn btn-sm btn-link">Clear</a>
-                @endif
-            </div>
-        </form>
+        @include('admin.partials.list-toolbar', ['route' => 'admin.camera-ready-checks.index', 'tabParam' => 'filter', 'tabValue' => $filter, 'allTracksLabel' => $allTracks ? 'All tracks' : 'All my tracks'])
     </div>
 </div>
 
@@ -179,12 +132,7 @@
             </table>
         </div>
     </div>
-    @if($papers->total() > 0)
-        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center">
-            <small class="text-muted">Showing {{ $papers->firstItem() }}–{{ $papers->lastItem() }} of {{ $papers->total() }}</small>
-            <div class="mb-n3">{{ $papers->links('pagination::bootstrap-4') }}</div>
-        </div>
-    @endif
+    @include('admin.partials.list-pagination', ['paginator' => $papers])
 </div>
 
 {{-- One "Send back" form for the whole page; the button fills in which paper. --}}

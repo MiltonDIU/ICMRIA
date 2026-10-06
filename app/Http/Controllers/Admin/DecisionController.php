@@ -7,7 +7,9 @@ use App\Models\Paper;
 use App\Models\PaperDecision;
 use App\Models\PaperDecisionComment;
 use App\Services\ChairScope;
+use App\Services\PaperListFilters;
 use App\Services\ReviewConsolidation;
+use Illuminate\Support\Str;
 use Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,24 +28,41 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class DecisionController extends Controller
 {
-    private const FILTERS = ['ready', 'conflict', 'awaiting', 'returned', 'approved'];
+    private const FILTERS = ['pending', 'ready', 'conflict', 'awaiting', 'returned', 'approved'];
+
+    public const SORTS = [
+        'id' => 'Paper ID (ascending)',
+        'id_desc' => 'Paper ID (descending)',
+        'title' => 'Title (A–Z)',
+        'track' => 'Track, then sub-track',
+        'evaluations' => 'Most evaluations first',
+        'average_high' => 'Highest average first',
+        'average_low' => 'Lowest average first',
+        'decided' => 'Decided most recently',
+    ];
 
     public function index(Request $request)
     {
         abort_if(Gate::denies('decision_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $scope = ChairScope::for(auth()->user());
+        $user = auth()->user();
+        $scope = ChairScope::for($user);
+        $list = PaperListFilters::from($request, self::SORTS);
         $filter = in_array($request->string('filter')->toString(), self::FILTERS, true)
             ? $request->string('filter')->toString()
             : '';
 
-        $rows = $scope->papers()
+        // Track and search in SQL; the tabs depend on the evaluations, so they are worked
+        // out per paper.
+        $rows = $list->apply($scope->papers())
             ->with(['track', 'subTrack', 'decision', 'reviewerAssignments.evaluation'])
-            ->orderBy('id')
+            ->orderBy('papers.id')
             ->get()
             ->map(fn ($paper) => ['paper' => $paper, 'review' => ReviewConsolidation::for($paper)]);
 
         $matches = [
+            // No decision entered yet, whether or not enough evaluations are in.
+            'pending' => fn ($row) => $row['paper']->decision === null,
             'ready' => fn ($row) => $this->needsDecision($row['paper']) && $row['review']->isReady(),
             'conflict' => fn ($row) => $this->needsDecision($row['paper']) && $row['review']->hasConflict(),
             'awaiting' => fn ($row) => $row['paper']->decision?->status === 'pending_approval',
@@ -56,13 +75,38 @@ class DecisionController extends Controller
             $counts[$key] = $rows->filter($match)->count();
         }
 
+        $shown = $filter ? $rows->filter($matches[$filter])->values() : $rows;
+
         return view('admin.decisions.index', [
-            'rows' => $filter ? $rows->filter($matches[$filter])->values() : $rows,
+            'rows' => $list->paginateCollection($this->sortRows($shown, $list->sort), $request),
             'counts' => $counts,
             'filter' => $filter,
+            'listFilters' => $list,
+            'tracks' => PaperListFilters::tracksFor($user, false),
+            'allTracks' => $scope->seesEverything(),
             'minimum' => app(\App\Services\ReviewerMatcher::class)->minimumReviewers(),
             'hasNoScope' => $scope->isEmpty(),
         ]);
+    }
+
+    /** Rows of ['paper', 'review'] in the chosen order; ties fall back to the paper ID. */
+    private function sortRows($rows, string $sort)
+    {
+        $average = fn ($row) => $row['review']->averages()['overall'] ?? null;
+
+        $sorted = match ($sort) {
+            'id_desc' => $rows->sortByDesc(fn ($row) => $row['paper']->id),
+            'title' => $rows->sortBy(fn ($row) => Str::lower((string) $row['paper']->title)),
+            'track' => $rows->sortBy(fn ($row) => [(int) $row['paper']->track_id, (int) $row['paper']->sub_track_id, $row['paper']->id]),
+            'evaluations' => $rows->sortBy(fn ($row) => [-$row['review']->submittedCount(), $row['paper']->id]),
+            // Papers without an average go last either way.
+            'average_high' => $rows->sortBy(fn ($row) => [$average($row) === null ? 1 : 0, -(float) $average($row), $row['paper']->id]),
+            'average_low' => $rows->sortBy(fn ($row) => [$average($row) === null ? 1 : 0, (float) $average($row), $row['paper']->id]),
+            'decided' => $rows->sortBy(fn ($row) => [$row['paper']->decision?->decided_at ? 0 : 1, -(optional($row['paper']->decision?->decided_at)->timestamp ?? 0), $row['paper']->id]),
+            default => $rows->sortBy(fn ($row) => $row['paper']->id),
+        };
+
+        return $sorted->values();
     }
 
     public function show(Paper $paper)
