@@ -47,6 +47,15 @@
                             <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
                                 Please upload the corrected revised manuscript from your paper page.
                             </p>
+                        @elseif($kind === 'files_approved')
+                            <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
+                                The camera-ready manuscript and copyright form for <strong>{{ $paper->submission_id }}</strong>,
+                                &ldquo;{{ $paper->title }}&rdquo;, have been checked and <strong style="color:#15803D;">approved</strong>.
+                            </p>
+                            <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
+                                The last step is the registration fee. You can pay it now from your Papers list; once it is paid,
+                                your paper is confirmed for the proceedings automatically.
+                            </p>
                         @elseif($kind === 'confirmed')
                             <p style="margin:0 0 16px; font-size:15px; line-height:1.6;">
                                 Your paper <strong>{{ $paper->submission_id }}</strong>, &ldquo;{{ $paper->title }}&rdquo;, is now

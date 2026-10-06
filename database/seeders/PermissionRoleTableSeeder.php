@@ -39,6 +39,8 @@ class PermissionRoleTableSeeder extends Seeder
             'decision_make',
             // Checks the revised manuscript of a paper accepted with minor revisions.
             'revision_review',
+            // Approves the camera-ready files before the author pays.
+            'camera_ready_approve',
         ];
 
         $role_permissions = [

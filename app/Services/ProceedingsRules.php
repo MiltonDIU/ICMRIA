@@ -138,7 +138,11 @@ class ProceedingsRules
      * only once the one before it is done, and nothing can be skipped:
      *
      *   accepted -> revision approved by a chair (minor revisions only) -> camera-ready
-     *   manuscript -> signed copyright form -> registration fee -> confirmed by admin
+     *   manuscript -> signed copyright form -> files approved by a chair -> registration
+     *   fee -> confirmed for the proceedings (automatically, on payment)
+     *
+     * The files are checked before the fee (organisers, 2026-10-06), so nobody pays for a
+     * paper whose files are not fit for the proceedings.
      */
 
     /** Nothing owed on the revision: none was asked for, or a chair approved it. */
@@ -157,26 +161,35 @@ class ProceedingsRules
         return self::cameraReadyUnlocked($paper) && (bool) $paper->cameraReady?->camera_ready_path;
     }
 
-    /** Both files are in, and the administrator has not sent them back. */
-    public static function paymentUnlocked(Paper $paper): bool
+    /** Both files are in and a chair (or an administrator) has approved them. */
+    public static function filesApproved(Paper $paper): bool
     {
         return self::copyrightUnlocked($paper)
             && (bool) $paper->cameraReady?->copyright_path
-            && $paper->cameraReady->status !== 'changes_requested';
+            && $paper->cameraReady->filesApproved();
+    }
+
+    public static function paymentUnlocked(Paper $paper): bool
+    {
+        return self::filesApproved($paper);
     }
 
     /**
-     * Once the fee is paid the author's part is done: the camera-ready files and the
-     * revision stay as they are. The one exception is the administrator asking for changes
-     * to the camera-ready files, which reopens them until the corrected files are in.
+     * Once the files are approved (and certainly once the fee is paid) the author's part
+     * is done: the camera-ready files and the revision stay as they are. The one exception
+     * is a chair or administrator asking for changes, which reopens them until the
+     * corrected files are in.
      */
-    public static function filesLockedByPaymentReason(Paper $paper): ?string
+    public static function filesLockedReason(Paper $paper): ?string
     {
-        if (!self::isPaid($paper) || $paper->cameraReady?->status === 'changes_requested') {
-            return null;
-        }
+        $status = $paper->cameraReady?->status;
 
-        return 'The registration fee for this paper has been paid, so its files can no longer be changed. Contact the conference team if something needs correcting.';
+        return match (true) {
+            $status === 'changes_requested' => null,
+            in_array($status, ['approved', 'confirmed'], true) => 'Your camera-ready files have been approved, so they can no longer be changed. Contact the conference team if something needs correcting.',
+            self::isPaid($paper) => 'The registration fee for this paper has been paid, so its files can no longer be changed. Contact the conference team if something needs correcting.',
+            default => null,
+        };
     }
 
     /** What the author has to do next, while a step stands between them and payment. */
@@ -188,7 +201,8 @@ class ProceedingsRules
             !self::revisionCleared($paper) => 'Your revised manuscript must be approved by the track chair first.',
             !$paper->cameraReady?->camera_ready_path => 'Upload the camera-ready manuscript first.',
             !$paper->cameraReady?->copyright_path => 'Upload the signed copyright transfer form first.',
-            default => 'The conference team has asked for changes to your camera-ready files. Upload the corrected files first.',
+            $paper->cameraReady->status === 'changes_requested' => 'Changes were requested to your camera-ready files. Upload the corrected files first.',
+            default => 'Your camera-ready files are being checked by the track chair. You can pay the registration fee once they are approved.',
         };
     }
 
@@ -234,6 +248,7 @@ class ProceedingsRules
         return $items + [
             'camera_ready' => ['label' => 'Camera-ready manuscript uploaded', 'done' => self::cameraReadyUnlocked($paper) && (bool) $final?->camera_ready_path],
             'copyright' => ['label' => 'Signed copyright transfer form uploaded', 'done' => self::copyrightUnlocked($paper) && (bool) $final?->copyright_path],
+            'files_approved' => ['label' => 'Camera-ready files approved by the track chair', 'done' => self::filesApproved($paper)],
             'payment' => ['label' => 'Registration fee paid', 'done' => self::isPaid($paper)],
         ];
     }

@@ -37,7 +37,7 @@ class PaperStage
         }
 
         if (ProceedingsRules::isAccepted($paper)) {
-            return self::acceptedStage($paper, $final);
+            return self::acceptedStage($paper, $final, $forAuthor);
         }
 
         // A decision exists but the authors have not been told yet.
@@ -63,7 +63,7 @@ class PaperStage
             : self::stage('Abstract submitted', 'light');
     }
 
-    private static function acceptedStage(Paper $paper, $final): array
+    private static function acceptedStage(Paper $paper, $final, bool $forAuthor): array
     {
         $label = $paper->decision->decision === 'minor_revisions' ? 'Accepted (minor revisions)' : 'Accepted';
 
@@ -79,9 +79,17 @@ class PaperStage
             !$final?->camera_ready_path => self::stage($label . ' — camera-ready due', 'warning'),
             !$final->copyright_path => self::stage($label . ' — copyright form due', 'warning'),
             $final->status === 'changes_requested' => self::stage($label . ' — camera-ready changes requested', 'warning'),
-            // Camera-ready and copyright are both in; only the fee is outstanding.
+            // Both files are in and wait for the track chair's check, which comes before the fee.
+            $final->status === 'submitted' => ProceedingsRules::isPaid($paper)
+                ? self::stage($label . ' — fee paid, files awaiting chair check', 'info')
+                : self::stage($label . ($forAuthor ? ' — camera-ready files being checked' : ' — camera-ready awaiting chair check'), 'info'),
+            // Files approved; only the fee is outstanding.
             !ProceedingsRules::isPaid($paper) => self::stage($label . ' — registration fee due', 'warning'),
-            default => self::stage($label . ' — paid, awaiting confirmation', 'info'),
+            // Approved and paid normally confirms at once; this covers anything left over.
+            // Everything is in; the administrator's final confirmation is the last step.
+            default => $forAuthor
+                ? self::stage($label . ' — fee paid, awaiting final confirmation by the organisers', 'info')
+                : self::stage($label . ' — fee paid, ready to confirm', 'info'),
         };
     }
 

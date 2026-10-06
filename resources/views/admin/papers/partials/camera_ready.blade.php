@@ -8,18 +8,23 @@
         $isOwner = auth()->id() === $paper->user_id;
         $windowOpen = \App\Services\ProceedingsRules::cameraReadyWindowIsOpen();
         $deadline = \App\Services\ProceedingsRules::cameraReadyDeadline();
-        // Confirmed, or paid (unless the administrator has asked for corrected files).
-        $paidLock = \App\Services\ProceedingsRules::filesLockedByPaymentReason($paper);
-        $locked = ($final && $final->isConfirmed()) || $paidLock !== null;
-        $statusStyle = ['submitted' => 'info', 'changes_requested' => 'danger', 'confirmed' => 'success'][$final->status ?? ''] ?? 'warning';
+        // Approved, confirmed or paid (unless a chair or administrator asked for corrected files).
+        $fileLock = \App\Services\ProceedingsRules::filesLockedReason($paper);
+        $locked = ($final && $final->isConfirmed()) || $fileLock !== null;
+        $isPaid = \App\Services\ProceedingsRules::isPaid($paper);
+        $awaitingCheck = $final && $final->awaitingCheck();
+        $statusStyle = ['submitted' => 'info', 'changes_requested' => 'danger', 'approved' => 'info', 'confirmed' => 'success'][$final->status ?? ''] ?? 'warning';
+        $statusLabel = match (true) {
+            !$final => 'Not submitted',
+            $final->status === 'submitted' && !$final->copyright_path => 'Copyright form due',
+            default => \App\Models\PaperCameraReady::STATUSES[$final->status],
+        };
     @endphp
 
     <div class="card shadow-sm border-0 mb-4 rounded-lg">
         <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
             <span class="font-weight-bold"><i class="fas fa-book mr-2 text-primary"></i> Camera-Ready &amp; Proceedings</span>
-            <span class="badge badge-{{ $statusStyle }} px-3 py-2">
-                {{ $final ? \App\Models\PaperCameraReady::STATUSES[$final->status] : 'Not submitted' }}
-            </span>
+            <span class="badge badge-{{ $statusStyle }} px-3 py-2">{{ $statusLabel }}</span>
         </div>
         <div class="card-body">
             @if($final && $final->status === 'changes_requested')
@@ -28,11 +33,22 @@
                 </div>
             @endif
 
-            @if($paidLock && !$final?->isConfirmed())
+            @if($awaitingCheck)
                 <div class="alert alert-info">
-                    <i class="fas fa-lock mr-1"></i> The registration fee is paid, so your files are final. The conference team
-                    will now check them and confirm your paper for the proceedings.
+                    <i class="fas fa-hourglass-half mr-1"></i> Your camera-ready manuscript and copyright form are with the track chair
+                    for checking. @unless($isPaid)You can pay the registration fee once they are approved; we will email you.@endunless
                 </div>
+            @elseif($final?->status === 'approved')
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle mr-1"></i> Your camera-ready files are approved and can no longer be changed.
+                    @if($isPaid)
+                        The fee is paid; your paper will be confirmed for the proceedings shortly.
+                    @else
+                        The last step is the registration fee. Once it is paid, your paper is confirmed for the proceedings automatically.
+                    @endif
+                </div>
+            @elseif($fileLock && !$final?->isConfirmed())
+                <div class="alert alert-info"><i class="fas fa-lock mr-1"></i> {{ $fileLock }}</div>
             @endif
 
             @if($final?->isConfirmed())
@@ -176,7 +192,7 @@
                             </label>
                         </div>
                         @if(!$final?->camera_ready_path)
-                            <p class="small text-muted"><i class="fas fa-lock mr-1"></i> Next step: the signed copyright transfer form, once the camera-ready manuscript is uploaded. The registration fee comes after that.</p>
+                            <p class="small text-muted"><i class="fas fa-lock mr-1"></i> Next step: the signed copyright transfer form, once the camera-ready manuscript is uploaded. Then your track chair checks both files, and the registration fee comes after their approval.</p>
                         @else
                         <div class="form-group">
                             <label for="copyright_form" class="font-weight-bold">Signed copyright transfer form</label>

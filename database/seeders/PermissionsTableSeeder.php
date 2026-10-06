@@ -578,6 +578,9 @@ class PermissionsTableSeeder extends Seeder
                 'title' => 'revision_review',
             ],
             [
+                'title' => 'camera_ready_approve',
+            ],
+            [
                 'title' => 'paper_manuscript_manage',
             ],
             [

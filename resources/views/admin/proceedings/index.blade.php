@@ -5,7 +5,7 @@
 @php
     $tabs = ['camera' => 'Camera-ready', 'payments' => 'Payments to verify', 'confirmed' => 'Confirmed for Proceedings'];
     $decisionStyles = ['accept' => 'success', 'minor_revisions' => 'info', 'reject' => 'danger'];
-    $finalStyles = ['submitted' => 'info', 'changes_requested' => 'danger', 'confirmed' => 'success'];
+    $finalStyles = ['submitted' => 'warning', 'changes_requested' => 'danger', 'approved' => 'info', 'confirmed' => 'success'];
     $proofStyles = ['submitted' => 'warning', 'verified' => 'success', 'rejected' => 'danger'];
     $exports = ['json' => 'JSON', 'xml' => 'XML', 'abstracts' => 'Book of Abstracts (PDF)', 'program' => 'Programme (PDF)', 'files' => 'Camera-ready files (ZIP)'];
 @endphp
@@ -24,8 +24,9 @@
     </div>
     <div class="card-body">
         <p class="text-muted mb-2">
-            Accepted papers on their way into the proceedings. A paper can be confirmed once its camera-ready manuscript,
-            the signed copyright form and a verified registration fee are all in.
+            Accepted papers on their way into the proceedings. Once the camera-ready manuscript and signed copyright form are in,
+            the track chair approves them (Camera-Ready Check); the author then pays, and the paper is confirmed for the
+            proceedings automatically when the fee arrives.
         </p>
         <div class="d-flex flex-wrap align-items-center">
             <span class="small text-muted mr-2">Export papers confirmed for the proceedings:</span>
@@ -129,7 +130,7 @@
                                 </td>
                                 <td>
                                     @if($final)
-                                        <span class="badge badge-{{ $finalStyles[$final->status] ?? 'light' }}">{{ \App\Models\PaperCameraReady::STATUSES[$final->status] }}</span>
+                                        <span class="badge badge-{{ $finalStyles[$final->status] ?? 'light' }}">{{ $final->status === 'submitted' && !$final->copyright_path ? 'Copyright form due' : \App\Models\PaperCameraReady::STATUSES[$final->status] }}</span>
                                         @if($final->status === 'changes_requested')
                                             <br><small class="text-danger">{{ $final->admin_note }}</small>
                                         @endif
@@ -139,13 +140,25 @@
 
                                     @can('camera_ready_review')
                                         <div class="mt-2">
-                                            <form action="{{ route('admin.proceedings.confirm', $paper->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <button class="btn btn-sm btn-success" {{ $missing ? 'disabled' : '' }}
-                                                        title="{{ $missing ? 'Outstanding: ' . implode('; ', $missing) : 'Confirm for proceedings' }}">
-                                                    <i class="fas fa-check"></i> Confirm
-                                                </button>
-                                            </form>
+                                            {{-- The track chair normally approves the files (Camera-Ready Check); an administrator may too. --}}
+                                            @if($final?->awaitingCheck())
+                                                @can('camera_ready_approve')
+                                                    <form action="{{ route('admin.camera-ready-checks.approve', $paper->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button class="btn btn-sm btn-success" title="Approve the files so the author can pay">
+                                                            <i class="fas fa-check"></i> Approve files
+                                                        </button>
+                                                    </form>
+                                                @endcan
+                                            @elseif(!$missing)
+                                                {{-- Approved and paid confirms by itself; this is the fallback. --}}
+                                                <form action="{{ route('admin.proceedings.confirm', $paper->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button class="btn btn-sm btn-success" title="Confirm for proceedings">
+                                                        <i class="fas fa-check"></i> Confirm
+                                                    </button>
+                                                </form>
+                                            @endif
                                             @if($final)
                                                 <details class="d-inline-block align-top">
                                                     <summary class="btn btn-sm btn-outline-danger">Request changes</summary>

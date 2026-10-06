@@ -252,11 +252,15 @@ class PaperController extends Controller
                     return '<div class="text-muted small" title="'.$authorText.'">'.$authorText.'</div>';
                 })
                 ->addColumn('total_member', function ($row) {
-                    $count = $row->authors->count();
-                    if ($count === 0 && $row->user) {
-                        $count = 1;
+                    // Who will come (and be charged), out of everyone listed on the paper.
+                    $total = $row->authors->count();
+                    if ($total === 0) {
+                        return '<span class="badge badge-light border font-weight-bold px-2 py-1 rounded-pill">1</span>'
+                            . '<small class="d-block text-muted">submitter</small>';
                     }
-                    return '<span class="badge badge-light border font-weight-bold px-2 py-1 rounded-pill">' . $count . '</span>';
+                    $attending = $row->authors->where('is_attending', true)->count();
+                    return '<span class="badge badge-' . ($attending ? 'success' : 'warning') . ' font-weight-bold px-2 py-1 rounded-pill">' . $attending . '</span>'
+                        . '<small class="d-block text-muted text-nowrap">of ' . $total . ' ' . ($total === 1 ? 'author' : 'authors') . '</small>';
                 })
                 ->addColumn('designation', function ($row) {
                     $author = $row->authors->where('is_presenting_author', 1)->first() ?? $row->authors->first();
@@ -338,8 +342,11 @@ class PaperController extends Controller
                         $badge .= '<small class="d-block text-muted mt-1">Abstract: ' . e($row->status ?: 'pending') . '</small>';
                     }
 
-                    if (\App\Services\ProceedingsRules::isPaid($row)) {
-                        $badge .= '<span class="badge badge-success mt-1" style="font-size: 0.65rem;">PAID</span>';
+                    // Only when the stage itself does not already say so (e.g. papers paid
+                    // under the old flow, before camera-ready was required).
+                    $stageSaysPaid = str_contains($stage['label'], 'fee paid') || $stage['label'] === 'Confirmed for Proceedings';
+                    if (\App\Services\ProceedingsRules::isPaid($row) && !$stageSaysPaid) {
+                        $badge .= '<span class="badge badge-success mt-1" style="font-size: 0.65rem;">Fee paid</span>';
                     }
 
                     return $badge;

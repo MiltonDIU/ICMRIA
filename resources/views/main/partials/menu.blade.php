@@ -440,6 +440,18 @@
                     </a>
                 </li>
                 @endcan
+                @can('camera_ready_approve')
+                <li class="nav-item">
+                    <a href="{{ route("admin.camera-ready-checks.index") }}" class="nav-link {{ request()->is('admin/camera-ready-checks*') ? 'active' : '' }}">
+                        <i class="fa-fw fas fa-file-signature">
+
+                        </i>
+                        <p>
+                            <span>Camera-Ready Check</span>
+                        </p>
+                    </a>
+                </li>
+                @endcan
                 @can('camera_ready_access')
                 <li class="nav-item">
                     <a href="{{ route("admin.proceedings.index") }}" class="nav-link {{ request()->is('admin/proceedings*') ? 'active' : '' }}">

@@ -35,7 +35,18 @@ class RevisionReviewers
      */
     public static function toNotify(Paper $paper): Collection
     {
-        $roleIds = Permission::where('title', 'revision_review')->first()?->roles()->pluck('roles.id') ?? collect();
+        return self::chairsToNotify($paper, 'revision_review', true);
+    }
+
+    /**
+     * The paper's Track and Sub-Track Chairs holding $permission (and the TPC Chair when
+     * $withTpcChair), without a conflict. Also used for the camera-ready file check.
+     *
+     * @return Collection<int, User>
+     */
+    public static function chairsToNotify(Paper $paper, string $permission, bool $withTpcChair): Collection
+    {
+        $roleIds = Permission::where('title', $permission)->first()?->roles()->pluck('roles.id') ?? collect();
 
         if ($roleIds->isEmpty()) {
             return collect();
@@ -46,8 +57,8 @@ class RevisionReviewers
         return User::with('roles')
             ->whereHas('roles', fn ($q) => $q->whereIn('roles.id', $roleIds))
             ->get()
-            ->filter(function (User $user) use ($paper) {
-                $isTpcChair = $user->roles->contains('id', self::ROLE_TPC_CHAIR);
+            ->filter(function (User $user) use ($paper, $withTpcChair) {
+                $isTpcChair = $withTpcChair && $user->roles->contains('id', self::ROLE_TPC_CHAIR);
                 $chairsTrack = \App\Models\TrackAssignment::where('user_id', $user->id)->where('role', 'chair')->exists();
 
                 return ($isTpcChair || $chairsTrack) && self::canReview($user, $paper);

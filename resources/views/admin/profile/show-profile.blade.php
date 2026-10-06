@@ -410,7 +410,7 @@
                         <th>Amount</th>
                         <th>Payment</th>
                         <th>Authors</th>
-                        <th>Total Member</th>
+                        <th>Attending</th>
                         <th>Action</th>
                     </tr>
                     </thead>
@@ -514,17 +514,21 @@
                                 @endif
                             </td>
                             <td class="text-center font-weight-bold">
+                                {{-- Who will come (and be charged), out of everyone listed on the papers. --}}
                                 @php
-                                    $totalMembers = 0;
-                                    if ($profile->user && $profile->user->papers->count() > 0) {
-                                        foreach ($profile->user->papers as $paper) {
-                                            $totalMembers += max(1, $paper->authors->count());
-                                        }
-                                    } else {
-                                        $totalMembers = 1;
+                                    $listed = 0;
+                                    $attending = 0;
+                                    foreach ($profile->user->papers ?? [] as $paper) {
+                                        $listed += max(1, $paper->authors->count());
+                                        $attending += $paper->authors->isEmpty() ? 1 : $paper->authors->where('is_attending', true)->count();
                                     }
                                 @endphp
-                                {{ $totalMembers }}
+                                @if($listed === 0)
+                                    1 <small class="d-block text-muted font-weight-normal">participant</small>
+                                @else
+                                    <span class="badge badge-{{ $attending ? 'success' : 'warning' }} px-2 py-1 rounded-pill">{{ $attending }}</span>
+                                    <small class="d-block text-muted font-weight-normal text-nowrap">of {{ $listed }} {{ $listed === 1 ? 'author' : 'authors' }}</small>
+                                @endif
                             </td>
                             <td>
                                 <div class="btn-group">

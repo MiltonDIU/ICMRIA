@@ -29,7 +29,8 @@ class PaperProgressEvent extends Model
         'payment_verified' => 'Transfer payment verified',
         'payment_rejected' => 'Transfer payment rejected',
         'payment_online' => 'Paid online',
-        'camera_ready_changes_requested' => 'Camera-ready files sent back by admin',
+        'camera_ready_approved' => 'Camera-ready files approved',
+        'camera_ready_changes_requested' => 'Camera-ready files sent back',
         'confirmed' => 'Confirmed for Proceedings',
     ];
 

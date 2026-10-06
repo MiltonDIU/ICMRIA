@@ -10,6 +10,7 @@ use App\Models\PaperPaymentProof;
 use App\Models\Schedule;
 use App\Services\PaperProgress;
 use App\Services\PaymentSync;
+use App\Services\ProceedingsConfirmation;
 use App\Services\ProceedingsExport;
 use App\Services\ProceedingsRules;
 use Gate;
@@ -114,19 +115,9 @@ class ProceedingsController extends Controller
             Log::error('Registration confirmation after manual payment failed', ['proof' => $proof->id, 'error' => $e->getMessage()]);
         }
 
-        // With every other item already in, the fee was the last thing outstanding, so
-        // verifying it confirms the paper for the proceedings straight away. Files the
-        // administrator has sent back for changes are left alone.
-        $paper->load(['decision', 'cameraReady']);
-        $autoConfirmed = $paper->cameraReady
-            && $paper->cameraReady->status === 'submitted'
-            && !ProceedingsRules::missing($paper);
-
-        if ($autoConfirmed) {
-            $paper->cameraReady->update(['status' => 'confirmed', 'confirmed_by' => auth()->id(), 'confirmed_at' => now()]);
-            PaperProgress::record($paper, 'confirmed', 'Automatically, on payment verification');
-            $this->tellAuthor($paper, 'confirmed');
-        }
+        // The files were approved before the fee, so the fee was the last thing
+        // outstanding: verifying it confirms the paper for the proceedings.
+        $autoConfirmed = ProceedingsConfirmation::confirmIfReady($paper, 'Automatically, on payment verification');
 
         return back()->with('success', 'Payment for ' . $paper->submission_id . ' verified.'
             . ($autoConfirmed ? ' Everything else was already in, so the paper is now Confirmed for Proceedings.' : ''));
@@ -158,7 +149,10 @@ class ProceedingsController extends Controller
         return back()->with('success', 'Payment for ' . $proof->paper->submission_id . ' rejected. The author can report a corrected one.');
     }
 
-    /** "Admin verifies payment and marks the paper as Confirmed for Proceedings." */
+    /**
+     * Manual confirmation. Normally not needed: a paper is confirmed by itself when the fee
+     * arrives after its files were approved. Kept for the administrator as a fallback.
+     */
     public function confirm(Paper $paper)
     {
         abort_if(Gate::denies('camera_ready_review'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -199,6 +193,8 @@ class ProceedingsController extends Controller
         $paper->cameraReady->update([
             'status' => 'changes_requested',
             'admin_note' => $data['admin_note'],
+            'files_reviewed_by' => auth()->id(),
+            'files_reviewed_at' => now(),
             'confirmed_by' => null,
             'confirmed_at' => null,
             'schedule_id' => null,

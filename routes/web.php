@@ -365,6 +365,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::get('revisions', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'index'])->name('revisions.index');
     Route::post('revisions/{paper}/approve', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'approve'])->name('revisions.approve');
     Route::post('revisions/{paper}/changes', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'requestChanges'])->name('revisions.changes');
+    Route::get('camera-ready-checks', [\App\Http\Controllers\Admin\CameraReadyCheckController::class, 'index'])->name('camera-ready-checks.index');
+    Route::post('camera-ready-checks/{paper}/approve', [\App\Http\Controllers\Admin\CameraReadyCheckController::class, 'approve'])->name('camera-ready-checks.approve');
+    Route::post('camera-ready-checks/{paper}/changes', [\App\Http\Controllers\Admin\CameraReadyCheckController::class, 'requestChanges'])->name('camera-ready-checks.changes');
 
     // Payment verification, confirmation for proceedings, programme and export (administrators)
     Route::get('proceedings', [\App\Http\Controllers\Admin\ProceedingsController::class, 'index'])->name('proceedings.index');

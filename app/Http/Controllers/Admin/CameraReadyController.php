@@ -58,8 +58,8 @@ class CameraReadyController extends Controller
             return back()->with('error', 'Your paper is already confirmed for the proceedings, so its files can no longer be replaced.');
         }
 
-        // Paid: nothing changes unless the administrator has asked for corrected files.
-        if ($reason = ProceedingsRules::filesLockedByPaymentReason($paper)) {
+        // Approved or paid: nothing changes unless a chair or administrator asked for corrected files.
+        if ($reason = ProceedingsRules::filesLockedReason($paper)) {
             return back()->with('error', $reason);
         }
 
@@ -107,7 +107,7 @@ class CameraReadyController extends Controller
             $final->revision_summary = $request->input('revision_summary');
         }
 
-        // A re-upload answers a request for changes.
+        // A re-upload answers a request for changes, and goes back to the chairs.
         $final->status = 'submitted';
         $final->save();
 
@@ -118,9 +118,20 @@ class CameraReadyController extends Controller
             PaperProgress::record($paper, 'copyright_uploaded', $final->copyright_name);
         }
 
-        return back()->with('success', $final->copyright_path
-            ? 'Uploaded. You can now pay the registration fee for this paper.'
-            : 'Camera-ready manuscript uploaded. Next, upload the signed copyright transfer form.');
+        if (!$final->copyright_path) {
+            return back()->with('success', 'Camera-ready manuscript uploaded. Next, upload the signed copyright transfer form.');
+        }
+
+        // Both files are in: the track's chairs check them before the fee.
+        foreach (RevisionReviewers::chairsToNotify($paper, 'camera_ready_approve', false) as $chair) {
+            try {
+                Mail::to($chair->email)->queue(new \App\Mail\CameraReadySubmitted($paper, $chair));
+            } catch (\Exception $e) {
+                Log::error('Camera-ready notification failed', ['paper' => $paper->id, 'chair' => $chair->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        return back()->with('success', 'Uploaded. Your track chair will now check the files. You can pay the registration fee once they are approved; we will email you.');
     }
 
     /**
@@ -145,7 +156,7 @@ class CameraReadyController extends Controller
             return back()->with('error', 'Your revised manuscript has already been approved by the track chair.');
         }
 
-        if ($reason = ProceedingsRules::filesLockedByPaymentReason($paper)) {
+        if ($reason = ProceedingsRules::filesLockedReason($paper)) {
             return back()->with('error', $reason);
         }
 
@@ -297,7 +308,7 @@ class CameraReadyController extends Controller
             || Gate::allows('camera_ready_access')
             || (Gate::allows('decision_access') && $paper->track_id
                 && ChairScope::for($user)->canManage($paper->track_id, $paper->sub_track_id))
-            || (Gate::allows('revision_review') && RevisionReviewers::canReview($user, $paper));
+            || ((Gate::allows('revision_review') || Gate::allows('camera_ready_approve')) && RevisionReviewers::canReview($user, $paper));
 
         abort_unless($allowed, Response::HTTP_FORBIDDEN, '403 Forbidden');
     }

@@ -17,9 +17,11 @@ class PaperCameraReady extends Model
 
     public $table = 'paper_camera_ready';
 
+    /** submitted -> (chair) approved or changes_requested -> (fee paid) confirmed */
     public const STATUSES = [
-        'submitted' => 'Submitted',
+        'submitted' => 'Awaiting chair check',
         'changes_requested' => 'Changes requested',
+        'approved' => 'Files approved',
         'confirmed' => 'Confirmed for Proceedings',
     ];
 
@@ -48,6 +50,8 @@ class PaperCameraReady extends Model
         'copyright_uploaded_at',
         'status',
         'admin_note',
+        'files_reviewed_by',
+        'files_reviewed_at',
         'confirmed_by',
         'confirmed_at',
         'schedule_id',
@@ -59,6 +63,7 @@ class PaperCameraReady extends Model
         'revised_uploaded_at' => 'datetime',
         'revision_reviewed_at' => 'datetime',
         'copyright_uploaded_at' => 'datetime',
+        'files_reviewed_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'presentation_order' => 'integer',
     ];
@@ -66,6 +71,23 @@ class PaperCameraReady extends Model
     public function isConfirmed(): bool
     {
         return $this->status === 'confirmed';
+    }
+
+    /** A chair (or an administrator) has approved the camera-ready files. */
+    public function filesApproved(): bool
+    {
+        return in_array($this->status, ['approved', 'confirmed'], true);
+    }
+
+    /** Both files are in and nobody has looked at them yet. */
+    public function awaitingCheck(): bool
+    {
+        return $this->status === 'submitted' && $this->camera_ready_path && $this->copyright_path;
+    }
+
+    public function filesReviewedBy()
+    {
+        return $this->belongsTo(User::class, 'files_reviewed_by');
     }
 
     public function paper()

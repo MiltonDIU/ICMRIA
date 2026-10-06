@@ -203,7 +203,7 @@
                             <th>Submitter Email</th>
                             <th>Designation</th>
                             <th>Authors</th>
-                            <th>Total Member</th>
+                            <th>Attending</th>
                             <th>Department</th>
                             <th>University</th>
                             <th>Country</th>

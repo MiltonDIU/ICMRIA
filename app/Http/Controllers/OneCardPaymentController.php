@@ -342,6 +342,8 @@ class OneCardPaymentController extends Controller
                     // The gateway may confirm twice; the transaction id keeps it to one record.
                     foreach ($pIds as $pId) {
                         \App\Services\PaperProgress::record((int) $pId, 'payment_online', $currency . ' ' . round($amount / count($pIds), 2) . ' (OneCard)', $user?->id, $tran_id);
+                        // The files were approved before the fee, so the paper is now complete.
+                        \App\Services\ProceedingsConfirmation::confirmIfReady((int) $pId, 'Automatically, on online payment');
                     }
                 }
             }
