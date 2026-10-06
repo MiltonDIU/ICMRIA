@@ -324,10 +324,10 @@ class ProceedingsController extends Controller
         foreach ($export->papers() as $paper) {
             $final = $paper->cameraReady;
 
-            foreach ([['camera_ready_path', 'camera_ready_name', 'camera-ready'], ['copyright_path', 'copyright_name', 'copyright']] as [$pathField, $nameField, $folder]) {
+            // Named by paper ID and kind even inside its folder, so a file moved out stays identifiable.
+            foreach ([['camera_ready_path', 'camera_ready_name', 'camera-ready'], ['copyright_path', 'copyright_name', 'copyright-form']] as [$pathField, $nameField, $kind]) {
                 if ($final?->$pathField && Storage::exists($final->$pathField)) {
-                    $extension = pathinfo((string) $final->$nameField, PATHINFO_EXTENSION);
-                    $zip->addFile(Storage::path($final->$pathField), $folder . '/' . $paper->submission_id . ($extension ? '.' . $extension : ''));
+                    $zip->addFile(Storage::path($final->$pathField), $kind . '/' . $paper->downloadName($kind, $final->$nameField));
                 }
             }
         }

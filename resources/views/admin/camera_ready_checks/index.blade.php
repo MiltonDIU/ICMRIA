@@ -3,35 +3,45 @@
 
 
 @php
-    $filters = [
+    $tabs = [
         'pending' => 'Awaiting check',
         'changes_requested' => 'Sent back',
         'approved' => 'Approved',
     ];
+    $statusStyles = ['submitted' => 'warning', 'changes_requested' => 'danger', 'approved' => 'info', 'confirmed' => 'success'];
+    // Query string kept when switching tabs.
+    $keep = array_filter(['track' => $trackFilter, 'q' => $search, 'sort' => $sort !== 'waiting' ? $sort : null]);
 @endphp
 
 <div class="card mb-3">
     <div class="card-header">Camera-Ready Check</div>
-    <div class="card-body">
-        <p class="text-muted mb-2">
-            Accepted papers whose authors have uploaded the camera-ready manuscript and the signed copyright form. Check that the
-            manuscript follows the conference template and carries every author's name and affiliation, and that the form is
-            signed. Then approve the files or send them back with a note. The author can pay the registration fee only after
-            you approve, and the paper is confirmed for the proceedings automatically once the fee is paid.
+    <div class="card-body pb-2">
+        <p class="text-muted small mb-3">
+            Check that each camera-ready manuscript follows the conference template and carries every author's name and
+            affiliation, and that the copyright form is signed. Approve the files or send them back with a note. The author can
+            pay only after approval, and the paper is confirmed for the proceedings automatically once the fee is paid.
         </p>
-        <div class="d-flex flex-wrap align-items-center">
-            @foreach($filters as $key => $label)
-                <a href="{{ route('admin.camera-ready-checks.index', array_filter(['filter' => $key, 'track' => $trackFilter])) }}"
+
+        <div class="d-flex flex-wrap mb-2">
+            @foreach($tabs as $key => $label)
+                <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $key] + $keep) }}"
                    class="btn btn-sm mr-1 mb-1 btn-{{ $filter === $key ? 'primary' : 'outline-secondary' }}">
                     {{ $label }} <span class="badge badge-light ml-1">{{ $counts[$key] }}</span>
                 </a>
             @endforeach
+        </div>
 
+        <form method="GET" action="{{ route('admin.camera-ready-checks.index') }}" class="form-row align-items-end">
+            <input type="hidden" name="filter" value="{{ $filter }}">
+            <div class="col-md-3 mb-2">
+                <label for="crc-q" class="small text-muted mb-1">Search</label>
+                <input type="search" id="crc-q" name="q" value="{{ $search }}" class="form-control form-control-sm"
+                       placeholder="Paper ID, title or author">
+            </div>
             @if($tracks->isNotEmpty())
-                <form method="GET" action="{{ route('admin.camera-ready-checks.index') }}" class="form-inline ml-md-auto mb-1">
-                    <input type="hidden" name="filter" value="{{ $filter }}">
-                    <label for="track-filter" class="small text-muted mr-2">Track</label>
-                    <select id="track-filter" name="track" class="form-control form-control-sm" style="max-width: 22rem;" onchange="this.form.submit()">
+                <div class="col-md-3 mb-2">
+                    <label for="crc-track" class="small text-muted mb-1">Track</label>
+                    <select id="crc-track" name="track" class="form-control form-control-sm" onchange="this.form.submit()">
                         <option value="">{{ $allTracks ? 'All tracks' : 'All my tracks' }}</option>
                         @foreach($tracks as $track)
                             <optgroup label="{{ Str::limit($track->name, 60) }}">
@@ -42,12 +52,31 @@
                             </optgroup>
                         @endforeach
                     </select>
-                    @if($trackFilter)
-                        <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $filter]) }}" class="btn btn-sm btn-link">Clear</a>
-                    @endif
-                </form>
+                </div>
             @endif
-        </div>
+            <div class="col-md-2 mb-2">
+                <label for="crc-sort" class="small text-muted mb-1">Sort</label>
+                <select id="crc-sort" name="sort" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @foreach(\App\Http\Controllers\Admin\CameraReadyCheckController::SORTS as $key => $label)
+                        <option value="{{ $key }}" @selected($sort === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-1 mb-2">
+                <label for="crc-per" class="small text-muted mb-1">Per page</label>
+                <select id="crc-per" name="per_page" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @foreach($perPageOptions as $n)
+                        <option value="{{ $n }}" @selected($perPage === $n)>{{ $n }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3 mb-2 d-flex flex-wrap align-items-center">
+                <button class="btn btn-sm btn-primary mr-1"><i class="fas fa-search"></i> Apply</button>
+                @if($search !== '' || $trackFilter !== '' || $sort !== 'waiting')
+                    <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $filter]) }}" class="btn btn-sm btn-link">Clear</a>
+                @endif
+            </div>
+        </form>
     </div>
 </div>
 
@@ -55,89 +84,145 @@
     <div class="alert alert-warning">You are not listed as the chair of any track, so there are no camera-ready files for you to check.</div>
 @endif
 
-@forelse($papers as $paper)
-    @php
-        $final = $paper->cameraReady;
-        $paid = \App\Services\ProceedingsRules::isPaid($paper);
-        $style = ['submitted' => 'warning', 'changes_requested' => 'danger', 'approved' => 'info', 'confirmed' => 'success'][$final->status] ?? 'light';
-    @endphp
-    <div class="card mb-3">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
-            <span><strong>{{ $paper->submission_id }}</strong> &mdash; {{ Str::limit($paper->title, 90) }}</span>
-            <span>
-                <span class="badge badge-{{ $style }}">{{ \App\Models\PaperCameraReady::STATUSES[$final->status] ?? '—' }}</span>
-                @if($final->status === 'approved')
-                    <span class="badge badge-light border">{{ $paid ? 'Fee paid' : 'Fee due' }}</span>
-                @endif
-            </span>
-        </div>
-        <div class="card-body">
-            <p class="text-muted small mb-2">
-                {{ $paper->track->name ?? '' }}@if($paper->subTrack) &rsaquo; {{ $paper->subTrack->name }}@endif
-            </p>
-
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                <div>
-                    <strong>Camera-ready:</strong> {{ $final->camera_ready_name }}
-                    <br><small class="text-muted">Uploaded {{ optional($final->camera_ready_uploaded_at)->format('j M Y, g:i a') }}</small>
-                </div>
-                <a href="{{ route('papers.camera-ready.download', [$paper->id, 'camera-ready']) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-download"></i> Download manuscript
-                </a>
-            </div>
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                <div>
-                    <strong>Copyright form:</strong> {{ $final->copyright_name }}
-                    <br><small class="text-muted">Uploaded {{ optional($final->copyright_uploaded_at)->format('j M Y, g:i a') }}</small>
-                </div>
-                <a href="{{ route('papers.camera-ready.download', [$paper->id, 'copyright']) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-download"></i> Download form
-                </a>
-            </div>
-
-            <p class="small mb-2">
-                <strong>Authors:</strong> {{ $paper->authors->pluck('name')->implode(', ') }}
-            </p>
-
-            @if($final->files_reviewed_at)
-                <p class="small text-muted mb-2">
-                    Last checked by {{ $final->filesReviewedBy->name ?? 'a chair' }} on {{ $final->files_reviewed_at->format('j M Y, g:i a') }}.
-                    @if($final->status === 'changes_requested' && $final->admin_note)
-                        <br>Note sent: {{ $final->admin_note }}
-                    @endif
-                </p>
-            @endif
-
-            @if($final->isConfirmed())
-                <p class="small text-success mb-0"><i class="fas fa-check-circle"></i> Fee paid; confirmed for the proceedings.</p>
-            @elseif($final->status === 'changes_requested')
-                <p class="small text-muted mb-0">Waiting for the authors to upload corrected files; they will come back to "Awaiting check".</p>
-            @else
-                <div class="d-flex flex-wrap align-items-start">
-                    @if($final->status === 'submitted')
-                        <form action="{{ route('admin.camera-ready-checks.approve', $paper->id) }}" method="POST" class="mr-3 mb-2">
-                            @csrf
-                            <button class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve files</button>
-                        </form>
-                    @endif
-                    @if(!$paid || Gate::allows('camera_ready_review'))
-                        <form action="{{ route('admin.camera-ready-checks.changes', $paper->id) }}" method="POST" class="flex-grow-1 mb-2">
-                            @csrf
-                            <div class="input-group input-group-sm">
-                                <input type="text" name="admin_note" class="form-control" maxlength="2000" required
-                                       placeholder="What the authors need to change">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-danger"><i class="fas fa-undo"></i> Send back</button>
-                                </div>
-                            </div>
-                        </form>
-                    @endif
-                </div>
-            @endif
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width: 9rem;">Paper</th>
+                        <th>Title / Track</th>
+                        <th style="width: 15rem;">Files</th>
+                        <th style="width: 11rem;">{{ $filter === 'pending' ? 'Waiting' : 'Checked' }}</th>
+                        <th style="width: 12rem;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($papers as $paper)
+                        @php
+                            $final = $paper->cameraReady;
+                            $paid = \App\Services\ProceedingsRules::isPaid($paper);
+                            $version = $paper->manuscriptVersions->max('version');
+                            $filesInAt = collect([$final->camera_ready_uploaded_at, $final->copyright_uploaded_at])->filter()->max();
+                            $fmt = fn ($at) => $at ? $at->format('j M Y, g:i a') : '—';
+                            $files = array_filter([
+                                $paper->manuscript_path ? ['M' . ($version ? ' v' . $version : ''), 'Manuscript (reviewed)', $paper->downloadName('manuscript', $paper->manuscript_original_name, $version ? (int) $version : null), $paper->manuscript_uploaded_at, route('papers.manuscript.download', $paper->id)] : null,
+                                $final->revised_path ? ['R', 'Revised manuscript', $paper->downloadName('revised-manuscript', $final->revised_name), $final->revised_uploaded_at, route('papers.camera-ready.download', [$paper->id, 'revised'])] : null,
+                                ['CR', 'Camera-ready manuscript', $paper->downloadName('camera-ready', $final->camera_ready_name), $final->camera_ready_uploaded_at, route('papers.camera-ready.download', [$paper->id, 'camera-ready'])],
+                                ['©', 'Copyright Transfer Form', $paper->downloadName('copyright-form', $final->copyright_name), $final->copyright_uploaded_at, route('papers.camera-ready.download', [$paper->id, 'copyright'])],
+                            ]);
+                        @endphp
+                        <tr>
+                            <td>
+                                <a href="{{ route('papers.show', $paper->id) }}" class="font-weight-bold">{{ $paper->submission_id }}</a>
+                                <br><span class="badge badge-{{ $statusStyles[$final->status] ?? 'light' }}">{{ \App\Models\PaperCameraReady::STATUSES[$final->status] ?? $final->status }}</span>
+                            </td>
+                            <td>
+                                <span title="{{ $paper->title }}">{{ Str::limit($paper->title, 90) }}</span>
+                                <small class="d-block text-muted">
+                                    {{ Str::limit($paper->track->name ?? '', 45) }}@if($paper->subTrack) &rsaquo; {{ Str::limit($paper->subTrack->name, 45) }}@endif
+                                </small>
+                                <small class="d-block text-muted" title="{{ $paper->authors->pluck('name')->implode(', ') }}">
+                                    {{ Str::limit($paper->authors->pluck('name')->implode(', '), 80) }}
+                                </small>
+                            </td>
+                            <td>
+                                @foreach($files as [$short, $label, $name, $at, $url])
+                                    <a href="{{ $url }}" class="btn btn-xs btn-outline-primary mb-1" data-toggle="tooltip"
+                                       title="{{ $label }} — {{ $name }} — uploaded {{ $fmt($at) }}">
+                                        <i class="fas fa-download"></i> {{ $short }}
+                                    </a>
+                                @endforeach
+                                <a href="{{ route('admin.camera-ready-checks.zip', $paper->id) }}" class="btn btn-xs btn-outline-secondary mb-1" data-toggle="tooltip"
+                                   title="All files of {{ $paper->submission_id }} in one ZIP — {{ $paper->downloadName('files', 'x.zip') }}">
+                                    <i class="fas fa-file-archive"></i> ZIP
+                                </a>
+                            </td>
+                            <td>
+                                @if($filter === 'pending')
+                                    <strong>{{ $filesInAt ? $filesInAt->diffForHumans(null, true) : '—' }}</strong>
+                                    <small class="d-block text-muted">since {{ $filesInAt ? $filesInAt->format('j M Y') : '—' }}</small>
+                                @else
+                                    <small>{{ $final->files_reviewed_at ? $final->files_reviewed_at->format('j M Y') : '—' }}</small>
+                                    <small class="d-block text-muted">{{ $final->filesReviewedBy->name ?? '' }}</small>
+                                    @if($final->status === 'changes_requested' && $final->admin_note)
+                                        <small class="d-block text-danger" title="{{ $final->admin_note }}">{{ Str::limit($final->admin_note, 50) }}</small>
+                                    @endif
+                                    @if(in_array($final->status, ['approved', 'confirmed'], true))
+                                        <span class="badge badge-light border">{{ $final->status === 'confirmed' ? 'Confirmed' : ($paid ? 'Fee paid' : 'Fee due') }}</span>
+                                    @endif
+                                @endif
+                            </td>
+                            <td class="text-nowrap">
+                                @if($final->status === 'submitted')
+                                    <form action="{{ route('admin.camera-ready-checks.approve', $paper->id) }}" method="POST" class="d-inline"
+                                          onsubmit="return confirm('Approve the files of {{ $paper->submission_id }}? The authors will be asked to pay the fee.');">
+                                        @csrf
+                                        <button class="btn btn-sm btn-success"><i class="fas fa-check"></i> Approve</button>
+                                    </form>
+                                @endif
+                                @if(in_array($final->status, ['submitted', 'approved'], true) && (!$paid || Gate::allows('camera_ready_review')))
+                                    <button type="button" class="btn btn-sm btn-outline-danger js-send-back"
+                                            data-action="{{ route('admin.camera-ready-checks.changes', $paper->id) }}"
+                                            data-paper="{{ $paper->submission_id }}">
+                                        <i class="fas fa-undo"></i> Send back
+                                    </button>
+                                @elseif($final->status === 'changes_requested')
+                                    <small class="text-muted">Waiting for corrected files</small>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="text-center text-muted py-4">No camera-ready files here.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
-@empty
-    <div class="card"><div class="card-body text-center text-muted">No camera-ready files here.</div></div>
-@endforelse
+    @if($papers->total() > 0)
+        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center">
+            <small class="text-muted">Showing {{ $papers->firstItem() }}–{{ $papers->lastItem() }} of {{ $papers->total() }}</small>
+            <div class="mb-n3">{{ $papers->links('pagination::bootstrap-4') }}</div>
+        </div>
+    @endif
+</div>
 
+{{-- One "Send back" form for the whole page; the button fills in which paper. --}}
+<div class="modal fade" id="sendBackModal" tabindex="-1" role="dialog" aria-labelledby="sendBackTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="POST" class="modal-content" id="sendBackForm">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="sendBackTitle">Send back <span id="sendBackPaper"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <label for="sendBackNote" class="small font-weight-bold">What the authors need to change</label>
+                <textarea id="sendBackNote" name="admin_note" class="form-control" rows="4" maxlength="2000" required></textarea>
+                <small class="text-muted">The authors receive this note by email and can upload corrected files.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger"><i class="fas fa-undo"></i> Send back</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@endsection
+
+@section('scripts')
+@parent
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('.js-send-back').on('click', function () {
+            $('#sendBackForm').attr('action', $(this).data('action'));
+            $('#sendBackPaper').text($(this).data('paper'));
+            $('#sendBackNote').val('');
+            $('#sendBackModal').modal('show');
+        });
+        $('#sendBackModal').on('shown.bs.modal', function () { $('#sendBackNote').trigger('focus'); });
+    });
+</script>
 @endsection

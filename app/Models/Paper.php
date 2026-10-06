@@ -155,6 +155,22 @@ class Paper extends Model
         return $this->hasMany(PaperManuscriptVersion::class)->orderByDesc('version');
     }
 
+    /**
+     * The name a file of this paper is downloaded under: paper ID, what the file is, and
+     * the version where there are several, e.g. "ICMRIA2027-001-manuscript-v2.pdf". The
+     * author's own file name is never used, so it cannot reveal them under double-blind
+     * review, and many downloaded files stay easy to tell apart.
+     */
+    public function downloadName(string $kind, ?string $originalName, ?int $version = null): string
+    {
+        $extension = strtolower(pathinfo((string) $originalName, PATHINFO_EXTENSION));
+
+        return ($this->submission_id ?: 'paper-' . $this->id)
+            . '-' . $kind
+            . ($version ? '-v' . $version : '')
+            . ($extension ? '.' . $extension : '');
+    }
+
     public function reviewerAssignments()
     {
         return $this->hasMany(PaperReviewerAssignment::class);

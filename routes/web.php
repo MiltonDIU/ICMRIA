@@ -366,6 +366,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth','ve
     Route::post('revisions/{paper}/approve', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'approve'])->name('revisions.approve');
     Route::post('revisions/{paper}/changes', [\App\Http\Controllers\Admin\RevisionReviewController::class, 'requestChanges'])->name('revisions.changes');
     Route::get('camera-ready-checks', [\App\Http\Controllers\Admin\CameraReadyCheckController::class, 'index'])->name('camera-ready-checks.index');
+    Route::get('camera-ready-checks/{paper}/zip', [\App\Http\Controllers\Admin\CameraReadyCheckController::class, 'downloadZip'])->name('camera-ready-checks.zip');
     Route::post('camera-ready-checks/{paper}/approve', [\App\Http\Controllers\Admin\CameraReadyCheckController::class, 'approve'])->name('camera-ready-checks.approve');
     Route::post('camera-ready-checks/{paper}/changes', [\App\Http\Controllers\Admin\CameraReadyCheckController::class, 'requestChanges'])->name('camera-ready-checks.changes');
 

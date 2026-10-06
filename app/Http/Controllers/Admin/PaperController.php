@@ -557,31 +557,27 @@ class PaperController extends Controller
             ->where('status', '!=', 'declined')
             ->exists();
 
-        abort_unless($isOwner || $chairsIt || $reviewsIt, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        // Whoever checks the camera-ready files (e.g. a Proceedings Editor) compares them
+        // with the reviewed manuscript.
+        $checksFiles = Gate::allows('camera_ready_approve') && \App\Services\CameraReadyCheckers::canCheck($user, $paper);
 
-        // Under double-blind review a reviewer gets the file under the paper ID. The name
-        // the author uploaded it with often carries their own name.
-        $downloadName = function (?string $original) use ($paper, $isOwner, $chairsIt) {
-            if ($isOwner || $chairsIt || !\App\Services\SubmissionRules::isDoubleBlind()) {
-                return $original;
-            }
+        abort_unless($isOwner || $chairsIt || $reviewsIt || $checksFiles, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-            $extension = pathinfo((string) $original, PATHINFO_EXTENSION);
-
-            return $paper->submission_id . ($extension ? '.' . $extension : '');
-        };
-
+        // Everyone gets the file as "<paper ID>-manuscript-v<n>"; the name the author
+        // uploaded it with often carries their own name, which double-blind review hides.
         if ($version !== null) {
             $record = $paper->manuscriptVersions()->where('version', $version)->first();
             abort_if(!$record || !Storage::exists($record->path), Response::HTTP_NOT_FOUND, 'That version is not on file.');
 
-            return Storage::download($record->path, $downloadName($record->original_name));
+            return Storage::download($record->path, $paper->downloadName('manuscript', $record->original_name, $record->version));
         }
 
         abort_if(!$paper->manuscript_path || !Storage::exists($paper->manuscript_path),
             Response::HTTP_NOT_FOUND, 'No manuscript on file.');
 
-        return Storage::download($paper->manuscript_path, $downloadName($paper->manuscript_original_name));
+        $current = $paper->manuscriptVersions()->max('version');
+
+        return Storage::download($paper->manuscript_path, $paper->downloadName('manuscript', $paper->manuscript_original_name, $current ? (int) $current : null));
     }
 
     /**

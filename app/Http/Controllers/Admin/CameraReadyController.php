@@ -213,17 +213,15 @@ class CameraReadyController extends Controller
         $this->authoriseReading($paper);
 
         $final = $paper->cameraReady;
-        [$path, $name] = match ($file) {
-            'copyright' => [$final?->copyright_path, $final?->copyright_name],
-            'revised' => [$final?->revised_path, $final?->revised_name],
-            default => [$final?->camera_ready_path, $final?->camera_ready_name],
+        [$path, $name, $kind] = match ($file) {
+            'copyright' => [$final?->copyright_path, $final?->copyright_name, 'copyright-form'],
+            'revised' => [$final?->revised_path, $final?->revised_name, 'revised-manuscript'],
+            default => [$final?->camera_ready_path, $final?->camera_ready_name, 'camera-ready'],
         };
 
         abort_if(!$path || !Storage::exists($path), Response::HTTP_NOT_FOUND, 'That file is not on record.');
 
-        $extension = pathinfo((string) $name, PATHINFO_EXTENSION);
-
-        return Storage::download($path, $paper->submission_id . '-' . $file . ($extension ? '.' . $extension : ''));
+        return Storage::download($path, $paper->downloadName($kind, $name));
     }
 
     /** A registration fee paid by transfer, reported for an administrator to verify. */
@@ -292,7 +290,11 @@ class CameraReadyController extends Controller
         abort_unless($proof->user_id === Auth::id() || Gate::allows('camera_ready_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         abort_if(!Storage::exists($proof->proof_path), Response::HTTP_NOT_FOUND, 'That file is not on record.');
 
-        return Storage::download($proof->proof_path, $proof->proof_name);
+        $name = $proof->paper
+            ? $proof->paper->downloadName('payment-proof', $proof->proof_name)
+            : $proof->proof_name;
+
+        return Storage::download($proof->proof_path, $name);
     }
 
     /**
