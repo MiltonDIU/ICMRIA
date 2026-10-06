@@ -29,7 +29,7 @@
             @endforeach
         </div>
 
-        @include('admin.partials.list-toolbar', ['route' => 'admin.camera-ready-checks.index', 'tabParam' => 'filter', 'tabValue' => $filter, 'allTracksLabel' => $allTracks ? 'All tracks' : 'All my tracks'])
+        @include('admin.partials.list-toolbar', ['route' => 'admin.camera-ready-checks.index', 'tabParam' => 'filter', 'tabValue' => $filter, 'allTracksLabel' => $allTracks ? 'All tracks' : 'All my tracks', 'showPayment' => true])
     </div>
 </div>
 
@@ -69,6 +69,7 @@
                             <td>
                                 <a href="{{ route('papers.show', $paper->id) }}" class="font-weight-bold">{{ $paper->submission_id }}</a>
                                 <br><span class="badge badge-{{ $statusStyles[$final->status] ?? 'light' }}">{{ \App\Models\PaperCameraReady::STATUSES[$final->status] ?? $final->status }}</span>
+                                <br><span class="badge {{ $paid ? 'badge-success' : 'badge-light border' }} mt-1">{{ $paid ? 'Fee paid' : 'Unpaid' }}</span>
                             </td>
                             <td>
                                 <span title="{{ $paper->title }}">{{ Str::limit($paper->title, 90) }}</span>
@@ -100,9 +101,6 @@
                                     <small class="d-block text-muted">{{ $final->filesReviewedBy->name ?? '' }}</small>
                                     @if($final->status === 'changes_requested' && $final->admin_note)
                                         <small class="d-block text-danger" title="{{ $final->admin_note }}">{{ Str::limit($final->admin_note, 50) }}</small>
-                                    @endif
-                                    @if(in_array($final->status, ['approved', 'confirmed'], true))
-                                        <span class="badge badge-light border">{{ $final->status === 'confirmed' ? 'Confirmed' : ($paid ? 'Fee paid' : 'Fee due') }}</span>
                                     @endif
                                 @endif
                             </td>

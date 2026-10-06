@@ -1,7 +1,7 @@
 {{--
     Search, track filter, sort and page size for a paper list (App\Services\PaperListFilters).
     Expects: $listFilters, $tracks, $route (index route name), $tabParam and $tabValue (the
-    tab to stay on), $allTracksLabel (optional).
+    tab to stay on), $allTracksLabel (optional), $showPayment (optional: the Fee filter).
 --}}
 <form method="GET" action="{{ route($route) }}" class="form-row align-items-end">
     @if($tabValue !== '')
@@ -28,6 +28,16 @@
             </select>
         </div>
     @endif
+    @if($showPayment ?? false)
+        <div class="col-md-1 mb-2">
+            <label for="list-payment" class="small text-muted mb-1">Fee</label>
+            <select id="list-payment" name="payment" class="form-control form-control-sm" onchange="this.form.submit()">
+                @foreach(\App\Services\PaperListFilters::PAYMENT as $key => $label)
+                    <option value="{{ $key }}" @selected($listFilters->payment === $key)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+    @endif
     <div class="col-md-2 mb-2">
         <label for="list-sort" class="small text-muted mb-1">Sort</label>
         <select id="list-sort" name="sort" class="form-control form-control-sm" onchange="this.form.submit()">
@@ -44,7 +54,7 @@
             @endforeach
         </select>
     </div>
-    <div class="col-md-3 mb-2">
+    <div class="col-md-{{ ($showPayment ?? false) ? 2 : 3 }} mb-2">
         <button class="btn btn-sm btn-primary"><i class="fas fa-search"></i> Apply</button>
         @if($listFilters->isFiltered())
             <a href="{{ route($route, $tabValue !== '' ? [$tabParam => $tabValue] : []) }}" class="btn btn-sm btn-link">Clear</a>

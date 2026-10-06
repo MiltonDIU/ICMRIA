@@ -20,6 +20,9 @@ class PaperListFilters
 {
     public const PER_PAGE = [25, 50, 100];
 
+    /** Registration fee filter, offered where the toolbar is given showPayment. */
+    public const PAYMENT = ['' => 'All', 'paid' => 'Paid', 'unpaid' => 'Unpaid'];
+
     /** @param array<string, string> $sorts key => label; the first is the default */
     private function __construct(
         public readonly string $track,
@@ -27,6 +30,7 @@ class PaperListFilters
         public readonly string $sort,
         public readonly int $perPage,
         public readonly array $sorts,
+        public readonly string $payment,
     ) {
     }
 
@@ -34,6 +38,7 @@ class PaperListFilters
     {
         $sort = $request->string('sort')->toString();
         $perPage = $request->integer('per_page');
+        $payment = $request->string('payment')->toString();
 
         return new self(
             preg_match('/^[ts]\d+$/', $request->string('track')->toString()) ? $request->string('track')->toString() : '',
@@ -41,6 +46,7 @@ class PaperListFilters
             array_key_exists($sort, $sorts) ? $sort : array_key_first($sorts),
             in_array($perPage, self::PER_PAGE, true) ? $perPage : self::PER_PAGE[0],
             $sorts,
+            array_key_exists($payment, self::PAYMENT) ? $payment : '',
         );
     }
 
@@ -51,7 +57,7 @@ class PaperListFilters
 
     public function isFiltered(): bool
     {
-        return $this->track !== '' || $this->search !== '' || !$this->isDefaultSort();
+        return $this->track !== '' || $this->search !== '' || $this->payment !== '' || !$this->isDefaultSort();
     }
 
     /** The parameters to carry over when switching tabs. */
@@ -60,14 +66,21 @@ class PaperListFilters
         return array_filter([
             'track' => $this->track,
             'q' => $this->search,
+            'payment' => $this->payment,
             'sort' => $this->isDefaultSort() ? null : $this->sort,
             'per_page' => $this->perPage === self::PER_PAGE[0] ? null : $this->perPage,
         ]);
     }
 
-    /** Narrows a paper query (papers table, possibly joined) to the chosen track and search. */
+    /** Narrows a paper query (papers table, possibly joined) to the chosen track, fee status and search. */
     public function apply($query, string $papers = 'papers')
     {
+        if ($this->payment === 'paid') {
+            $query->where($papers . '.payment_status', '1');
+        } elseif ($this->payment === 'unpaid') {
+            $query->where(fn ($q) => $q->whereNull($papers . '.payment_status')->orWhere($papers . '.payment_status', '!=', '1'));
+        }
+
         if (preg_match('/^t(\d+)$/', $this->track, $m)) {
             $query->where($papers . '.track_id', (int) $m[1]);
         } elseif (preg_match('/^s(\d+)$/', $this->track, $m)) {
@@ -87,7 +100,7 @@ class PaperListFilters
     /** The same, for a query on a model that belongs to a paper (e.g. decisions). */
     public function applyThroughPaper($query)
     {
-        if ($this->track === '' && $this->search === '') {
+        if ($this->track === '' && $this->search === '' && $this->payment === '') {
             return $query;
         }
 
