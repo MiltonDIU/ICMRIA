@@ -136,6 +136,8 @@ class SettingsTableSeeder extends Seeder
             // 'false' stops authors declaring conflicts of interest themselves; those already
             // declared still apply.
             ['key' => 'author_conflict_declaration_enabled', 'value' => 'true'],
+            // Authors may name the track's chairs and co-chairs too ('false': reviewers only).
+            ['key' => 'author_conflict_include_chairs', 'value' => 'true'],
 
             // Requirement document, "Author Guidelines": abstracts of 200-250 words
             // and 4-6 keywords. Read through App\Services\SubmissionRules so the

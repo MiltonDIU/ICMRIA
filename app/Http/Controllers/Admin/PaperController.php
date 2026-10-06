@@ -593,8 +593,13 @@ class PaperController extends Controller
             'conflicted_user_id' => 'required|exists:users,id',
             'note' => 'nullable|string|max:255',
         ], [
-            'conflicted_user_id.required' => 'Choose the chair or reviewer you have a conflict with.',
+            'conflicted_user_id.required' => 'Choose the person you have a conflict with.',
         ]);
+
+        // Only someone the list would offer (a chair only while Settings allows it).
+        if (!$this->conflictCandidates($paper)->contains('id', (int) $data['conflicted_user_id'])) {
+            return back()->with('error', 'That person cannot be named as a conflict for this paper.');
+        }
 
         \App\Models\PaperConflict::firstOrCreate([
             'paper_id' => $paper->id,
@@ -677,8 +682,9 @@ class PaperController extends Controller
     }
 
     /**
-     * People an author might reasonably declare a conflict with: the chairs and
-     * reviewers who could end up handling this paper's track.
+     * People who may be named for this paper: the reviewers of its track, and its chairs
+     * when Settings allows. Someone holding paper_conflict_manage is offered the chairs
+     * too, to record a conflict on an author's behalf.
      */
     private function conflictCandidates(Paper $paper)
     {
@@ -686,11 +692,12 @@ class PaperController extends Controller
             return collect();
         }
 
-        return \App\Models\User::whereHas('trackAssignments', function ($query) use ($paper) {
-                $query->where('track_id', $paper->track_id);
-            })
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $ids = \App\Services\ConflictCandidates::userIdsForTrack(
+            (int) $paper->track_id,
+            Gate::allows('paper_conflict_manage') ? true : null
+        );
+
+        return \App\Models\User::whereIn('id', $ids)->orderBy('name')->get(['id', 'name']);
     }
 
     public function create()

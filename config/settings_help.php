@@ -61,6 +61,8 @@ return [
         'description' => 'Longest manuscript, in pages.'],
     'author_conflict_declaration_enabled' => ['group' => 'Submission', 'values' => 'true / false',
         'description' => 'Whether authors may name chairs or reviewers they have a conflict of interest with. false hides it from authors; declarations already made still apply.'],
+    'author_conflict_include_chairs' => ['group' => 'Submission', 'values' => 'true / false',
+        'description' => 'true (default) = authors may name the chairs and co-chairs of their track as conflicts, as well as its reviewers. false = reviewers only. Conflicts already declared still apply, and an admin with conflict permission can still record one against a chair.'],
     'manuscript_locks_on_review' => ['group' => 'Submission', 'values' => 'true / false',
         'description' => 'true = once a reviewer holds a paper, the author can no longer replace its manuscript, so reviewers all read the same file.'],
 

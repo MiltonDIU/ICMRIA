@@ -9,21 +9,23 @@
     $conflictCandidates = $conflictCandidates ?? \App\Services\ConflictCandidates::byTrack();
     $oldConflictIds = array_map('intval', (array) old('conflict_user_ids', $existingConflictUserIds ?? []));
     $defaultNote = old('conflict_note', $existingConflictNote ?? '');
+    // Settings: author_conflict_include_chairs decides whether chairs are offered.
+    $who = \App\Services\ConflictCandidates::chairsOffered() ? 'chairs or reviewers' : 'reviewers';
 @endphp
 
 <div class="conflict-fields border rounded p-3 mb-4" style="background: #F8FAFC;">
     <h5 class="mb-1"><strong>Conflicts of Interest</strong> <small class="text-muted">(optional)</small></h5>
     <p class="small text-muted mb-3">
-        Name any chair or reviewer of your chosen track with whom you have a conflict of interest &mdash; for example
+        Name any {{ $who === 'reviewers' ? 'reviewer' : 'chair or reviewer' }} of your chosen track with whom you have a conflict of interest &mdash; for example
         a supervisor, a close collaborator, or a colleague at your own institution. They will not be asked to review
         or decide on your paper. You can add more later from your paper page.
     </p>
 
     <div class="form-group mb-2">
-        <label for="conflict_user_ids" class="small font-weight-bold">Chairs and reviewers of the selected track</label>
-        <select id="conflict_user_ids" name="conflict_user_ids[]" class="form-control select2" multiple="multiple" style="width: 100%;" data-placeholder="Search and select chairs or reviewers..." data-skip-required>
+        <label for="conflict_user_ids" class="small font-weight-bold">{{ ucfirst($who === 'reviewers' ? 'reviewers' : 'chairs and reviewers') }} of the selected track</label>
+        <select id="conflict_user_ids" name="conflict_user_ids[]" class="form-control select2" multiple="multiple" style="width: 100%;" data-placeholder="Search and select {{ $who }}..." data-skip-required>
         </select>
-        <small class="form-text text-muted" id="conflict_user_hint">Choose a track above to see its chairs and reviewers.</small>
+        <small class="form-text text-muted" id="conflict_user_hint">Choose a track above to see its {{ $who === 'reviewers' ? 'reviewers' : 'chairs and reviewers' }}.</small>
         @error('conflict_user_ids') <span class="text-danger small"><strong>{{ $message }}</strong></span> @enderror
     </div>
 
@@ -54,6 +56,7 @@
         <script>
             (function () {
                 const candidates = @json($conflictCandidates);
+                const who = @json($who);
                 let preselected = @json($oldConflictIds);
                 let isInitialLoad = true;
 
@@ -88,15 +91,15 @@
 
                     if (hint) {
                         hint.textContent = !trackVal
-                            ? 'Choose a track above to see its chairs and reviewers.'
+                            ? 'Choose a track above to see its ' + who.replace(' or ', ' and ') + '.'
                             : (people.length
-                                ? 'Search and select any chairs or reviewers you have a conflict of interest with.'
-                                : 'This track has no chairs or reviewers listed yet.');
+                                ? 'Search and select any ' + who + ' you have a conflict of interest with.'
+                                : 'This track has no ' + who + ' listed yet.');
                     }
 
                     if (window.jQuery && jQuery.fn.select2) {
                         jQuery(select).select2({
-                            placeholder: people.length ? 'Search and select chairs or reviewers...' : 'No chairs or reviewers in this track',
+                            placeholder: people.length ? 'Search and select ' + who + '...' : 'No ' + who + ' in this track',
                             allowClear: true,
                             width: '100%'
                         });
@@ -112,7 +115,7 @@
 
                     if (select && window.jQuery && jQuery.fn.select2) {
                         jQuery(select).select2({
-                            placeholder: 'Search and select chairs or reviewers...',
+                            placeholder: 'Search and select ' + who + '...',
                             allowClear: true,
                             width: '100%'
                         });

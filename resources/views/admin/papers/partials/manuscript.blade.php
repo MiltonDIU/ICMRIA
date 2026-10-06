@@ -233,7 +233,7 @@
                     </div>
                 </div>
                 <small class="form-text text-muted">
-                    The list offers the chairs and reviewers attached to this paper's track.
+                    The list offers the {{ \App\Services\ConflictCandidates::chairsOffered() || auth()->user()->can('paper_conflict_manage') ? 'chairs and reviewers' : 'reviewers' }} attached to this paper's track.
                 </small>
             </form>
         @endif

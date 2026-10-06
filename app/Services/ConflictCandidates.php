@@ -10,9 +10,9 @@ use App\Models\TrackAssignment;
  * Conflict-of-interest declarations made while a paper is being submitted, on either
  * the registration form or the submission form (requirement document, Phase 2).
  *
- * The author names anyone who chairs or reviews in the chosen track. Those people are
- * then never offered the paper to review or decide on; ReviewerMatcher and ChairScope
- * read these declarations.
+ * The author names reviewers of the chosen track (and its chairs, if Settings allows:
+ * author_conflict_include_chairs). Those people are then never offered the paper to
+ * review or decide on; ReviewerMatcher and ChairScope read these declarations.
  *
  * A conflict could once be declared against a free-text institution as well. Nothing
  * could act on it — reviewers carry no institution to match against — so it was dropped.
@@ -33,19 +33,50 @@ class ConflictCandidates
     }
 
     /**
-     * The chairs and reviewers of every track, for the form to offer once a track is
-     * chosen. A person who both chairs and reviews in a track is listed once, as chair.
+     * Whether authors are offered the track's chairs and co-chairs as well as its
+     * reviewers. Setting author_conflict_include_chairs; on unless set to 'false', in
+     * which case authors name reviewers only. Conflicts already declared still apply, and
+     * someone holding paper_conflict_manage can still record one against a chair.
+     */
+    public static function chairsOffered(): bool
+    {
+        return \App\Models\Setting::where('key', 'author_conflict_include_chairs')->value('value') !== 'false';
+    }
+
+    /**
+     * Who may be named for a paper in this track: its reviewers, and its chairs when
+     * $withChairs (by default, as Settings says).
+     *
+     * @return \Illuminate\Support\Collection<int, int> user ids
+     */
+    public static function userIdsForTrack(int $trackId, ?bool $withChairs = null): \Illuminate\Support\Collection
+    {
+        $withChairs ??= self::chairsOffered();
+        $rows = TrackAssignment::where('track_id', $trackId)->get(['user_id', 'role']);
+        $ids = $rows->pluck('user_id')->unique();
+
+        // A chair who also reviews in the track counts as a chair.
+        return ($withChairs ? $ids : $ids->diff($rows->where('role', 'chair')->pluck('user_id')))->values();
+    }
+
+    /**
+     * The people of every track an author may name, for the form to offer once a track is
+     * chosen: reviewers, and chairs if Settings allows. A person who both chairs and
+     * reviews in a track is listed once, as chair.
      *
      * @return array<int, array<int, array{id: int, label: string}>> track id => people
      */
     public static function byTrack(): array
     {
+        $withChairs = self::chairsOffered();
+
         return TrackAssignment::with('user')
             ->get()
             ->filter(fn ($row) => $row->user !== null)
             ->groupBy('track_id')
-            ->map(function ($rows) {
+            ->map(function ($rows) use ($withChairs) {
                 return $rows->groupBy('user_id')
+                    ->reject(fn ($personRows) => !$withChairs && $personRows->contains('role', 'chair'))
                     ->map(function ($personRows) {
                         $user = $personRows->first()->user;
                         $role = $personRows->contains('role', 'chair') ? 'Chair' : 'Reviewer';
@@ -70,8 +101,8 @@ class ConflictCandidates
     }
 
     /**
-     * Records the declarations for a new paper. People outside the paper's track are
-     * ignored, since the form only ever offers the track's own chairs and reviewers.
+     * Records the declarations for a new paper. Anyone the form would not have offered
+     * (outside the paper's track, or a chair while chairs are not offered) is ignored.
      *
      * @return int how many conflicts were recorded
      */
@@ -81,7 +112,7 @@ class ConflictCandidates
             return 0;
         }
 
-        $inTrack = TrackAssignment::where('track_id', $paper->track_id)->pluck('user_id')->unique();
+        $inTrack = self::userIdsForTrack((int) $paper->track_id);
         $note = filled($input['conflict_note'] ?? null) ? trim($input['conflict_note']) : null;
         $recorded = 0;
 
