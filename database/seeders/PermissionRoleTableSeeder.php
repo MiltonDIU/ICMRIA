@@ -95,6 +95,14 @@ class PermissionRoleTableSeeder extends Seeder
                 'final_approval',
                 'revision_review',
             ],
+            // Proceedings Editor: checks the camera-ready files of every track, nothing else.
+            8 => [
+                'admin_dashboard',
+                'profile',
+                'profile_edit',
+                'camera_ready_approve',
+                'camera_ready_all_tracks',
+            ],
         ];
 
         foreach ($role_permissions as $role_id => $titles) {

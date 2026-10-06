@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\CameraReadyUpdate;
 use App\Models\Paper;
+use App\Models\Track;
+use App\Services\CameraReadyCheckers;
 use App\Services\ChairScope;
 use App\Services\PaperProgress;
 use App\Services\ProceedingsConfirmation;
 use App\Services\ProceedingsRules;
-use App\Services\RevisionReviewers;
 use Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,8 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * The camera-ready check (organisers, 2026-10-06): once an accepted paper's camera-ready
  * manuscript and signed copyright form are in, the paper's Track Chair or Sub-Track Chair
- * approves the files or sends them back, before the author pays. Administrators see every
- * track and may act too. Who may act is the camera_ready_approve permission.
+ * approves the files or sends them back, before the author pays. Administrators and
+ * Proceedings Editors see every track and may act too (CameraReadyCheckers).
  */
 class CameraReadyCheckController extends Controller
 {
@@ -30,12 +31,28 @@ class CameraReadyCheckController extends Controller
     {
         abort_if(Gate::denies('camera_ready_approve'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $scope = ChairScope::for(auth()->user());
+        $user = auth()->user();
+        $scope = ChairScope::for($user);
+        $allTracks = CameraReadyCheckers::seesAllTracks($user);
         $filter = in_array($request->string('filter')->toString(), self::FILTERS, true)
             ? $request->string('filter')->toString()
             : 'pending';
 
-        $papers = $scope->constrainPapers(Paper::accepted())
+        // Track filter: "t<id>" for a whole track, "s<id>" for one sub-track.
+        $trackFilter = $request->string('track')->toString();
+        $tracks = Track::with(['subTracks' => fn ($q) => $q->orderBy('id')])
+            ->when(!$allTracks, fn ($q) => $q->whereIn('id', $scope->trackIds() ?: [0]))
+            ->orderBy('id')
+            ->get();
+
+        $query = Paper::accepted();
+        if (!$allTracks) {
+            $query = $scope->constrainPapers($query);
+        }
+
+        $papers = $query
+            ->when(preg_match('/^t(\d+)$/', $trackFilter, $m), fn ($q) => $q->where('papers.track_id', (int) $m[1]))
+            ->when(preg_match('/^s(\d+)$/', $trackFilter, $m), fn ($q) => $q->where('papers.sub_track_id', (int) $m[1]))
             ->whereHas('cameraReady', fn ($q) => $q->whereNotNull('camera_ready_path')->whereNotNull('copyright_path'))
             ->with(['track', 'subTrack', 'decision', 'cameraReady.filesReviewedBy', 'authors', 'conflicts', 'user'])
             ->orderBy('id')
@@ -58,7 +75,10 @@ class CameraReadyCheckController extends Controller
             'papers' => $papers->filter(fn ($paper) => $group($paper) === $filter)->values(),
             'counts' => $counts,
             'filter' => $filter,
-            'hasNoScope' => $scope->isEmpty(),
+            'tracks' => $tracks,
+            'trackFilter' => $trackFilter,
+            'allTracks' => $allTracks,
+            'hasNoScope' => !$allTracks && $scope->isEmpty(),
         ]);
     }
 
@@ -125,7 +145,7 @@ class CameraReadyCheckController extends Controller
         abort_if(Gate::denies('camera_ready_approve'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $paper->load(['decision', 'cameraReady', 'authors', 'conflicts', 'user']);
 
-        abort_unless(RevisionReviewers::canReview(auth()->user(), $paper), Response::HTTP_FORBIDDEN,
+        abort_unless(CameraReadyCheckers::canCheck(auth()->user(), $paper), Response::HTTP_FORBIDDEN,
             '403 Forbidden - that paper is outside your tracks, or you have a conflict with it.');
 
         $final = $paper->cameraReady;

@@ -44,6 +44,10 @@ class RolesTableSeeder extends Seeder
                 'id'    => 7,
                 'title' => 'TPC Chair',
             ],
+            [
+                'id'    => 8,
+                'title' => 'Proceedings Editor',
+            ],
         ];
 
         foreach ($roles as $role) {

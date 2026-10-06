@@ -19,13 +19,34 @@
             signed. Then approve the files or send them back with a note. The author can pay the registration fee only after
             you approve, and the paper is confirmed for the proceedings automatically once the fee is paid.
         </p>
-        <div class="d-flex flex-wrap">
+        <div class="d-flex flex-wrap align-items-center">
             @foreach($filters as $key => $label)
-                <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $key]) }}"
+                <a href="{{ route('admin.camera-ready-checks.index', array_filter(['filter' => $key, 'track' => $trackFilter])) }}"
                    class="btn btn-sm mr-1 mb-1 btn-{{ $filter === $key ? 'primary' : 'outline-secondary' }}">
                     {{ $label }} <span class="badge badge-light ml-1">{{ $counts[$key] }}</span>
                 </a>
             @endforeach
+
+            @if($tracks->isNotEmpty())
+                <form method="GET" action="{{ route('admin.camera-ready-checks.index') }}" class="form-inline ml-md-auto mb-1">
+                    <input type="hidden" name="filter" value="{{ $filter }}">
+                    <label for="track-filter" class="small text-muted mr-2">Track</label>
+                    <select id="track-filter" name="track" class="form-control form-control-sm" style="max-width: 22rem;" onchange="this.form.submit()">
+                        <option value="">{{ $allTracks ? 'All tracks' : 'All my tracks' }}</option>
+                        @foreach($tracks as $track)
+                            <optgroup label="{{ Str::limit($track->name, 60) }}">
+                                <option value="t{{ $track->id }}" @selected($trackFilter === 't' . $track->id)>Whole track</option>
+                                @foreach($track->subTracks as $subTrack)
+                                    <option value="s{{ $subTrack->id }}" @selected($trackFilter === 's' . $subTrack->id)>{{ Str::limit($subTrack->name, 60) }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                    @if($trackFilter)
+                        <a href="{{ route('admin.camera-ready-checks.index', ['filter' => $filter]) }}" class="btn btn-sm btn-link">Clear</a>
+                    @endif
+                </form>
+            @endif
         </div>
     </div>
 </div>
@@ -51,7 +72,9 @@
             </span>
         </div>
         <div class="card-body">
-            <p class="text-muted small mb-2">{{ $paper->subTrack->name ?? ($paper->track->name ?? '') }}</p>
+            <p class="text-muted small mb-2">
+                {{ $paper->track->name ?? '' }}@if($paper->subTrack) &rsaquo; {{ $paper->subTrack->name }}@endif
+            </p>
 
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
                 <div>

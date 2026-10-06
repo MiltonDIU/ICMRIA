@@ -581,6 +581,9 @@ class PermissionsTableSeeder extends Seeder
                 'title' => 'camera_ready_approve',
             ],
             [
+                'title' => 'camera_ready_all_tracks',
+            ],
+            [
                 'title' => 'paper_manuscript_manage',
             ],
             [

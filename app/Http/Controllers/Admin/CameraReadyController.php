@@ -123,7 +123,7 @@ class CameraReadyController extends Controller
         }
 
         // Both files are in: the track's chairs check them before the fee.
-        foreach (RevisionReviewers::chairsToNotify($paper, 'camera_ready_approve', false) as $chair) {
+        foreach (\App\Services\CameraReadyCheckers::toNotify($paper) as $chair) {
             try {
                 Mail::to($chair->email)->queue(new \App\Mail\CameraReadySubmitted($paper, $chair));
             } catch (\Exception $e) {
@@ -308,7 +308,8 @@ class CameraReadyController extends Controller
             || Gate::allows('camera_ready_access')
             || (Gate::allows('decision_access') && $paper->track_id
                 && ChairScope::for($user)->canManage($paper->track_id, $paper->sub_track_id))
-            || ((Gate::allows('revision_review') || Gate::allows('camera_ready_approve')) && RevisionReviewers::canReview($user, $paper));
+            || (Gate::allows('revision_review') && RevisionReviewers::canReview($user, $paper))
+            || (Gate::allows('camera_ready_approve') && \App\Services\CameraReadyCheckers::canCheck($user, $paper));
 
         abort_unless($allowed, Response::HTTP_FORBIDDEN, '403 Forbidden');
     }
